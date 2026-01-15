@@ -46,20 +46,27 @@ components.json
 eslint.config.mjs
 next.config.ts
 package.json
-plans/reports/scout-ext-20260115-src-structure.md
-plans/reports/scout-ext-260115-0702-claude-directory-overview.md
 postcss.config.mjs
+prisma.config.ts
+prisma/migrations/20260115005308_init/migration.sql
+prisma/migrations/20260115125127_add_user_model/migration.sql
+prisma/migrations/migration_lock.toml
+prisma/schema.prisma
+prisma/seed.ts
 public/file.svg
 public/globe.svg
 public/next.svg
 public/vercel.svg
 public/window.svg
 README.md
+src/app/(auth)/layout.tsx
+src/app/(auth)/login/page.tsx
 src/app/(dashboard)/data-table/page.tsx
 src/app/(dashboard)/forms/page.tsx
 src/app/(dashboard)/layout.tsx
 src/app/(dashboard)/page.tsx
 src/app/(dashboard)/status-badges/page.tsx
+src/app/api/auth/[...nextauth]/route.ts
 src/app/favicon.ico
 src/app/globals.css
 src/app/layout.tsx
@@ -113,15 +120,287 @@ src/components/ui/table.tsx
 src/components/ui/tabs.tsx
 src/config/navigation.ts
 src/config/site.ts
+src/lib/auth.base.config.ts
+src/lib/auth.config.ts
+src/lib/auth.ts
+src/lib/db.ts
 src/lib/format.ts
 src/lib/utils.ts
+src/middleware.ts
 src/types/enums.ts
 src/types/index.ts
+test-db-connection.ts
 tsconfig.json
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="prisma/migrations/20260115125127_add_user_model/migration.sql">
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password_hash" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'ADMIN',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+</file>
+
+<file path="src/app/(auth)/layout.tsx">
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Đăng nhập - agr-pal',
+}
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="w-full max-w-md">{children}</div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/app/(auth)/login/page.tsx">
+'use client'
+
+import { useState, Suspense } from 'react'
+import { signIn } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+
+function LoginForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError(result.error)
+      } else {
+        const from = searchParams.get('from') || '/dashboard'
+        router.push(from)
+        router.refresh()
+      }
+    } catch (err) {
+      setError('Đã xảy ra lỗi. Vui lòng thử lại.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-center text-2xl">Đăng nhập agr-pal</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="admin@agrpal.local"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          </Button>
+        </form>
+
+        <div className="mt-4 text-center text-sm text-slate-500">
+          <p>Tài khoản mặc định:</p>
+          <p className="font-mono">admin@agrpal.local / admin123</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+</file>
+
+<file path="src/app/api/auth/[...nextauth]/route.ts">
+import { handlers } from '@/lib/auth.config'
+
+export const { GET, POST } = handlers
+export const runtime = 'nodejs'
+</file>
+
+<file path="src/lib/auth.base.config.ts">
+import type { NextAuthConfig } from 'next-auth'
+
+export const authConfig: NextAuthConfig = {
+  pages: {
+    signIn: '/login',
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 8 * 60 * 60,
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string
+      }
+      return session
+    },
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user
+      const isAuthPage = nextUrl.pathname.startsWith('/login')
+      const isPublicPage = nextUrl.pathname === '/'
+
+      if (isAuthPage) {
+        if (isLoggedIn) return false // Redirect authenticated users away from login
+        return true // Allow unauthenticated access to login
+      }
+
+      if (!isLoggedIn && !isPublicPage) {
+        return false // Redirect unauthenticated users to login
+      }
+
+      return true
+    },
+  },
+  providers: [],
+}
+</file>
+
+<file path="src/lib/auth.config.ts">
+import NextAuth from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/db'
+import { authConfig } from '@/lib/auth.base.config'
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [
+    CredentialsProvider({
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        })
+
+        if (!user) {
+          return null
+        }
+
+        const isValid = await bcrypt.compare(credentials.password as string, user.password_hash)
+
+        if (!isValid) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        }
+      },
+    }),
+  ],
+})
+</file>
+
+<file path="src/lib/auth.ts">
+import { auth } from '@/lib/auth.config'
+
+export async function getSession() {
+  return await auth()
+}
+
+export async function requireAuth() {
+  const session = await auth()
+  if (!session) {
+    throw new Error('Unauthorized')
+  }
+  return session
+}
+</file>
+
+<file path="src/middleware.ts">
+import NextAuth from 'next-auth'
+import { authConfig } from '@/lib/auth.base.config'
+
+export const { auth: middleware } = NextAuth(authConfig)
+
+export default middleware
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/login'],
+}
+</file>
 
 <file path="CLAUDE.md">
 # CLAUDE.md
@@ -163,223 +442,6 @@ We keep all important docs in `./docs` folder and keep updating them, structure 
 ```
 
 **IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
-</file>
-
-<file path="plans/reports/scout-ext-20260115-src-structure.md">
-# Codebase Scout Report: src/ Directory Structure
-
-Date: 2026-01-15
-Task: Complete mapping of src/ directory structure
-Method: Native Glob/Grep/Read tools
-
-## Executive Summary
-
-Next.js 14+ App Router project for Agri-ERP - agricultural service management system.
-Vietnamese-localized ERP for managing bookings, jobs, billing, payroll, machines, services.
-Foundation components fully implemented with demo pages.
-
-Tech Stack: Next.js 14+, TypeScript, Tailwind CSS, shadcn/ui, Vietnamese locale
-
-## Directory Structure
-
-src/
-  app/           - Next.js App Router pages (9 files)
-  components/    - Reusable React components (46 files)
-  config/        - Application configuration (2 files)
-  lib/           - Utility functions (2 files)
-  types/         - TypeScript definitions (2 files)
-
-Total: 61 files
-
-## 1. APP DIRECTORY
-
-Core Files:
-- layout.tsx: Root layout with Inter font, metadata
-- page.tsx: Root redirects to /dashboard
-- globals.css: Global Tailwind styles
-- favicon.ico: App icon
-
-Dashboard Route Group:
-- (dashboard)/layout.tsx: Wraps in AppShell
-- (dashboard)/page.tsx: Main dashboard with stats
-- (dashboard)/data-table/page.tsx: DataTable demo with 8 bookings
-- (dashboard)/forms/page.tsx: Form components demo
-- (dashboard)/status-badges/page.tsx: Status badge showcase
-
-## 2. COMPONENTS
-
-Layout (9 files):
-- app-shell.tsx: Main layout with sidebar + header
-- page-container.tsx, content-section.tsx: Page wrappers
-- header/: Sticky header with breadcrumbs, search, user menu
-- sidebar/: Collapsible sidebar with navigation
-
-Forms (6 files):
-- currency-input.tsx: VND input with auto-formatting
-- quantity-input.tsx: Numeric with +/- buttons
-- date-picker.tsx: Calendar with vi-VN locale
-- form-field.tsx: Label + input wrapper
-- multi-select-checkbox.tsx: Checkbox list with disabled support
-
-Data Display (5 files):
-- data-table/: Feature-rich table with sort, pagination, card view
-  - data-table.tsx: Main component
-  - data-table-header.tsx: Sortable headers
-  - data-table-pagination.tsx: Pagination controls
-  - data-table-empty.tsx: Empty state
-
-Status Badges (8 files):
-- status-badge.tsx: Base component with 13 variants
-- booking-status.tsx, job-status.tsx: Domain-specific badges
-- payment-status.tsx, bill-status.tsx, payroll-status.tsx
-- machine-status.tsx
-Features: Vietnamese labels, optional icons, WCAG AA colors
-
-UI Primitives (18 files):
-- shadcn/ui components: badge, button, calendar, card, checkbox
-- dialog, dropdown-menu, form, input, label, popover, select
-- separator, sheet, skeleton, sonner, table, tabs
-
-## 3. CONFIG
-
-navigation.ts:
-- 5 nav groups, 9 items total
-- Dashboard, Bookings, Jobs, Customers, Workers
-- Billing, Payroll, Machines, Services
-- Helper functions: getNavItem(id), getNavItemByHref(href)
-
-site.ts:
-- Business: name, currency=VND, locale=vi-VN
-- UI: defaultPageSize=20, maxPageSize=100
-- Features: darkMode, notifications, exportData, advancedSearch
-
-## 4. LIB
-
-utils.ts:
-- cn(): Tailwind class merger (clsx + twMerge)
-
-format.ts:
-- formatCurrency(), parseCurrency(): VND formatting
-- formatNumber(): Thousand separators
-- formatDate(), formatDateShort(): DD/MM/YYYY
-- formatDateTime(), formatRelativeDate(): Vietnamese relative time
-
-## 5. TYPES
-
-enums.ts:
-- BookingStatus: NEW, IN_PROGRESS, BLOCKED, COMPLETED, CANCELED
-- JobStatus: Same as BookingStatus
-- PaymentStatus: PENDING_BILL, ADDED_BILL, FULLY_PAID
-- JobPaymentStatus: PENDING_PAYROLL, ADDED_PAYROLL, FULLY_PAID
-- BillStatus: OPEN, PARTIAL_PAID, COMPLETED
-- PayrollStatus: Same as BillStatus
-- MachineStatus: AVAILABLE, IN_USE, MAINTENANCE
-- PaymentMethod: CASH, BANK_TRANSFER
-- AdvanceStatus: UNPROCESSED, PROCESSED
-- StatusVariant: Union type for badge styling (13 variants)
-
-## Key Features
-
-Layout System:
-- Fixed sidebar (256px, collapsible to 64px)
-- Sticky header with breadcrumbs
-- Responsive design
-
-Data Display:
-- Sortable, paginated DataTable
-- Table and card view modes
-- Loading skeleton, empty states
-
-Form Components:
-- Specialized inputs for currency, quantity, dates
-- Multi-select with disabled items
-- Keyboard navigation, accessibility
-
-Status System:
-- Type-safe enums
-- Consistent color system
-- Vietnamese labels
-
-Internationalization:
-- vi-VN locale throughout
-- DD/MM/YYYY date format
-- VND currency (1.000.000 đ)
-
-## Component Dependencies
-
-Most-used imports:
-- @/components/ui/*: shadcn/ui primitives
-- @/lib/utils: cn() class merger
-- lucide-react: Icons
-- @/types: Enums for type safety
-- @/lib/format: Currency, date formatting
-
-Design system:
-- Tailwind CSS
-- CSS variables (--primary, --muted)
-- Dark mode support
-
-## Implemented vs Planned
-
-Implemented (4 pages):
-- /dashboard: Main dashboard with stats
-- /data-table: DataTable demo
-- /forms: Form components demo
-- /status-badges: Status badge showcase
-
-Planned (5 routes):
-- /bookings, /jobs: Operations
-- /customers, /workers: People
-- /billing, /payroll: Financial
-- /machines, /services: Assets
-
-Foundation: Complete for building planned features
-
-## Architecture Insights
-
-Strengths:
-- Type safety with enums
-- Reusable components
-- Consistent patterns
-- Accessibility (WCAG AA)
-- Vietnamese localization
-- Clean imports (@/ alias)
-
-Design Patterns:
-- Composition (AppShell)
-- Render props (DataTable)
-- Controlled components
-- Barrel exports
-- TypeScript generics
-
-## Next Steps
-
-1. Implement CRUD pages using DataTable + forms
-2. Add state management (Zustand/Context)
-3. API integration (replace mock data)
-4. Form validation (Zod + React Hook Form)
-5. Authentication (NextAuth/Clerk)
-6. Database schema (Prisma/Drizzle)
-7. Testing (Jest + RTL)
-
-## Unresolved Questions
-
-- API architecture: REST vs GraphQL vs tRPC?
-- Database: PostgreSQL, MySQL, other?
-- State management: Zustand, Redux, Context?
-- Form validation: Zod, Yup, other?
-- Auth provider: NextAuth, Clerk, custom?
-- Deployment: Vercel, self-hosted?
-
----
-
-Report generated: 2026-01-15
-Scout method: Native tools (Glob/Grep/Read)
-Coverage: 100% of src/ directory (61 files)
-</file>
-
-<file path="plans/reports/scout-ext-260115-0702-claude-directory-overview.md">
-
 </file>
 
 <file path="components.json">
@@ -449,6 +511,1093 @@ const config = {
 export default config;
 </file>
 
+<file path="prisma.config.ts">
+// This file was generated by Prisma, and assumes you have installed the following:
+// npm install --save-dev prisma dotenv
+import { config } from "dotenv";
+import { defineConfig } from "prisma/config";
+
+// Load environment variables from .env.local
+config({ path: ".env.local" });
+
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
+  datasource: {
+    url: process.env["DATABASE_URL"],
+  },
+});
+</file>
+
+<file path="prisma/migrations/20260115005308_init/migration.sql">
+-- CreateEnum
+CREATE TYPE "MachineStatus" AS ENUM ('AVAILABLE', 'IN_USE', 'MAINTENANCE');
+
+-- CreateEnum
+CREATE TYPE "BookingStatus" AS ENUM ('NEW', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELED');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING_BILL', 'ADDED_BILL', 'FULLY_PAID');
+
+-- CreateEnum
+CREATE TYPE "JobStatus" AS ENUM ('NEW', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELED');
+
+-- CreateEnum
+CREATE TYPE "JobPaymentStatus" AS ENUM ('PENDING_PAYROLL', 'ADDED_PAYROLL', 'FULLY_PAID');
+
+-- CreateEnum
+CREATE TYPE "BillStatus" AS ENUM ('OPEN', 'PARTIAL_PAID', 'COMPLETED');
+
+-- CreateEnum
+CREATE TYPE "AdvanceStatus" AS ENUM ('UNPROCESSED', 'PROCESSED');
+
+-- CreateEnum
+CREATE TYPE "PayrollStatus" AS ENUM ('OPEN', 'PARTIAL_PAID', 'COMPLETED');
+
+-- CreateTable
+CREATE TABLE "services" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "unit" TEXT NOT NULL,
+    "description" TEXT,
+    "price" DECIMAL(12,2) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "services_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "job_types" (
+    "id" TEXT NOT NULL,
+    "service_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "default_base_salary" DECIMAL(12,2) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "job_types_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "workers" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" TEXT,
+    "address" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "workers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "worker_weights" (
+    "id" TEXT NOT NULL,
+    "worker_id" TEXT NOT NULL,
+    "job_type_id" TEXT NOT NULL,
+    "weight" DECIMAL(5,2) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "worker_weights_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "machines" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "model" TEXT,
+    "type" TEXT,
+    "purchase_date" TIMESTAMP(3),
+    "status" "MachineStatus" NOT NULL DEFAULT 'AVAILABLE',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "machines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "customers" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" TEXT,
+    "address" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "customers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "lands" (
+    "id" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "gps_lat" DECIMAL(10,7),
+    "gps_lng" DECIMAL(10,7),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "lands_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "bookings" (
+    "id" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    "land_id" TEXT NOT NULL,
+    "service_id" TEXT NOT NULL,
+    "quantity" DECIMAL(10,2) NOT NULL,
+    "captured_price" DECIMAL(12,2) NOT NULL,
+    "total_amount" DECIMAL(12,2) NOT NULL,
+    "status" "BookingStatus" NOT NULL DEFAULT 'NEW',
+    "payment_status" "PaymentStatus" NOT NULL DEFAULT 'PENDING_BILL',
+    "bill_id" TEXT,
+    "notes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "bookings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "jobs" (
+    "id" TEXT NOT NULL,
+    "booking_id" TEXT NOT NULL,
+    "job_type_id" TEXT NOT NULL,
+    "machine_id" TEXT,
+    "status" "JobStatus" NOT NULL DEFAULT 'NEW',
+    "notes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "jobs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "job_workers" (
+    "id" TEXT NOT NULL,
+    "job_id" TEXT NOT NULL,
+    "worker_id" TEXT NOT NULL,
+    "actual_qty" DECIMAL(10,2) NOT NULL,
+    "applied_base" DECIMAL(12,2) NOT NULL,
+    "applied_weight" DECIMAL(5,2) NOT NULL,
+    "final_pay" DECIMAL(12,2) NOT NULL,
+    "payment_status" "JobPaymentStatus" NOT NULL DEFAULT 'PENDING_PAYROLL',
+    "payroll_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "job_workers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "bills" (
+    "id" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    "total_amount" DECIMAL(12,2) NOT NULL,
+    "total_paid" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "status" "BillStatus" NOT NULL DEFAULT 'OPEN',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "bills_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "advance_payments" (
+    "id" TEXT NOT NULL,
+    "worker_id" TEXT NOT NULL,
+    "amount" DECIMAL(12,2) NOT NULL,
+    "status" "AdvanceStatus" NOT NULL DEFAULT 'UNPROCESSED',
+    "payroll_id" TEXT,
+    "notes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "advance_payments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payroll_sheets" (
+    "id" TEXT NOT NULL,
+    "worker_id" TEXT NOT NULL,
+    "total_wages" DECIMAL(12,2) NOT NULL,
+    "total_adv" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "net_payable" DECIMAL(12,2) NOT NULL,
+    "total_paid" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "status" "PayrollStatus" NOT NULL DEFAULT 'OPEN',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "payroll_sheets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "job_types_service_id_idx" ON "job_types"("service_id");
+
+-- CreateIndex
+CREATE INDEX "worker_weights_worker_id_idx" ON "worker_weights"("worker_id");
+
+-- CreateIndex
+CREATE INDEX "worker_weights_job_type_id_idx" ON "worker_weights"("job_type_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "worker_weights_worker_id_job_type_id_key" ON "worker_weights"("worker_id", "job_type_id");
+
+-- CreateIndex
+CREATE INDEX "lands_customer_id_idx" ON "lands"("customer_id");
+
+-- CreateIndex
+CREATE INDEX "bookings_customer_id_idx" ON "bookings"("customer_id");
+
+-- CreateIndex
+CREATE INDEX "bookings_status_idx" ON "bookings"("status");
+
+-- CreateIndex
+CREATE INDEX "bookings_payment_status_idx" ON "bookings"("payment_status");
+
+-- CreateIndex
+CREATE INDEX "bookings_bill_id_idx" ON "bookings"("bill_id");
+
+-- CreateIndex
+CREATE INDEX "jobs_booking_id_idx" ON "jobs"("booking_id");
+
+-- CreateIndex
+CREATE INDEX "jobs_status_idx" ON "jobs"("status");
+
+-- CreateIndex
+CREATE INDEX "job_workers_job_id_idx" ON "job_workers"("job_id");
+
+-- CreateIndex
+CREATE INDEX "job_workers_worker_id_idx" ON "job_workers"("worker_id");
+
+-- CreateIndex
+CREATE INDEX "job_workers_payment_status_idx" ON "job_workers"("payment_status");
+
+-- CreateIndex
+CREATE INDEX "job_workers_payroll_id_idx" ON "job_workers"("payroll_id");
+
+-- CreateIndex
+CREATE INDEX "bills_customer_id_idx" ON "bills"("customer_id");
+
+-- CreateIndex
+CREATE INDEX "bills_status_idx" ON "bills"("status");
+
+-- CreateIndex
+CREATE INDEX "advance_payments_worker_id_idx" ON "advance_payments"("worker_id");
+
+-- CreateIndex
+CREATE INDEX "advance_payments_status_idx" ON "advance_payments"("status");
+
+-- CreateIndex
+CREATE INDEX "advance_payments_payroll_id_idx" ON "advance_payments"("payroll_id");
+
+-- CreateIndex
+CREATE INDEX "payroll_sheets_worker_id_idx" ON "payroll_sheets"("worker_id");
+
+-- CreateIndex
+CREATE INDEX "payroll_sheets_status_idx" ON "payroll_sheets"("status");
+
+-- AddForeignKey
+ALTER TABLE "job_types" ADD CONSTRAINT "job_types_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "worker_weights" ADD CONSTRAINT "worker_weights_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "worker_weights" ADD CONSTRAINT "worker_weights_job_type_id_fkey" FOREIGN KEY ("job_type_id") REFERENCES "job_types"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "lands" ADD CONSTRAINT "lands_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_land_id_fkey" FOREIGN KEY ("land_id") REFERENCES "lands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "services"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_bill_id_fkey" FOREIGN KEY ("bill_id") REFERENCES "bills"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_booking_id_fkey" FOREIGN KEY ("booking_id") REFERENCES "bookings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_job_type_id_fkey" FOREIGN KEY ("job_type_id") REFERENCES "job_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_machine_id_fkey" FOREIGN KEY ("machine_id") REFERENCES "machines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "jobs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_payroll_id_fkey" FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bills" ADD CONSTRAINT "bills_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "advance_payments" ADD CONSTRAINT "advance_payments_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "advance_payments" ADD CONSTRAINT "advance_payments_payroll_id_fkey" FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payroll_sheets" ADD CONSTRAINT "payroll_sheets_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+</file>
+
+<file path="prisma/migrations/migration_lock.toml">
+# Please do not edit this file manually
+# It should be added in your version-control system (e.g., Git)
+provider = "postgresql"
+</file>
+
+<file path="prisma/schema.prisma">
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// AUTHENTICATION (1 table)
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("ADMIN")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ============================================
+// MASTERS (5 tables)
+// ============================================
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  unit        String   // "hectare", "ton", "hour"
+  description String?
+  price       Decimal  @db.Decimal(12, 2) // Current price
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  bookings  Booking[]
+  job_types Job_Type[]
+
+  @@map("services")
+}
+
+model Job_Type {
+  id                  String   @id @default(cuid())
+  service_id          String
+  name                String // "Driver", "Bagger", "Helper"
+  default_base_salary Decimal  @db.Decimal(12, 2)
+  created_at          DateTime @default(now())
+
+  service        Service         @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  worker_weights Worker_Weight[]
+  jobs           Job[]
+
+  @@index([service_id])
+  @@map("job_types")
+}
+
+model Worker {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  address    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  job_workers      Job_Worker[]
+  worker_weights   Worker_Weight[]
+  advance_payments Advance_Payment[]
+  payroll_sheets   Payroll_Sheet[]
+
+  @@map("workers")
+}
+
+model Worker_Weight {
+  id          String   @id @default(cuid())
+  worker_id   String
+  job_type_id String
+  weight      Decimal  @db.Decimal(5, 2) // 0.8 to 2.0 (multiplier)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  worker   Worker   @relation(fields: [worker_id], references: [id], onDelete: Cascade)
+  job_type Job_Type @relation(fields: [job_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([worker_id, job_type_id])
+  @@index([worker_id])
+  @@index([job_type_id])
+  @@map("worker_weights")
+}
+
+model Machine {
+  id            String        @id @default(cuid())
+  name          String
+  model         String?
+  type          String?
+  purchase_date DateTime?
+  status        MachineStatus @default(AVAILABLE)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+
+  jobs Job[]
+
+  @@map("machines")
+}
+
+enum MachineStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+// ============================================
+// OPERATIONS (5 tables)
+// ============================================
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  address    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lands    Land[]
+  bookings Booking[]
+  bills    Bill[]
+
+  @@map("customers")
+}
+
+model Land {
+  id          String   @id @default(cuid())
+  customer_id String
+  name        String // "Ruộng ông Bảy"
+  gps_lat     Decimal? @db.Decimal(10, 7)
+  gps_lng     Decimal? @db.Decimal(10, 7)
+  created_at  DateTime @default(now())
+
+  customer Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([customer_id])
+  @@map("lands")
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  customer_id    String
+  land_id        String
+  service_id     String
+  quantity       Decimal       @db.Decimal(10, 2)
+  captured_price Decimal       @db.Decimal(12, 2) // Price snapshot
+  total_amount   Decimal       @db.Decimal(12, 2) // qty × captured_price
+  status         BookingStatus @default(NEW)
+  payment_status PaymentStatus @default(PENDING_BILL)
+  bill_id        String?
+  notes          String?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  customer Customer @relation(fields: [customer_id], references: [id])
+  land     Land     @relation(fields: [land_id], references: [id])
+  service  Service  @relation(fields: [service_id], references: [id])
+  bill     Bill?    @relation(fields: [bill_id], references: [id])
+  jobs     Job[]
+
+  @@index([customer_id])
+  @@index([status])
+  @@index([payment_status])
+  @@index([bill_id])
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  NEW
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING_BILL
+  ADDED_BILL
+  FULLY_PAID
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  booking_id  String
+  job_type_id String
+  machine_id  String?
+  status      JobStatus @default(NEW)
+  notes       String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  booking     Booking      @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  job_type    Job_Type     @relation(fields: [job_type_id], references: [id])
+  machine     Machine?     @relation(fields: [machine_id], references: [id])
+  job_workers Job_Worker[]
+
+  @@index([booking_id])
+  @@index([status])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  NEW
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELED
+}
+
+model Job_Worker {
+  id             String           @id @default(cuid())
+  job_id         String
+  worker_id      String
+  actual_qty     Decimal          @db.Decimal(10, 2)
+  applied_base   Decimal          @db.Decimal(12, 2) // Snapshot
+  applied_weight Decimal          @db.Decimal(5, 2) // Snapshot
+  final_pay      Decimal          @db.Decimal(12, 2) // Calculated snapshot
+  payment_status JobPaymentStatus @default(PENDING_PAYROLL)
+  payroll_id     String?
+  created_at     DateTime         @default(now())
+
+  job     Job            @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  worker  Worker         @relation(fields: [worker_id], references: [id])
+  payroll Payroll_Sheet? @relation(fields: [payroll_id], references: [id])
+
+  @@index([job_id])
+  @@index([worker_id])
+  @@index([payment_status])
+  @@index([payroll_id])
+  @@map("job_workers")
+}
+
+enum JobPaymentStatus {
+  PENDING_PAYROLL
+  ADDED_PAYROLL
+  FULLY_PAID
+}
+
+// ============================================
+// FINANCIALS (3 tables)
+// ============================================
+
+model Bill {
+  id           String     @id @default(cuid())
+  customer_id  String
+  total_amount Decimal    @db.Decimal(12, 2)
+  total_paid   Decimal    @db.Decimal(12, 2) @default(0)
+  status       BillStatus @default(OPEN)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+
+  customer Customer  @relation(fields: [customer_id], references: [id])
+  bookings Booking[]
+
+  @@index([customer_id])
+  @@index([status])
+  @@map("bills")
+}
+
+enum BillStatus {
+  OPEN
+  PARTIAL_PAID
+  COMPLETED
+}
+
+model Advance_Payment {
+  id         String        @id @default(cuid())
+  worker_id  String
+  amount     Decimal       @db.Decimal(12, 2)
+  status     AdvanceStatus @default(UNPROCESSED)
+  payroll_id String?
+  notes      String?
+  created_at DateTime      @default(now())
+
+  worker  Worker         @relation(fields: [worker_id], references: [id])
+  payroll Payroll_Sheet? @relation(fields: [payroll_id], references: [id])
+
+  @@index([worker_id])
+  @@index([status])
+  @@index([payroll_id])
+  @@map("advance_payments")
+}
+
+enum AdvanceStatus {
+  UNPROCESSED
+  PROCESSED
+}
+
+model Payroll_Sheet {
+  id          String        @id @default(cuid())
+  worker_id   String
+  total_wages Decimal       @db.Decimal(12, 2)
+  total_adv   Decimal       @db.Decimal(12, 2) @default(0)
+  net_payable Decimal       @db.Decimal(12, 2) // total_wages - total_adv
+  total_paid  Decimal       @db.Decimal(12, 2) @default(0)
+  status      PayrollStatus @default(OPEN)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  worker           Worker            @relation(fields: [worker_id], references: [id])
+  job_workers      Job_Worker[]
+  advance_payments Advance_Payment[]
+
+  @@index([worker_id])
+  @@index([status])
+  @@map("payroll_sheets")
+}
+
+enum PayrollStatus {
+  OPEN
+  PARTIAL_PAID
+  COMPLETED
+}
+</file>
+
+<file path="prisma/seed.ts">
+import { PrismaClient } from '@prisma/client'
+import { config } from 'dotenv'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
+import bcrypt from 'bcryptjs'
+
+// Load environment variables from .env.local
+config({ path: '.env.local' })
+
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+})
+
+const adapter = new PrismaPg(pool)
+
+const prisma = new PrismaClient({
+  adapter,
+})
+
+async function main() {
+  console.log('🌱 Starting seed...')
+
+  // ============================================
+  // 1. Admin User (1 user)
+  // ============================================
+  console.log('Creating admin user...')
+
+  const passwordHash = await bcrypt.hash('admin123', 10)
+  const adminUser = await prisma.user.create({
+    data: {
+      name: 'Admin',
+      email: 'admin@agrpal.local',
+      password_hash: passwordHash,
+      role: 'ADMIN',
+    },
+  })
+
+  console.log(`✓ Created admin user: ${adminUser.email}`)
+
+  // ============================================
+  // 2. Services & Job Types (2 services)
+  // ============================================
+  console.log('Creating services...')
+
+  const riceHarvest = await prisma.service.create({
+    data: {
+      name: 'Thu hoạch lúa',
+      unit: 'hectare',
+      description: 'Dịch vụ thu hoạch lúa',
+      price: 500000,
+      job_types: {
+        create: [
+          { name: 'Lái máy', default_base_salary: 100000 },
+          { name: 'Công nhặt', default_base_salary: 80000 },
+        ],
+      },
+    },
+    include: { job_types: true },
+  })
+
+  const cornHarvest = await prisma.service.create({
+    data: {
+      name: 'Thu hoạch ngô',
+      unit: 'hectare',
+      description: 'Dịch vụ thu hoạch ngô',
+      price: 450000,
+      job_types: {
+        create: [
+          { name: 'Lái máy', default_base_salary: 95000 },
+          { name: 'Công phụ', default_base_salary: 75000 },
+        ],
+      },
+    },
+    include: { job_types: true },
+  })
+
+  console.log(`✓ Created 2 services with ${riceHarvest.job_types.length + cornHarvest.job_types.length} job types`)
+
+  // ============================================
+  // 3. Workers & Weights (5 workers)
+  // ============================================
+  console.log('Creating workers...')
+
+  const worker1 = await prisma.worker.create({
+    data: {
+      name: 'Trần Văn B',
+      phone: '0912345678',
+      address: 'An Giang',
+      worker_weights: {
+        create: [
+          { job_type_id: riceHarvest.job_types[0].id, weight: 1.2 }, // Driver rice: 1.2x
+          { job_type_id: riceHarvest.job_types[1].id, weight: 1.0 }, // Bagger rice: 1.0x
+          { job_type_id: cornHarvest.job_types[0].id, weight: 1.1 }, // Driver corn: 1.1x
+        ],
+      },
+    },
+  })
+
+  const worker2 = await prisma.worker.create({
+    data: {
+      name: 'Nguyễn Văn C',
+      phone: '0923456789',
+      address: 'Đồng Tháp',
+      worker_weights: {
+        create: [
+          { job_type_id: riceHarvest.job_types[1].id, weight: 1.1 }, // Bagger rice: 1.1x
+          { job_type_id: cornHarvest.job_types[1].id, weight: 1.0 }, // Helper corn: 1.0x
+        ],
+      },
+    },
+  })
+
+  const worker3 = await prisma.worker.create({
+    data: {
+      name: 'Lê Thị D',
+      phone: '0934567890',
+      address: 'Long An',
+      worker_weights: {
+        create: [
+          { job_type_id: riceHarvest.job_types[1].id, weight: 0.9 }, // Bagger rice: 0.9x
+        ],
+      },
+    },
+  })
+
+  const worker4 = await prisma.worker.create({
+    data: {
+      name: 'Phạm Văn E',
+      phone: '0945678901',
+      address: 'Tiền Giang',
+      worker_weights: {
+        create: [
+          { job_type_id: riceHarvest.job_types[0].id, weight: 1.3 }, // Driver rice: 1.3x
+          { job_type_id: cornHarvest.job_types[0].id, weight: 1.2 }, // Driver corn: 1.2x
+        ],
+      },
+    },
+  })
+
+  const worker5 = await prisma.worker.create({
+    data: {
+      name: 'Hoàng Thị F',
+      phone: '0956789012',
+      address: 'Vĩnh Long',
+      worker_weights: {
+        create: [
+          { job_type_id: cornHarvest.job_types[1].id, weight: 1.1 }, // Helper corn: 1.1x
+        ],
+      },
+    },
+  })
+
+  console.log('✓ Created 5 workers with weight assignments')
+
+  // ============================================
+  // 4. Customers & Lands (3 customers, 5 lands)
+  // ============================================
+  console.log('Creating customers and lands...')
+
+  const customer1 = await prisma.customer.create({
+    data: {
+      name: 'Nguyễn Văn A',
+      phone: '0987654321',
+      address: 'Ấp 1, Xã Tân Lập, Huyện Mộc Hóa, Long An',
+      lands: {
+        create: [
+          {
+            name: 'Ruộng ông Bảy',
+            gps_lat: 10.123456,
+            gps_lng: 106.654321
+          },
+          {
+            name: 'Ruộng cạnh sông',
+            gps_lat: 10.125678,
+            gps_lng: 106.656543
+          },
+        ],
+      },
+    },
+    include: { lands: true },
+  })
+
+  const customer2 = await prisma.customer.create({
+    data: {
+      name: 'Trần Thị B',
+      phone: '0976543210',
+      address: 'Ấp 2, Xã Tân Thành, Huyện Tân Hưng, Long An',
+      lands: {
+        create: [
+          {
+            name: 'Ruộng đồng sau nhà',
+            gps_lat: 10.234567,
+            gps_lng: 106.765432
+          },
+        ],
+      },
+    },
+    include: { lands: true },
+  })
+
+  const customer3 = await prisma.customer.create({
+    data: {
+      name: 'Lê Văn C',
+      phone: '0965432109',
+      address: 'Ấp 3, Xã Vĩnh Hưng, Huyện Vĩnh Hưng, Long An',
+      lands: {
+        create: [
+          {
+            name: 'Ruộng phía Đông',
+            gps_lat: 10.345678,
+            gps_lng: 106.876543
+          },
+          {
+            name: 'Ruộng phía Tây',
+            gps_lat: 10.347890,
+            gps_lng: 106.878765
+          },
+        ],
+      },
+    },
+    include: { lands: true },
+  })
+
+  console.log('✓ Created 3 customers with 5 land parcels')
+
+  // ============================================
+  // 5. Machines (2 machines)
+  // ============================================
+  console.log('Creating machines...')
+
+  const machine1 = await prisma.machine.create({
+    data: {
+      name: 'Máy gặt 01',
+      model: 'Kubota DC-70',
+      type: 'Harvester',
+      purchase_date: new Date('2023-01-15'),
+      status: 'AVAILABLE',
+    },
+  })
+
+  const machine2 = await prisma.machine.create({
+    data: {
+      name: 'Máy gặt 02',
+      model: 'Yanmar YH880',
+      type: 'Harvester',
+      purchase_date: new Date('2024-06-20'),
+      status: 'AVAILABLE',
+    },
+  })
+
+  console.log('✓ Created 2 machines')
+
+  // ============================================
+  // 6. Sample Bookings (10 bookings)
+  // ============================================
+  console.log('Creating sample bookings...')
+
+  // Customer 1 - Bookings
+  await prisma.booking.createMany({
+    data: [
+      {
+        customer_id: customer1.id,
+        land_id: customer1.lands[0].id,
+        service_id: riceHarvest.id,
+        quantity: 5,
+        captured_price: 500000,
+        total_amount: 2500000,
+        status: 'COMPLETED',
+        payment_status: 'FULLY_PAID',
+      },
+      {
+        customer_id: customer1.id,
+        land_id: customer1.lands[1].id,
+        service_id: riceHarvest.id,
+        quantity: 3.5,
+        captured_price: 500000,
+        total_amount: 1750000,
+        status: 'COMPLETED',
+        payment_status: 'ADDED_BILL',
+      },
+      {
+        customer_id: customer1.id,
+        land_id: customer1.lands[0].id,
+        service_id: cornHarvest.id,
+        quantity: 2,
+        captured_price: 450000,
+        total_amount: 900000,
+        status: 'IN_PROGRESS',
+        payment_status: 'PENDING_BILL',
+      },
+    ],
+  })
+
+  // Customer 2 - Bookings
+  await prisma.booking.createMany({
+    data: [
+      {
+        customer_id: customer2.id,
+        land_id: customer2.lands[0].id,
+        service_id: riceHarvest.id,
+        quantity: 4,
+        captured_price: 500000,
+        total_amount: 2000000,
+        status: 'COMPLETED',
+        payment_status: 'ADDED_BILL',
+      },
+      {
+        customer_id: customer2.id,
+        land_id: customer2.lands[0].id,
+        service_id: cornHarvest.id,
+        quantity: 3,
+        captured_price: 450000,
+        total_amount: 1350000,
+        status: 'NEW',
+        payment_status: 'PENDING_BILL',
+      },
+    ],
+  })
+
+  // Customer 3 - Bookings
+  await prisma.booking.createMany({
+    data: [
+      {
+        customer_id: customer3.id,
+        land_id: customer3.lands[0].id,
+        service_id: riceHarvest.id,
+        quantity: 6,
+        captured_price: 500000,
+        total_amount: 3000000,
+        status: 'COMPLETED',
+        payment_status: 'FULLY_PAID',
+      },
+      {
+        customer_id: customer3.id,
+        land_id: customer3.lands[1].id,
+        service_id: riceHarvest.id,
+        quantity: 4.5,
+        captured_price: 500000,
+        total_amount: 2250000,
+        status: 'IN_PROGRESS',
+        payment_status: 'PENDING_BILL',
+      },
+      {
+        customer_id: customer3.id,
+        land_id: customer3.lands[0].id,
+        service_id: cornHarvest.id,
+        quantity: 2.5,
+        captured_price: 450000,
+        total_amount: 1125000,
+        status: 'NEW',
+        payment_status: 'PENDING_BILL',
+      },
+    ],
+  })
+
+  // Additional mix bookings
+  await prisma.booking.createMany({
+    data: [
+      {
+        customer_id: customer1.id,
+        land_id: customer1.lands[0].id,
+        service_id: riceHarvest.id,
+        quantity: 7,
+        captured_price: 500000,
+        total_amount: 3500000,
+        status: 'NEW',
+        payment_status: 'PENDING_BILL',
+      },
+      {
+        customer_id: customer2.id,
+        land_id: customer2.lands[0].id,
+        service_id: riceHarvest.id,
+        quantity: 5.5,
+        captured_price: 500000,
+        total_amount: 2750000,
+        status: 'BLOCKED',
+        payment_status: 'PENDING_BILL',
+        notes: 'Chờ máy gặt sửa chữa',
+      },
+    ],
+  })
+
+  console.log('✓ Created 10 sample bookings')
+
+  // ============================================
+  // Summary
+  // ============================================
+  console.log('\n✅ Seed data created successfully!')
+  console.log('─────────────────────────────────')
+  console.log('Admin User:   1 (admin@agrpal.local / admin123)')
+  console.log('Services:     2')
+  console.log('Job Types:    4')
+  console.log('Workers:      5')
+  console.log('Customers:    3')
+  console.log('Lands:        5')
+  console.log('Machines:     2')
+  console.log('Bookings:    10')
+  console.log('─────────────────────────────────')
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error('❌ Seed failed:', e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
+</file>
+
 <file path="public/file.svg">
 <svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
 </file>
@@ -467,45 +1616,6 @@ export default config;
 
 <file path="public/window.svg">
 <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
-</file>
-
-<file path="README.md">
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 </file>
 
 <file path="src/app/(dashboard)/data-table/page.tsx">
@@ -1106,14 +2216,22 @@ export default function FormsPage() {
 </file>
 
 <file path="src/app/(dashboard)/layout.tsx">
-import { AppShell } from "@/components/layout";
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/auth'
+import { AppShell } from '@/components/layout'
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return <AppShell>{children}</AppShell>;
+  const session = await getSession()
+
+  if (!session) {
+    redirect('/login')
+  }
+
+  return <AppShell user={session.user}>{children}</AppShell>
 }
 </file>
 
@@ -2548,11 +3666,15 @@ import { Sidebar } from "./sidebar/sidebar";
 import { Header } from "./header/header";
 
 interface AppShellProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
+  user?: {
+    name?: string | null
+    email?: string | null
+  }
 }
 
-export function AppShell({ children, className }: AppShellProps) {
+export function AppShell({ children, className, user }: AppShellProps) {
   return (
     <div className="relative flex min-h-screen">
       {/* Sidebar */}
@@ -2561,7 +3683,7 @@ export function AppShell({ children, className }: AppShellProps) {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col transition-all duration-300 ml-64">
         {/* Header */}
-        <Header />
+        <Header user={user} />
 
         {/* Page Content */}
         <main className={cn("flex-1 overflow-y-auto bg-background", className)}>
@@ -2569,7 +3691,7 @@ export function AppShell({ children, className }: AppShellProps) {
         </main>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
@@ -2696,7 +3818,8 @@ export function Breadcrumbs() {
 <file path="src/components/layout/header/header.tsx">
 "use client";
 
-import { Bell, Search, Settings, User } from "lucide-react";
+import { Bell, Search, Settings, User, LogOut } from "lucide-react";
+import { signOut } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -2711,9 +3834,17 @@ import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   className?: string;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+  };
 }
 
-export function Header({ className }: HeaderProps) {
+export function Header({ className, user }: HeaderProps) {
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/login' });
+  };
+
   return (
     <header
       className={cn(
@@ -2746,7 +3877,14 @@ export function Header({ className }: HeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {user?.name || 'My Account'}
+              {user?.email && (
+                <div className="text-xs font-normal text-muted-foreground">
+                  {user.email}
+                </div>
+              )}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
@@ -2757,8 +3895,9 @@ export function Header({ className }: HeaderProps) {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              Sign out
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Đăng xuất</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -5368,6 +6507,53 @@ export const siteConfig = {
 export type SiteConfig = typeof siteConfig;
 </file>
 
+<file path="src/lib/db.ts">
+import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
+
+// Ensure DATABASE_URL is available
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not set')
+}
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+  pool: Pool | undefined
+}
+
+// Create connection pool (singleton)
+export const pool =
+  globalForPrisma.pool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10, // Maximum 10 connections for development
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.pool = pool
+
+// Create Prisma adapter
+const adapter = new PrismaPg(pool)
+
+// Create Prisma Client (singleton)
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+// Ensure connection is closed on process termination
+if (typeof window === 'undefined') {
+  process.on('beforeExit', async () => {
+    await prisma.$disconnect()
+    await pool.end()
+  })
+}
+</file>
+
 <file path="src/lib/format.ts">
 /**
  * Formatting utilities for currency, numbers, and dates
@@ -5594,8 +6780,57 @@ export type StatusVariant =
   | "maintenance";
 </file>
 
-<file path="src/types/index.ts">
-export * from "./enums";
+<file path="test-db-connection.ts">
+// Test Prisma database connection
+import { config } from 'dotenv'
+
+// Load .env.local
+config({ path: '.env.local' })
+
+import { prisma } from './src/lib/db'
+
+async function testConnection() {
+  try {
+    console.log('🔍 Testing database connection...')
+
+    // Test 1: Connection
+    await prisma.$connect()
+    console.log('✓ Database connected successfully')
+
+    // Test 2: Query test
+    const serviceCount = await prisma.service.count()
+    console.log(`✓ Query successful: Found ${serviceCount} services`)
+
+    // Test 3: Fetch sample data
+    const services = await prisma.service.findMany({
+      take: 2,
+      include: { job_types: true },
+    })
+    console.log(`✓ Fetched ${services.length} services with job types`)
+
+    const customerCount = await prisma.customer.count()
+    const workerCount = await prisma.worker.count()
+    const machineCount = await prisma.machine.count()
+    const bookingCount = await prisma.booking.count()
+
+    console.log('\n📊 Database Summary:')
+    console.log(`   Services:  ${serviceCount}`)
+    console.log(`   Customers: ${customerCount}`)
+    console.log(`   Workers:   ${workerCount}`)
+    console.log(`   Machines:  ${machineCount}`)
+    console.log(`   Bookings:  ${bookingCount}`)
+
+    console.log('\n✅ All tests passed!')
+
+  } catch (error) {
+    console.error('❌ Test failed:', error)
+    process.exit(1)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+testConnection()
 </file>
 
 <file path="tsconfig.json">
@@ -5635,105 +6870,445 @@ export * from "./enums";
 }
 </file>
 
-<file path=".gitignore">
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+<file path="README.md">
+# agr-pal
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+**Agricultural Service Management System (Agri-ERP)**
 
-# testing
-/coverage
+Vietnamese-localized ERP for managing agricultural service operations: bookings, jobs, billing, payroll, machines, and services.
 
-# next.js
-/.next/
-/out/
+![Status: Foundation Complete](https://img.shields.io/badge/status-foundation%20complete-green)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-# production
-/build
+---
 
-# misc
-.DS_Store
-*.pem
+## Quick Links
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+- 📚 **[Project Overview & PDR](./docs/project-overview-pdr.md)** - Business requirements, features, roadmap
+- 🏗️ **[System Architecture](./docs/system-architecture.md)** - Technical design, database schema, deployment
+- 📦 **[Codebase Summary](./docs/codebase-summary.md)** - Directory structure, components, utilities
+- 📝 **[Code Standards](./docs/code-standards.md)** - Conventions, patterns, best practices
+- 🎨 **[Brand Guidelines](./docs/high-level-project-documents/Brand%20Guidelines.md)** - Colors, typography, UI/UX
+- 📋 **[Product Requirements (PRD)](./docs/high-level-project-documents/PRODUCT%20REQUIREMENTS%20DOCUMENT%20(PRD)%20-%20VERSION%201.0.md)** - Detailed functional specs
 
-# env files (can opt-in for committing if needed)
-.env*
+---
 
-# vercel
-.vercel
+## What is agr-pal?
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+agr-pal replaces manual ledgers for agricultural service businesses. Track bookings, execute jobs, generate bills, calculate payroll, and monitor machine ROI—all in one system.
 
-# claude code
-.claude
+**Key Features:**
+- 🌾 **Bookings:** Service requests from customers (land, quantity, pricing)
+- 🔧 **Jobs:** Worker/machine assignments with wage snapshots
+- 💰 **Billing:** Aggregate bookings, track partial payments, customer debt
+- 💵 **Payroll:** Calculate wages (base × weight × quantity), deduct advances
+- 🚜 **Machines:** Inventory, maintenance logs, ROI reports
+- 📊 **Dashboard:** Financial summary, pending tasks, business health
 
-# documents
-docs/
-</file>
+**Target User:** Single admin (business owner) managing 5-20 workers, 50-100 customers.
 
-<file path="package.json">
-{
-  "name": "agr-pal",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
-    "@radix-ui/react-checkbox": "^1.3.3",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-dropdown-menu": "^2.1.16",
-    "@radix-ui/react-label": "^2.1.8",
-    "@radix-ui/react-popover": "^1.1.15",
-    "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-separator": "^1.1.8",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@radix-ui/react-tabs": "^1.1.13",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "lucide-react": "^0.562.0",
-    "next": "16.1.1",
-    "next-themes": "^0.4.6",
-    "react": "19.2.3",
-    "react-day-picker": "^9.13.0",
-    "react-dom": "19.2.3",
-    "react-hook-form": "^7.71.1",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0",
-    "zod": "^4.3.5"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.1",
-    "tailwindcss": "^4",
-    "tw-animate-css": "^1.4.0",
-    "typescript": "^5"
-  }
-}
+**Locale:** Vietnamese (VND currency, DD/MM/YYYY dates, vi-VN formatting).
+
+---
+
+## Tech Stack
+
+**Frontend:**
+- [Next.js 16](https://nextjs.org) (App Router, React 19, Server Components)
+- [TypeScript 5](https://www.typescriptlang.org) (strict mode)
+- [Tailwind CSS 4](https://tailwindcss.com) (utility-first styling)
+- [shadcn/ui](https://ui.shadcn.com) (Radix UI + Tailwind components)
+- [React Hook Form](https://react-hook-form.com) + [Zod](https://zod.dev) (forms & validation)
+- [Lucide React](https://lucide.dev) (icons)
+
+**Backend (Planned):**
+- [PostgreSQL](https://www.postgresql.org) (relational database)
+- [Prisma](https://www.prisma.io) (type-safe ORM)
+- [Clerk](https://clerk.dev) or [NextAuth](https://next-auth.js.org) (authentication)
+
+**Deployment (Planned):**
+- [Vercel](https://vercel.com) (recommended for MVP)
+- Docker + VPS (cost-effective for production)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+ (LTS recommended)
+- npm, yarn, pnpm, or bun
+- Git
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/agr-pal.git
+cd agr-pal
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Available Scripts
+
+```bash
+npm run dev      # Start dev server (hot reload)
+npm run build    # Build production bundle
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+---
+
+## Project Structure
+
+```
+agr-pal/
+├── docs/                          # 📚 Documentation
+│   ├── codebase-summary.md        # Code overview
+│   ├── code-standards.md          # Conventions
+│   ├── project-overview-pdr.md    # Business requirements
+│   ├── system-architecture.md     # Technical design
+│   └── high-level-project-documents/
+│       ├── PRODUCT REQUIREMENTS DOCUMENT (PRD) - VERSION 1.0.md
+│       └── Brand Guidelines.md
+├── src/
+│   ├── app/                       # Next.js App Router
+│   │   ├── (dashboard)/           # Main app pages
+│   │   │   ├── page.tsx           # Dashboard home
+│   │   │   ├── data-table/        # DataTable demo
+│   │   │   ├── forms/             # Forms demo
+│   │   │   └── status-badges/     # Status badges demo
+│   │   ├── layout.tsx             # Root layout
+│   │   ├── page.tsx               # Root redirect
+│   │   └── globals.css            # Global styles
+│   ├── components/                # React components
+│   │   ├── data-display/          # Tables, cards
+│   │   ├── forms/                 # Currency, date, quantity inputs
+│   │   ├── layout/                # AppShell, header, sidebar
+│   │   ├── status/                # Status badges (13 variants)
+│   │   └── ui/                    # shadcn/ui primitives
+│   ├── config/                    # App configuration
+│   │   ├── navigation.ts          # Nav structure (9 routes)
+│   │   └── site.ts                # Site settings (VND, vi-VN)
+│   ├── lib/                       # Utilities
+│   │   ├── format.ts              # Currency, date formatting
+│   │   └── utils.ts               # cn() class merger
+│   └── types/                     # TypeScript types
+│       ├── enums.ts               # Status enums (9 types)
+│       └── index.ts               # Re-exports
+├── public/                        # Static assets
+├── .claude/                       # Claude Code workflows
+├── plans/reports/                 # Scout reports
+└── [config files]                 # Next.js, TS, ESLint, Tailwind
+```
+
+### Key Directories
+
+**`src/app/`** - Next.js App Router pages (4 demo pages implemented)
+**`src/components/`** - Reusable components (46 files: layout, forms, tables, badges)
+**`src/lib/`** - Utilities (VND formatting, date formatting, Tailwind class merger)
+**`src/types/`** - Type definitions (9 status enums for type safety)
+
+---
+
+## Features (Current vs Planned)
+
+### ✅ Implemented (Foundation Phase)
+
+**Layout System:**
+- AppShell with collapsible sidebar (256px → 64px)
+- Sticky header with breadcrumbs, search, notifications, user menu
+- Responsive design (desktop-first)
+- Dark mode support
+
+**Components:**
+- **DataTable:** Sortable, paginated, card view, empty states
+- **Forms:** Currency input (VND), quantity input (+/- buttons), date picker (vi-VN)
+- **Status Badges:** 13 variants (NEW, IN_PROGRESS, COMPLETED, etc.) with WCAG AA colors
+- **UI Primitives:** 18 shadcn/ui components (button, card, dialog, etc.)
+
+**Utilities:**
+- Currency formatting: `formatCurrency(1000000)` → "1.000.000 đ"
+- Date formatting: `formatDateShort(date)` → "15/01/2026"
+- Type-safe status enums (prevents typos, enables autocomplete)
+
+**Demo Pages:**
+- `/dashboard` - Stats cards, recent activity
+- `/data-table` - DataTable with 8 sample bookings
+- `/forms` - Form components showcase
+- `/status-badges` - Status badge variants
+
+### ⏳ Planned (Feature Development)
+
+**8 CRUD Modules:**
+- **Services & Pricing:** Manage catalog, price history
+- **Customers & Land:** Profiles, GPS land parcels
+- **Bookings:** Create service requests, track status
+- **Jobs:** Assign workers/machines, freeze wages
+- **Billing:** Aggregate bookings, partial payments, debt tracking
+- **Payroll:** Calculate wages, deduct advances
+- **Machines:** Inventory, maintenance, ROI reports
+- **Dashboard:** Financial summary, alerts, reports
+
+**Backend:**
+- PostgreSQL database (13 tables per PRD)
+- Prisma ORM (type-safe queries, migrations)
+- Authentication (Clerk or NextAuth)
+- Next.js API routes or Server Actions
+
+**Advanced Features:**
+- Form validation (Zod schemas)
+- State management (Zustand, TanStack Query)
+- Testing (Vitest, Playwright)
+- Deployment (Vercel or Docker)
+
+---
+
+## Development Workflow
+
+### Code Standards
+
+**File Naming:** kebab-case (e.g., `currency-input.tsx`)
+**File Size:** <200 lines (refactor if exceeded)
+**Imports:** Use `@/` aliases (`@/components`, `@/lib`, `@/types`)
+**Components:** Functional, arrow functions, TypeScript strict mode
+**Styling:** Tailwind CSS with `cn()` class merger
+
+**Principles:**
+- **YAGNI:** Build only what's needed now
+- **KISS:** Prefer simple solutions over clever code
+- **DRY:** Extract reusable patterns (but don't over-abstract)
+
+See [docs/code-standards.md](./docs/code-standards.md) for full guide.
+
+### Git Workflow
+
+**Commit Format:** `type(scope): message`
+
+Examples:
+```
+feat(bookings): add booking creation form
+fix(currency): handle empty input in parseCurrency
+refactor(layout): extract sidebar nav to separate component
+```
+
+**Branch Naming:** `type/description`
+
+Examples: `feat/booking-crud`, `fix/currency-formatting`
+
+### Testing (Planned)
+
+**Unit Tests:**
+```bash
+npm run test              # Run all tests
+npm run test:watch        # Watch mode
+npm run test:coverage     # Coverage report
+```
+
+**E2E Tests:**
+```bash
+npm run test:e2e          # Playwright tests
+```
+
+---
+
+## Database Schema (Planned)
+
+**13 Tables** across 3 groups:
+
+### Masters (5 tables)
+- `Service` - Service catalog (name, unit, current price)
+- `Job_Type` - Job types per service (base salary)
+- `Worker` - Worker profiles
+- `Worker_Weight` - Salary multipliers (worker × job_type)
+- `Machine` - Machine inventory (status, purchase date)
+
+### Operations (5 tables)
+- `Customer` - Customer profiles
+- `Land` - Land parcels (GPS, customer FK)
+- `Booking` - Service bookings (captured price snapshot)
+- `Job` - Job execution (booking, machine FKs)
+- `Job_Worker` - Worker assignments (wage snapshots)
+
+### Financials (3 tables)
+- `Bill` - Customer invoices (aggregates bookings)
+- `Advance_Payment` - Worker advances
+- `Payroll_Sheet` - Worker payroll (aggregates jobs + advances)
+
+**Key Pattern: Snapshot on Creation**
+- Booking captures service price at time of creation
+- Job_Worker captures base salary & weight at time of job creation
+- Prevents historical data drift when prices/wages change
+
+See [docs/system-architecture.md](./docs/system-architecture.md) §Database for full schema.
+
+---
+
+## Business Logic Highlights
+
+### Wage Calculation (Job Workers)
+
+```
+Final Wage = Actual Quantity × Base Salary × Worker Weight
+
+Example:
+- Worker "Trần Văn B" does 8 hours of "Driver" job
+- Base salary: 100,000 VND/hour (from Job_Type)
+- Worker weight: 1.2 (from Worker_Weight)
+- Final wage: 8 × 100,000 × 1.2 = 960,000 VND
+
+Stored in Job_Worker:
+- actual_qty: 8
+- applied_base: 100,000  (snapshot)
+- applied_weight: 1.2    (snapshot)
+- final_pay: 960,000     (snapshot)
+```
+
+**Why snapshots?** If base salary changes to 110k next month, old jobs still show 100k (historical accuracy).
+
+### Bill Aggregation (Customer Debt)
+
+```
+Bill Total = Σ (Booking.total_amount) for all bookings in bill
+Customer Debt = Σ (Bill.total_amount - Bill.total_paid) for all OPEN/PARTIAL bills
+
+Example:
+- Bill #1: 3 bookings (1M, 2M, 1.5M) → Total 4.5M
+- Customer pays 2M → Bill status PARTIAL_PAID, debt 2.5M
+- Customer pays 2.5M → Bill status COMPLETED, debt 0
+```
+
+**Business Rule:** Booking can belong to only one bill. Cannot delete bill with PARTIAL_PAID status.
+
+---
+
+## Contributing
+
+### Contribution Workflow
+
+1. Read [docs/code-standards.md](./docs/code-standards.md)
+2. Create feature branch: `git checkout -b feat/your-feature`
+3. Make changes following standards
+4. Run linter: `npm run lint`
+5. Commit with conventional format: `feat(scope): message`
+6. Push and create pull request
+
+### Pull Request Checklist
+
+- [ ] TypeScript strict mode passes (no `any`)
+- [ ] File size <200 lines (or justified)
+- [ ] Imports use `@/` aliases
+- [ ] Tailwind classes grouped logically
+- [ ] WCAG AA contrast ratios (status badges)
+- [ ] Vietnamese locale used (dates, currency)
+- [ ] No hardcoded strings (use enums/constants)
+
+---
+
+## Roadmap
+
+### Phase 1: Foundation ✅ (Complete - 2026-01-15)
+- ✅ Next.js project setup
+- ✅ Component library (layout, forms, tables, badges)
+- ✅ Type-safe enums
+- ✅ Vietnamese localization
+- ✅ Demo pages
+
+### Phase 2: Backend & Auth ⏳ (2 weeks)
+- ⏳ PostgreSQL + Prisma schema
+- ⏳ Authentication (Clerk/NextAuth)
+- ⏳ API routes or Server Actions
+- ⏳ Database migrations + seeding
+
+### Phase 3: CRUD Modules ⏳ (4 weeks)
+- ⏳ Services & Pricing
+- ⏳ Customers & Land
+- ⏳ Bookings
+- ⏳ Jobs with wage snapshots
+- ⏳ Billing with partial payments
+- ⏳ Payroll with advances
+- ⏳ Machines & maintenance
+
+### Phase 4: Reports & Polish ⏳ (2 weeks)
+- ⏳ Dashboard with financial summary
+- ⏳ Debt/payroll reports
+- ⏳ Form validation (Zod)
+- ⏳ Error handling, loading states
+
+### Phase 5: Testing & Deployment ⏳ (1 week)
+- ⏳ Unit + integration tests
+- ⏳ E2E tests (critical flows)
+- ⏳ Production deployment
+- ⏳ User acceptance testing
+
+---
+
+## Environment Variables (Planned)
+
+Create `.env.local`:
+
+```bash
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/agrpal"
+
+# Authentication (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_..."
+CLERK_SECRET_KEY="sk_..."
+
+# OR Authentication (NextAuth)
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+---
+
+## FAQ
+
+**Q: Is this production-ready?**
+A: Foundation (UI) is complete. Backend (database, API, auth) is planned but not implemented.
+
+**Q: Can I use this for my business?**
+A: Not yet. Current version is demo-only (no data persistence). Wait for Phase 2-3 (backend + CRUD).
+
+**Q: Why Vietnamese locale only?**
+A: Target market is Vietnamese agricultural services. Internationalization (i18n) can be added later.
+
+**Q: Can I add more users (workers, customers)?**
+A: Current design is single admin. Multi-user support (RBAC) can be added in future phases.
+
+**Q: How do I customize colors/branding?**
+A: Edit `src/app/globals.css` (CSS variables) and see [Brand Guidelines](./docs/high-level-project-documents/Brand%20Guidelines.md).
+
+---
+
+## License
+
+MIT License - See [LICENSE](./LICENSE) for details.
+
+---
+
+## Support
+
+- 📖 **Documentation:** [docs/](./docs/)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/yourusername/agr-pal/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/yourusername/agr-pal/discussions)
+
+---
+
+**Built with ❤️ for Vietnamese agricultural service businesses.**
 </file>
 
 <file path="src/app/globals.css">
@@ -6013,6 +7588,150 @@ import { redirect } from "next/navigation";
 export default function Home() {
   redirect("/dashboard");
 }
+</file>
+
+<file path="src/types/index.ts">
+export * from "./enums";
+
+// Export Prisma generated types
+export type {
+  Service,
+  Job_Type,
+  Worker,
+  Worker_Weight,
+  Machine,
+  Customer,
+  Land,
+  Booking,
+  Job,
+  Job_Worker,
+  Bill,
+  Advance_Payment,
+  Payroll_Sheet,
+} from "@prisma/client";
+</file>
+
+<file path="package.json">
+{
+  "name": "agr-pal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "next-auth": "^5.0.0-beta.30",
+    "next-themes": "^0.4.6",
+    "pg": "^8.17.0",
+    "prisma": "^7.2.0",
+    "react": "19.2.3",
+    "react-day-picker": "^9.13.0",
+    "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "tsx": "^4.21.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "dotenv": "^17.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# Prisma
+.env
+.env.local
+.env.*.local
+node_modules/.prisma
+.prisma
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# claude code
+.claude
+plans
+
+# documents
+docs/
+/src/generated/prisma
 </file>
 
 </files>

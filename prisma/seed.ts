@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { config } from 'dotenv'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
+import bcrypt from 'bcryptjs'
 
 // Load environment variables from .env.local
 config({ path: '.env.local' })
@@ -20,7 +21,24 @@ async function main() {
   console.log('🌱 Starting seed...')
 
   // ============================================
-  // 1. Services & Job Types (2 services)
+  // 1. Admin User (1 user)
+  // ============================================
+  console.log('Creating admin user...')
+
+  const passwordHash = await bcrypt.hash('admin123', 10)
+  const adminUser = await prisma.user.create({
+    data: {
+      name: 'Admin',
+      email: 'admin@agrpal.local',
+      password_hash: passwordHash,
+      role: 'ADMIN',
+    },
+  })
+
+  console.log(`✓ Created admin user: ${adminUser.email}`)
+
+  // ============================================
+  // 2. Services & Job Types (2 services)
   // ============================================
   console.log('Creating services...')
 
@@ -59,7 +77,7 @@ async function main() {
   console.log(`✓ Created 2 services with ${riceHarvest.job_types.length + cornHarvest.job_types.length} job types`)
 
   // ============================================
-  // 2. Workers & Weights (5 workers)
+  // 3. Workers & Weights (5 workers)
   // ============================================
   console.log('Creating workers...')
 
@@ -135,7 +153,7 @@ async function main() {
   console.log('✓ Created 5 workers with weight assignments')
 
   // ============================================
-  // 3. Customers & Lands (3 customers, 5 lands)
+  // 4. Customers & Lands (3 customers, 5 lands)
   // ============================================
   console.log('Creating customers and lands...')
 
@@ -206,7 +224,7 @@ async function main() {
   console.log('✓ Created 3 customers with 5 land parcels')
 
   // ============================================
-  // 4. Machines (2 machines)
+  // 5. Machines (2 machines)
   // ============================================
   console.log('Creating machines...')
 
@@ -233,7 +251,7 @@ async function main() {
   console.log('✓ Created 2 machines')
 
   // ============================================
-  // 5. Sample Bookings (10 bookings)
+  // 6. Sample Bookings (10 bookings)
   // ============================================
   console.log('Creating sample bookings...')
 
@@ -369,6 +387,7 @@ async function main() {
   // ============================================
   console.log('\n✅ Seed data created successfully!')
   console.log('─────────────────────────────────')
+  console.log('Admin User:   1 (admin@agrpal.local / admin123)')
   console.log('Services:     2')
   console.log('Job Types:    4')
   console.log('Workers:      5')

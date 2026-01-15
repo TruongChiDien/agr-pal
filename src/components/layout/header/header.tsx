@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search, Settings, User } from "lucide-react";
+import { Bell, Search, Settings, User, LogOut } from "lucide-react";
+import { signOut } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,9 +16,17 @@ import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   className?: string;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+  };
 }
 
-export function Header({ className }: HeaderProps) {
+export function Header({ className, user }: HeaderProps) {
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/login' });
+  };
+
   return (
     <header
       className={cn(
@@ -50,7 +59,14 @@ export function Header({ className }: HeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {user?.name || 'My Account'}
+              {user?.email && (
+                <div className="text-xs font-normal text-muted-foreground">
+                  {user.email}
+                </div>
+              )}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
@@ -61,8 +77,9 @@ export function Header({ className }: HeaderProps) {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              Sign out
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Đăng xuất</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

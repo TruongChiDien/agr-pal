@@ -10,6 +10,22 @@ datasource db {
 }
 
 // ============================================
+// AUTHENTICATION (1 table)
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("ADMIN")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ============================================
 // MASTERS (5 tables)
 // ============================================
 

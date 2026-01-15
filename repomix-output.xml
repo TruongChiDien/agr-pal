@@ -1,0 +1,6018 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+CLAUDE.md
+components.json
+eslint.config.mjs
+next.config.ts
+package.json
+plans/reports/scout-ext-20260115-src-structure.md
+plans/reports/scout-ext-260115-0702-claude-directory-overview.md
+postcss.config.mjs
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
+README.md
+src/app/(dashboard)/data-table/page.tsx
+src/app/(dashboard)/forms/page.tsx
+src/app/(dashboard)/layout.tsx
+src/app/(dashboard)/page.tsx
+src/app/(dashboard)/status-badges/page.tsx
+src/app/favicon.ico
+src/app/globals.css
+src/app/layout.tsx
+src/app/page.tsx
+src/components/data-display/data-table/data-table-empty.tsx
+src/components/data-display/data-table/data-table-header.tsx
+src/components/data-display/data-table/data-table-pagination.tsx
+src/components/data-display/data-table/data-table.tsx
+src/components/data-display/data-table/index.ts
+src/components/forms/currency-input.tsx
+src/components/forms/date-picker.tsx
+src/components/forms/form-field.tsx
+src/components/forms/index.ts
+src/components/forms/multi-select-checkbox.tsx
+src/components/forms/quantity-input.tsx
+src/components/layout/app-shell.tsx
+src/components/layout/content-section.tsx
+src/components/layout/header/breadcrumbs.tsx
+src/components/layout/header/header.tsx
+src/components/layout/header/index.ts
+src/components/layout/index.ts
+src/components/layout/page-container.tsx
+src/components/layout/sidebar/index.ts
+src/components/layout/sidebar/sidebar-nav.tsx
+src/components/layout/sidebar/sidebar.tsx
+src/components/status/bill-status.tsx
+src/components/status/booking-status.tsx
+src/components/status/index.ts
+src/components/status/job-status.tsx
+src/components/status/machine-status.tsx
+src/components/status/payment-status.tsx
+src/components/status/payroll-status.tsx
+src/components/status/status-badge.tsx
+src/components/ui/badge.tsx
+src/components/ui/button.tsx
+src/components/ui/calendar.tsx
+src/components/ui/card.tsx
+src/components/ui/checkbox.tsx
+src/components/ui/dialog.tsx
+src/components/ui/dropdown-menu.tsx
+src/components/ui/form.tsx
+src/components/ui/input.tsx
+src/components/ui/label.tsx
+src/components/ui/popover.tsx
+src/components/ui/select.tsx
+src/components/ui/separator.tsx
+src/components/ui/sheet.tsx
+src/components/ui/skeleton.tsx
+src/components/ui/sonner.tsx
+src/components/ui/table.tsx
+src/components/ui/tabs.tsx
+src/config/navigation.ts
+src/config/site.ts
+src/lib/format.ts
+src/lib/utils.ts
+src/types/enums.ts
+src/types/index.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="CLAUDE.md">
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Role & Responsibilities
+
+Your role is to analyze user requirements, delegate tasks to appropriate sub-agents, and ensure cohesive delivery of features that meet specifications and architectural standards.
+
+## Workflows
+
+- Primary workflow: `./.claude/workflows/primary-workflow.md`
+- Development rules: `./.claude/workflows/development-rules.md`
+- Orchestration protocols: `./.claude/workflows/orchestration-protocol.md`
+- Documentation management: `./.claude/workflows/documentation-management.md`
+- And other workflows: `./.claude/workflows/*`
+
+**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
+**IMPORTANT:** You must follow strictly the development rules in `./.claude/workflows/development-rules.md` file.
+**IMPORTANT:** Before you plan or proceed any implementation, always read the `./README.md` file first to get context.
+**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+**IMPORTANT**: Date format is configured in `.ck.json` and injected by session hooks via `$CK_PLAN_DATE_FORMAT` env var. Use this format for plan/report naming.
+
+## Documentation Management
+
+We keep all important docs in `./docs` folder and keep updating them, structure like below:
+
+```
+./docs
+├── project-overview-pdr.md
+├── code-standards.md
+├── codebase-summary.md
+├── design-guidelines.md
+├── deployment-guide.md
+├── system-architecture.md
+└── project-roadmap.md
+```
+
+**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+</file>
+
+<file path="plans/reports/scout-ext-20260115-src-structure.md">
+# Codebase Scout Report: src/ Directory Structure
+
+Date: 2026-01-15
+Task: Complete mapping of src/ directory structure
+Method: Native Glob/Grep/Read tools
+
+## Executive Summary
+
+Next.js 14+ App Router project for Agri-ERP - agricultural service management system.
+Vietnamese-localized ERP for managing bookings, jobs, billing, payroll, machines, services.
+Foundation components fully implemented with demo pages.
+
+Tech Stack: Next.js 14+, TypeScript, Tailwind CSS, shadcn/ui, Vietnamese locale
+
+## Directory Structure
+
+src/
+  app/           - Next.js App Router pages (9 files)
+  components/    - Reusable React components (46 files)
+  config/        - Application configuration (2 files)
+  lib/           - Utility functions (2 files)
+  types/         - TypeScript definitions (2 files)
+
+Total: 61 files
+
+## 1. APP DIRECTORY
+
+Core Files:
+- layout.tsx: Root layout with Inter font, metadata
+- page.tsx: Root redirects to /dashboard
+- globals.css: Global Tailwind styles
+- favicon.ico: App icon
+
+Dashboard Route Group:
+- (dashboard)/layout.tsx: Wraps in AppShell
+- (dashboard)/page.tsx: Main dashboard with stats
+- (dashboard)/data-table/page.tsx: DataTable demo with 8 bookings
+- (dashboard)/forms/page.tsx: Form components demo
+- (dashboard)/status-badges/page.tsx: Status badge showcase
+
+## 2. COMPONENTS
+
+Layout (9 files):
+- app-shell.tsx: Main layout with sidebar + header
+- page-container.tsx, content-section.tsx: Page wrappers
+- header/: Sticky header with breadcrumbs, search, user menu
+- sidebar/: Collapsible sidebar with navigation
+
+Forms (6 files):
+- currency-input.tsx: VND input with auto-formatting
+- quantity-input.tsx: Numeric with +/- buttons
+- date-picker.tsx: Calendar with vi-VN locale
+- form-field.tsx: Label + input wrapper
+- multi-select-checkbox.tsx: Checkbox list with disabled support
+
+Data Display (5 files):
+- data-table/: Feature-rich table with sort, pagination, card view
+  - data-table.tsx: Main component
+  - data-table-header.tsx: Sortable headers
+  - data-table-pagination.tsx: Pagination controls
+  - data-table-empty.tsx: Empty state
+
+Status Badges (8 files):
+- status-badge.tsx: Base component with 13 variants
+- booking-status.tsx, job-status.tsx: Domain-specific badges
+- payment-status.tsx, bill-status.tsx, payroll-status.tsx
+- machine-status.tsx
+Features: Vietnamese labels, optional icons, WCAG AA colors
+
+UI Primitives (18 files):
+- shadcn/ui components: badge, button, calendar, card, checkbox
+- dialog, dropdown-menu, form, input, label, popover, select
+- separator, sheet, skeleton, sonner, table, tabs
+
+## 3. CONFIG
+
+navigation.ts:
+- 5 nav groups, 9 items total
+- Dashboard, Bookings, Jobs, Customers, Workers
+- Billing, Payroll, Machines, Services
+- Helper functions: getNavItem(id), getNavItemByHref(href)
+
+site.ts:
+- Business: name, currency=VND, locale=vi-VN
+- UI: defaultPageSize=20, maxPageSize=100
+- Features: darkMode, notifications, exportData, advancedSearch
+
+## 4. LIB
+
+utils.ts:
+- cn(): Tailwind class merger (clsx + twMerge)
+
+format.ts:
+- formatCurrency(), parseCurrency(): VND formatting
+- formatNumber(): Thousand separators
+- formatDate(), formatDateShort(): DD/MM/YYYY
+- formatDateTime(), formatRelativeDate(): Vietnamese relative time
+
+## 5. TYPES
+
+enums.ts:
+- BookingStatus: NEW, IN_PROGRESS, BLOCKED, COMPLETED, CANCELED
+- JobStatus: Same as BookingStatus
+- PaymentStatus: PENDING_BILL, ADDED_BILL, FULLY_PAID
+- JobPaymentStatus: PENDING_PAYROLL, ADDED_PAYROLL, FULLY_PAID
+- BillStatus: OPEN, PARTIAL_PAID, COMPLETED
+- PayrollStatus: Same as BillStatus
+- MachineStatus: AVAILABLE, IN_USE, MAINTENANCE
+- PaymentMethod: CASH, BANK_TRANSFER
+- AdvanceStatus: UNPROCESSED, PROCESSED
+- StatusVariant: Union type for badge styling (13 variants)
+
+## Key Features
+
+Layout System:
+- Fixed sidebar (256px, collapsible to 64px)
+- Sticky header with breadcrumbs
+- Responsive design
+
+Data Display:
+- Sortable, paginated DataTable
+- Table and card view modes
+- Loading skeleton, empty states
+
+Form Components:
+- Specialized inputs for currency, quantity, dates
+- Multi-select with disabled items
+- Keyboard navigation, accessibility
+
+Status System:
+- Type-safe enums
+- Consistent color system
+- Vietnamese labels
+
+Internationalization:
+- vi-VN locale throughout
+- DD/MM/YYYY date format
+- VND currency (1.000.000 đ)
+
+## Component Dependencies
+
+Most-used imports:
+- @/components/ui/*: shadcn/ui primitives
+- @/lib/utils: cn() class merger
+- lucide-react: Icons
+- @/types: Enums for type safety
+- @/lib/format: Currency, date formatting
+
+Design system:
+- Tailwind CSS
+- CSS variables (--primary, --muted)
+- Dark mode support
+
+## Implemented vs Planned
+
+Implemented (4 pages):
+- /dashboard: Main dashboard with stats
+- /data-table: DataTable demo
+- /forms: Form components demo
+- /status-badges: Status badge showcase
+
+Planned (5 routes):
+- /bookings, /jobs: Operations
+- /customers, /workers: People
+- /billing, /payroll: Financial
+- /machines, /services: Assets
+
+Foundation: Complete for building planned features
+
+## Architecture Insights
+
+Strengths:
+- Type safety with enums
+- Reusable components
+- Consistent patterns
+- Accessibility (WCAG AA)
+- Vietnamese localization
+- Clean imports (@/ alias)
+
+Design Patterns:
+- Composition (AppShell)
+- Render props (DataTable)
+- Controlled components
+- Barrel exports
+- TypeScript generics
+
+## Next Steps
+
+1. Implement CRUD pages using DataTable + forms
+2. Add state management (Zustand/Context)
+3. API integration (replace mock data)
+4. Form validation (Zod + React Hook Form)
+5. Authentication (NextAuth/Clerk)
+6. Database schema (Prisma/Drizzle)
+7. Testing (Jest + RTL)
+
+## Unresolved Questions
+
+- API architecture: REST vs GraphQL vs tRPC?
+- Database: PostgreSQL, MySQL, other?
+- State management: Zustand, Redux, Context?
+- Form validation: Zod, Yup, other?
+- Auth provider: NextAuth, Clerk, custom?
+- Deployment: Vercel, self-hosted?
+
+---
+
+Report generated: 2026-01-15
+Scout method: Native tools (Glob/Grep/Read)
+Coverage: 100% of src/ directory (61 files)
+</file>
+
+<file path="plans/reports/scout-ext-260115-0702-claude-directory-overview.md">
+
+</file>
+
+<file path="components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {}
+}
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  reactCompiler: true,
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="src/app/(dashboard)/data-table/page.tsx">
+"use client";
+
+import { useState } from "react";
+import { PageContainer, ContentSection } from "@/components/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTable, ColumnDef, SortDirection } from "@/components/data-display/data-table";
+import { formatCurrency, formatDateShort } from "@/lib/format";
+import { LayoutGrid, LayoutList } from "lucide-react";
+
+interface Booking {
+  id: string;
+  code: string;
+  customerName: string;
+  landName: string;
+  serviceName: string;
+  date: Date;
+  amount: number;
+  status: "New" | "In Progress" | "Completed" | "Blocked";
+}
+
+const sampleBookings: Booking[] = [
+  {
+    id: "1",
+    code: "BK-001",
+    customerName: "Nguyễn Văn A",
+    landName: "Ruộng Đông",
+    serviceName: "Cày ruộng",
+    date: new Date(2026, 0, 10),
+    amount: 5000000,
+    status: "New",
+  },
+  {
+    id: "2",
+    code: "BK-002",
+    customerName: "Trần Thị B",
+    landName: "Ruộng Tây",
+    serviceName: "Phun thuốc",
+    date: new Date(2026, 0, 11),
+    amount: 3500000,
+    status: "In Progress",
+  },
+  {
+    id: "3",
+    code: "BK-003",
+    customerName: "Lê Văn C",
+    landName: "Ruộng Nam",
+    serviceName: "Gặt lúa",
+    date: new Date(2026, 0, 9),
+    amount: 8000000,
+    status: "Completed",
+  },
+  {
+    id: "4",
+    code: "BK-004",
+    customerName: "Phạm Thị D",
+    landName: "Ruộng Bắc",
+    serviceName: "Bón phân",
+    date: new Date(2026, 0, 12),
+    amount: 2500000,
+    status: "New",
+  },
+  {
+    id: "5",
+    code: "BK-005",
+    customerName: "Hoàng Văn E",
+    landName: "Ruộng Trung",
+    serviceName: "Cày ruộng",
+    date: new Date(2026, 0, 8),
+    amount: 4200000,
+    status: "Blocked",
+  },
+  {
+    id: "6",
+    code: "BK-006",
+    customerName: "Vũ Thị F",
+    landName: "Ruộng Xa",
+    serviceName: "Phun thuốc",
+    date: new Date(2026, 0, 13),
+    amount: 3000000,
+    status: "New",
+  },
+  {
+    id: "7",
+    code: "BK-007",
+    customerName: "Đặng Văn G",
+    landName: "Ruộng Gần",
+    serviceName: "Gặt lúa",
+    date: new Date(2026, 0, 7),
+    amount: 7500000,
+    status: "Completed",
+  },
+  {
+    id: "8",
+    code: "BK-008",
+    customerName: "Bùi Thị H",
+    landName: "Ruộng Cao",
+    serviceName: "Bón phân",
+    date: new Date(2026, 0, 14),
+    amount: 2800000,
+    status: "In Progress",
+  },
+];
+
+const statusConfig = {
+  New: { bg: "bg-blue-100", text: "text-blue-700", label: "Mới" },
+  "In Progress": { bg: "bg-orange-100", text: "text-orange-700", label: "Đang thực hiện" },
+  Completed: { bg: "bg-green-100", text: "text-green-700", label: "Hoàn thành" },
+  Blocked: { bg: "bg-gray-100", text: "text-gray-700", label: "Tạm dừng" },
+};
+
+export default function DataTablePage() {
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [sortKey, setSortKey] = useState<string>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Cycle through: asc -> desc -> null -> asc
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortKey("");
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  // Sort data
+  const sortedData = [...sampleBookings].sort((a, b) => {
+    if (!sortKey || !sortDirection) return 0;
+
+    const aValue = (a as any)[sortKey];
+    const bValue = (b as any)[sortKey];
+
+    if (aValue instanceof Date && bValue instanceof Date) {
+      return sortDirection === "asc"
+        ? aValue.getTime() - bValue.getTime()
+        : bValue.getTime() - aValue.getTime();
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+    }
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortDirection === "asc"
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    return 0;
+  });
+
+  // Paginate data
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = sortedData.slice(startIndex, endIndex);
+
+  // Define columns
+  const columns: ColumnDef<Booking>[] = [
+    {
+      key: "code",
+      label: "Mã đơn",
+      sortable: true,
+      width: "120px",
+      render: (item) => <span className="font-mono font-medium">{item.code}</span>,
+    },
+    {
+      key: "customerName",
+      label: "Khách hàng",
+      sortable: true,
+    },
+    {
+      key: "landName",
+      label: "Ruộng",
+      sortable: true,
+    },
+    {
+      key: "serviceName",
+      label: "Dịch vụ",
+      sortable: true,
+    },
+    {
+      key: "date",
+      label: "Ngày",
+      sortable: true,
+      width: "120px",
+      render: (item) => formatDateShort(item.date),
+    },
+    {
+      key: "amount",
+      label: "Giá trị",
+      sortable: true,
+      align: "right",
+      width: "150px",
+      render: (item) => (
+        <span className="font-medium">{formatCurrency(item.amount)}</span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Trạng thái",
+      sortable: true,
+      width: "150px",
+      align: "center",
+      render: (item) => {
+        const config = statusConfig[item.status];
+        return (
+          <Badge className={`${config.bg} ${config.text} border-0`}>
+            {config.label}
+          </Badge>
+        );
+      },
+    },
+  ];
+
+  return (
+    <PageContainer>
+      <ContentSection
+        title="Data Table Demo"
+        description="Reusable data table with sorting, pagination, and card view"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "table" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("table")}
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              Table
+            </Button>
+            <Button
+              variant={viewMode === "card" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("card")}
+            >
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Card
+            </Button>
+          </div>
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={Math.ceil(sampleBookings.length / pageSize)}
+          totalItems={sampleBookings.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          viewMode={viewMode}
+          onRowClick={(item) => alert(`Clicked: ${item.code}`)}
+          getRowId={(item) => item.id}
+          renderCard={(item) => (
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base font-mono">{item.code}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formatDateShort(item.date)}
+                    </p>
+                  </div>
+                  <Badge
+                    className={`${statusConfig[item.status].bg} ${statusConfig[item.status].text} border-0`}
+                  >
+                    {statusConfig[item.status].label}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Khách hàng</p>
+                  <p className="font-medium">{item.customerName}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ruộng</p>
+                    <p className="text-sm font-medium">{item.landName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dịch vụ</p>
+                    <p className="text-sm font-medium">{item.serviceName}</p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground">Giá trị</p>
+                  <p className="text-lg font-bold text-primary">
+                    {formatCurrency(item.amount)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        />
+      </ContentSection>
+
+      {/* Features showcase */}
+      <ContentSection title="Features" description="Data table capabilities">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Sorting</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Click column headers to sort data. Cycles through ascending, descending, and
+                no sort.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Pagination</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Navigate through pages with first, previous, next, and last buttons.
+                Adjustable page size.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Card View</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Switch to card view for a more visual representation on desktop. Perfect for
+                dashboards.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Row Click</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Click any row (or card) to trigger custom actions. Hover states for better UX.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Loading State</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Built-in skeleton loading states while data is being fetched.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Empty State</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Customizable empty state with icon, message, and description.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </ContentSection>
+    </PageContainer>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/forms/page.tsx">
+"use client";
+
+import { useState } from "react";
+import { PageContainer, ContentSection } from "@/components/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CurrencyInput,
+  QuantityInput,
+  DatePicker,
+  FormField,
+  MultiSelectCheckbox,
+} from "@/components/forms";
+
+export default function FormsPage() {
+  // Currency input state
+  const [price, setPrice] = useState(1000000);
+
+  // Quantity input state
+  const [quantity, setQuantity] = useState(5);
+
+  // Date picker state
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  // Multi-select state
+  const sampleBookings = [
+    { id: "1", name: "Booking #001", amount: 5000000, status: "Pending Bill" },
+    { id: "2", name: "Booking #002", amount: 3500000, status: "Pending Bill" },
+    { id: "3", name: "Booking #003", amount: 2000000, status: "Added Bill" },
+    { id: "4", name: "Booking #004", amount: 4200000, status: "Pending Bill" },
+  ];
+
+  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
+
+  // Calculate total for selected bookings
+  const selectedTotal = sampleBookings
+    .filter((b) => selectedBookings.includes(b.id))
+    .reduce((sum, b) => b.amount, 0);
+
+  return (
+    <PageContainer>
+      <ContentSection
+        title="Form Components Demo"
+        description="Interactive demonstration of all form components"
+      >
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Currency Input */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Currency Input</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                label="Service Price"
+                htmlFor="price"
+                description="VND-formatted input with auto-formatting"
+                required
+              >
+                <CurrencyInput
+                  id="price"
+                  value={price}
+                  onChange={setPrice}
+                  placeholder="Enter amount"
+                  min={0}
+                  incrementStep={100000}
+                />
+              </FormField>
+
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm">
+                  <span className="font-medium">Current value:</span> {price.toLocaleString("vi-VN")} đ
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Use arrow keys (↑/↓) to increment by 100,000 đ
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quantity Input */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Quantity Input</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                label="Work Quantity"
+                htmlFor="quantity"
+                description="Numeric input with +/- buttons"
+                required
+              >
+                <QuantityInput
+                  id="quantity"
+                  value={quantity}
+                  onChange={setQuantity}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  unit="công"
+                />
+              </FormField>
+
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm">
+                  <span className="font-medium">Current quantity:</span> {quantity} công
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Min: 0, Max: 100, Step: 0.5
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Date Picker */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Date Picker</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                label="Booking Date"
+                htmlFor="date"
+                description="Calendar picker with Vietnamese locale"
+                required
+              >
+                <DatePicker
+                  date={selectedDate}
+                  onDateChange={setSelectedDate}
+                  placeholder="Chọn ngày"
+                />
+              </FormField>
+
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm">
+                  <span className="font-medium">Selected date:</span>{" "}
+                  {selectedDate ? selectedDate.toLocaleDateString("vi-VN") : "None"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Multi-Select Checkbox */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg">Multi-Select Checkbox</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                label="Select Bookings for Billing"
+                description="Multi-select with disabled items and running total"
+              >
+                <MultiSelectCheckbox
+                  items={sampleBookings}
+                  selectedIds={selectedBookings}
+                  onSelectionChange={setSelectedBookings}
+                  getItemId={(item) => item.id}
+                  isItemDisabled={(item) => item.status === "Added Bill"}
+                  disabledMessage="This booking has already been added to a bill"
+                  renderItem={(item, isSelected, isDisabled) => (
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.amount.toLocaleString("vi-VN")} đ
+                          </p>
+                        </div>
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            item.status === "Pending Bill"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                />
+              </FormField>
+
+              {selectedBookings.length > 0 && (
+                <div className="p-4 bg-primary/5 border border-primary rounded-md">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Selected Total:</span>
+                    <span className="text-xl font-bold text-primary">
+                      {selectedTotal.toLocaleString("vi-VN")} đ
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedBookings.length} booking(s) selected
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </ContentSection>
+    </PageContainer>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/layout.tsx">
+import { AppShell } from "@/components/layout";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <AppShell>{children}</AppShell>;
+}
+</file>
+
+<file path="src/app/(dashboard)/page.tsx">
+import { PageContainer, ContentSection } from "@/components/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+
+export default function DashboardPage() {
+  return (
+    <PageContainer>
+      <ContentSection
+        title="Dashboard"
+        description="Welcome to Agri-ERP - Your agricultural service management system"
+        actions={
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Quick Action
+          </Button>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">45,231,000 đ</div>
+              <p className="text-xs text-muted-foreground">
+                +20.1% from last month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Active Bookings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+12</div>
+              <p className="text-xs text-muted-foreground">
+                +4 from last week
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Pending Bills
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">8</div>
+              <p className="text-xs text-muted-foreground">
+                Total: 12,500,000 đ
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Active Machines
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">15</div>
+              <p className="text-xs text-muted-foreground">
+                3 in maintenance
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </ContentSection>
+
+      <ContentSection
+        title="Recent Activity"
+        description="Latest updates from your operations"
+      >
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">
+              Recent activity will appear here...
+            </p>
+          </CardContent>
+        </Card>
+      </ContentSection>
+    </PageContainer>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/status-badges/page.tsx">
+"use client";
+
+import { PageContainer, ContentSection } from "@/components/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BookingStatusBadge,
+  JobStatusBadge,
+  PaymentStatusBadge,
+  BillStatusBadge,
+  PayrollStatusBadge,
+  MachineStatusBadge,
+} from "@/components/status";
+import {
+  BookingStatus,
+  JobStatus,
+  PaymentStatus,
+  BillStatus,
+  PayrollStatus,
+  MachineStatus,
+} from "@/types";
+
+export default function StatusBadgesPage() {
+  return (
+    <PageContainer>
+      <ContentSection
+        title="Status Badge System"
+        description="Comprehensive status badges for all business workflows"
+      >
+        <div className="space-y-6">
+          {/* Booking Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Booking Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <BookingStatusBadge status={BookingStatus.New} />
+                <BookingStatusBadge status={BookingStatus.InProgress} />
+                <BookingStatusBadge status={BookingStatus.Completed} />
+                <BookingStatusBadge status={BookingStatus.Blocked} />
+                <BookingStatusBadge status={BookingStatus.Canceled} />
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-2">Without icons:</p>
+                <div className="flex flex-wrap gap-3">
+                  <BookingStatusBadge status={BookingStatus.New} showIcon={false} />
+                  <BookingStatusBadge status={BookingStatus.InProgress} showIcon={false} />
+                  <BookingStatusBadge status={BookingStatus.Completed} showIcon={false} />
+                  <BookingStatusBadge status={BookingStatus.Blocked} showIcon={false} />
+                  <BookingStatusBadge status={BookingStatus.Canceled} showIcon={false} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Job Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Job Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <JobStatusBadge status={JobStatus.New} />
+                <JobStatusBadge status={JobStatus.InProgress} />
+                <JobStatusBadge status={JobStatus.Completed} />
+                <JobStatusBadge status={JobStatus.Blocked} />
+                <JobStatusBadge status={JobStatus.Canceled} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Payment Status (Booking → Bill)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <PaymentStatusBadge status={PaymentStatus.PendingBill} />
+                <PaymentStatusBadge status={PaymentStatus.AddedBill} />
+                <PaymentStatusBadge status={PaymentStatus.FullyPaid} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bill Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Bill Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <BillStatusBadge status={BillStatus.Open} />
+                <BillStatusBadge status={BillStatus.PartialPaid} />
+                <BillStatusBadge status={BillStatus.Completed} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payroll Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Payroll Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <PayrollStatusBadge status={PayrollStatus.Open} />
+                <PayrollStatusBadge status={PayrollStatus.PartialPaid} />
+                <PayrollStatusBadge status={PayrollStatus.Completed} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Machine Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Machine Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <MachineStatusBadge status={MachineStatus.Available} />
+                <MachineStatusBadge status={MachineStatus.InUse} />
+                <MachineStatusBadge status={MachineStatus.Maintenance} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Usage Examples */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Usage in Data Table</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-medium">Booking</th>
+                      <th className="text-left p-3 font-medium">Customer</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Payment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t hover:bg-accent/50">
+                      <td className="p-3 font-mono">BK-001</td>
+                      <td className="p-3">Nguyễn Văn A</td>
+                      <td className="p-3">
+                        <BookingStatusBadge status={BookingStatus.New} />
+                      </td>
+                      <td className="p-3">
+                        <PaymentStatusBadge status={PaymentStatus.PendingBill} />
+                      </td>
+                    </tr>
+                    <tr className="border-t hover:bg-accent/50">
+                      <td className="p-3 font-mono">BK-002</td>
+                      <td className="p-3">Trần Thị B</td>
+                      <td className="p-3">
+                        <BookingStatusBadge status={BookingStatus.InProgress} />
+                      </td>
+                      <td className="p-3">
+                        <PaymentStatusBadge status={PaymentStatus.AddedBill} />
+                      </td>
+                    </tr>
+                    <tr className="border-t hover:bg-accent/50">
+                      <td className="p-3 font-mono">BK-003</td>
+                      <td className="p-3">Lê Văn C</td>
+                      <td className="p-3">
+                        <BookingStatusBadge status={BookingStatus.Completed} />
+                      </td>
+                      <td className="p-3">
+                        <PaymentStatusBadge status={PaymentStatus.FullyPaid} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Color System */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Design System</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2 text-sm">Color Meanings</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-blue-100 border border-blue-700"></div>
+                    <span className="text-muted-foreground">Blue - New/Initial state</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-orange-100 border border-orange-700"></div>
+                    <span className="text-muted-foreground">Orange - In Progress/Active</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-green-100 border border-green-700"></div>
+                    <span className="text-muted-foreground">Green - Completed/Success</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-yellow-100 border border-yellow-700"></div>
+                    <span className="text-muted-foreground">Yellow - Pending/Waiting</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-amber-100 border border-amber-700"></div>
+                    <span className="text-muted-foreground">Amber - Partial/Incomplete</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-gray-100 border border-gray-700"></div>
+                    <span className="text-muted-foreground">Gray - Blocked/Inactive</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-red-100 border border-red-700"></div>
+                    <span className="text-muted-foreground">Red - Canceled/Error</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-2 text-sm">Design Features</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  <li>✓ WCAG AA compliant color contrast</li>
+                  <li>✓ Dark mode support</li>
+                  <li>✓ Optional icons for visual clarity</li>
+                  <li>✓ Consistent font weight (medium) for readability</li>
+                  <li>✓ Border for better visibility</li>
+                  <li>✓ Vietnamese labels for all statuses</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ContentSection>
+    </PageContainer>
+  );
+}
+</file>
+
+<file path="src/components/data-display/data-table/data-table-empty.tsx">
+import { FileQuestion } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export interface DataTableEmptyProps {
+  message?: string;
+  description?: string;
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+export function DataTableEmpty({
+  message = "No data found",
+  description = "Try adjusting your filters or search criteria",
+  icon,
+  className,
+}: DataTableEmptyProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-12 px-4 text-center",
+        className
+      )}
+    >
+      <div className="mb-4 text-muted-foreground">
+        {icon || <FileQuestion className="h-12 w-12" />}
+      </div>
+      <h3 className="text-lg font-semibold mb-1">{message}</h3>
+      <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/data-display/data-table/data-table-header.tsx">
+import { Button } from "@/components/ui/button";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type SortDirection = "asc" | "desc" | null;
+
+export interface DataTableHeaderProps {
+  label: string;
+  sortable?: boolean;
+  sortDirection?: SortDirection;
+  onSort?: () => void;
+  className?: string;
+  align?: "left" | "center" | "right";
+}
+
+export function DataTableHeader({
+  label,
+  sortable = false,
+  sortDirection = null,
+  onSort,
+  className,
+  align = "left",
+}: DataTableHeaderProps) {
+  const alignmentClasses = {
+    left: "text-left justify-start",
+    center: "text-center justify-center",
+    right: "text-right justify-end",
+  };
+
+  if (!sortable || !onSort) {
+    return (
+      <div
+        className={cn(
+          "flex items-center font-medium text-sm h-10 px-4",
+          alignmentClasses[align],
+          className
+        )}
+      >
+        {label}
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onSort}
+      className={cn(
+        "h-10 px-4 font-medium hover:bg-accent",
+        alignmentClasses[align],
+        className
+      )}
+    >
+      <span>{label}</span>
+      <div className="ml-2 h-4 w-4">
+        {sortDirection === "asc" && <ArrowUp className="h-4 w-4" />}
+        {sortDirection === "desc" && <ArrowDown className="h-4 w-4" />}
+        {sortDirection === null && <ArrowUpDown className="h-4 w-4 opacity-50" />}
+      </div>
+    </Button>
+  );
+}
+</file>
+
+<file path="src/components/data-display/data-table/data-table-pagination.tsx">
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export interface DataTablePaginationProps {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
+  className?: string;
+}
+
+export function DataTablePagination({
+  currentPage,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [10, 20, 50, 100],
+  className,
+}: DataTablePaginationProps) {
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  const canGoPrevious = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4",
+        className
+      )}
+    >
+      {/* Page size selector */}
+      <div className="flex items-center gap-2">
+        {onPageSizeChange && (
+          <>
+            <p className="text-sm text-muted-foreground whitespace-nowrap">
+              Rows per page
+            </p>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => onPageSizeChange(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {pageSizeOptions.map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
+      </div>
+
+      {/* Info and navigation */}
+      <div className="flex items-center gap-6">
+        <p className="text-sm text-muted-foreground whitespace-nowrap">
+          {totalItems > 0 ? (
+            <>
+              Showing {startItem.toLocaleString()} to {endItem.toLocaleString()} of{" "}
+              {totalItems.toLocaleString()} results
+            </>
+          ) : (
+            "No results"
+          )}
+        </p>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onPageChange(1)}
+            disabled={!canGoPrevious}
+            aria-label="Go to first page"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={!canGoPrevious}
+            aria-label="Go to previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <div className="flex items-center gap-1 px-2">
+            <span className="text-sm font-medium">{currentPage}</span>
+            <span className="text-sm text-muted-foreground">of</span>
+            <span className="text-sm font-medium">{totalPages}</span>
+          </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={!canGoNext}
+            aria-label="Go to next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onPageChange(totalPages)}
+            disabled={!canGoNext}
+            aria-label="Go to last page"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/data-display/data-table/data-table.tsx">
+"use client";
+
+import * as React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { DataTablePagination } from "./data-table-pagination";
+import { DataTableEmpty } from "./data-table-empty";
+import { DataTableHeader, SortDirection } from "./data-table-header";
+
+export interface ColumnDef<T> {
+  key: string;
+  label: string;
+  sortable?: boolean;
+  align?: "left" | "center" | "right";
+  width?: string; // e.g., "200px", "20%"
+  render?: (item: T) => React.ReactNode;
+  className?: string;
+}
+
+export interface DataTableProps<T> {
+  columns: ColumnDef<T>[];
+  data: T[];
+
+  // Pagination
+  currentPage?: number;
+  pageSize?: number;
+  totalPages?: number;
+  totalItems?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+
+  // Sorting
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  onSort?: (key: string) => void;
+
+  // Row interaction
+  onRowClick?: (item: T) => void;
+  getRowId?: (item: T) => string;
+
+  // View options
+  viewMode?: "table" | "card";
+  onViewModeChange?: (mode: "table" | "card") => void;
+  renderCard?: (item: T) => React.ReactNode;
+
+  // State
+  isLoading?: boolean;
+  emptyMessage?: string;
+  emptyDescription?: string;
+
+  // Styling
+  className?: string;
+  containerClassName?: string;
+}
+
+export function DataTable<T>({
+  columns,
+  data,
+  currentPage = 1,
+  pageSize = 10,
+  totalPages,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+  sortKey,
+  sortDirection,
+  onSort,
+  onRowClick,
+  getRowId,
+  viewMode = "table",
+  onViewModeChange,
+  renderCard,
+  isLoading = false,
+  emptyMessage,
+  emptyDescription,
+  className,
+  containerClassName,
+}: DataTableProps<T>) {
+  const calculatedTotalPages = totalPages || Math.ceil((totalItems || data.length) / pageSize);
+  const calculatedTotalItems = totalItems || data.length;
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className={cn("space-y-4", containerClassName)}>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableHead key={column.key} style={{ width: column.width }}>
+                    <Skeleton className="h-4 w-24" />
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: pageSize }).map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (data.length === 0) {
+    return (
+      <div className={cn("rounded-md border", containerClassName)}>
+        <DataTableEmpty message={emptyMessage} description={emptyDescription} />
+      </div>
+    );
+  }
+
+  // Card view
+  if (viewMode === "card" && renderCard) {
+    return (
+      <div className={cn("space-y-4", containerClassName)}>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {data.map((item, index) => {
+            const id = getRowId ? getRowId(item) : index.toString();
+            return (
+              <div
+                key={id}
+                onClick={() => onRowClick?.(item)}
+                className={cn(
+                  onRowClick && "cursor-pointer hover:shadow-md transition-shadow"
+                )}
+              >
+                {renderCard(item)}
+              </div>
+            );
+          })}
+        </div>
+
+        {onPageChange && calculatedTotalPages > 1 && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={calculatedTotalPages}
+            pageSize={pageSize}
+            totalItems={calculatedTotalItems}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Table view
+  return (
+    <div className={cn("space-y-4", containerClassName)}>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table className={className}>
+            <TableHeader>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableHead
+                    key={column.key}
+                    style={{ width: column.width }}
+                    className={cn("bg-muted/50", column.className)}
+                  >
+                    <DataTableHeader
+                      label={column.label}
+                      sortable={column.sortable}
+                      sortDirection={sortKey === column.key ? sortDirection : null}
+                      onSort={
+                        column.sortable && onSort
+                          ? () => onSort(column.key)
+                          : undefined
+                      }
+                      align={column.align}
+                    />
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((item, index) => {
+                const id = getRowId ? getRowId(item) : index.toString();
+                return (
+                  <TableRow
+                    key={id}
+                    onClick={() => onRowClick?.(item)}
+                    className={cn(
+                      onRowClick &&
+                        "cursor-pointer hover:bg-accent/50 transition-colors"
+                    )}
+                  >
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.key}
+                        className={cn(
+                          column.align === "center" && "text-center",
+                          column.align === "right" && "text-right",
+                          column.className
+                        )}
+                      >
+                        {column.render
+                          ? column.render(item)
+                          : String((item as any)[column.key] ?? "")}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {onPageChange && calculatedTotalPages > 1 && (
+        <DataTablePagination
+          currentPage={currentPage}
+          totalPages={calculatedTotalPages}
+          pageSize={pageSize}
+          totalItems={calculatedTotalItems}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/data-display/data-table/index.ts">
+export { DataTable } from "./data-table";
+export type { DataTableProps, ColumnDef } from "./data-table";
+
+export { DataTableHeader } from "./data-table-header";
+export type { DataTableHeaderProps, SortDirection } from "./data-table-header";
+
+export { DataTablePagination } from "./data-table-pagination";
+export type { DataTablePaginationProps } from "./data-table-pagination";
+
+export { DataTableEmpty } from "./data-table-empty";
+export type { DataTableEmptyProps } from "./data-table-empty";
+</file>
+
+<file path="src/components/forms/currency-input.tsx">
+"use client";
+
+import * as React from "react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { formatCurrency, parseCurrency } from "@/lib/format";
+
+export interface CurrencyInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  incrementStep?: number; // For arrow key increment/decrement
+}
+
+export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
+  ({ className, value, onChange, min = 0, max, incrementStep = 1000, disabled, ...props }, ref) => {
+    const [displayValue, setDisplayValue] = React.useState<string>(() =>
+      formatCurrency(value, false)
+    );
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    // Update display value when value prop changes (controlled component)
+    React.useEffect(() => {
+      if (!isFocused) {
+        setDisplayValue(formatCurrency(value, false));
+      }
+    }, [value, isFocused]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value;
+      setDisplayValue(inputValue);
+
+      // Parse and validate the input
+      const parsed = parseCurrency(inputValue);
+
+      // Apply min/max constraints
+      let constrained = parsed;
+      if (min !== undefined && constrained < min) {
+        constrained = min;
+      }
+      if (max !== undefined && constrained > max) {
+        constrained = max;
+      }
+
+      onChange(constrained);
+    };
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      // Select all text on focus for easy replacement
+      e.target.select();
+    };
+
+    const handleBlur = () => {
+      setIsFocused(false);
+      // Re-format to ensure consistent display
+      setDisplayValue(formatCurrency(value, false));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Arrow keys for increment/decrement
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const newValue = value + incrementStep;
+        if (max === undefined || newValue <= max) {
+          onChange(newValue);
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const newValue = value - incrementStep;
+        if (newValue >= min) {
+          onChange(newValue);
+        }
+      }
+    };
+
+    return (
+      <div className="relative">
+        <Input
+          ref={ref}
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          disabled={disabled}
+          className={cn("pr-8", className)}
+          {...props}
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+          đ
+        </span>
+      </div>
+    );
+  }
+);
+
+CurrencyInput.displayName = "CurrencyInput";
+</file>
+
+<file path="src/components/forms/date-picker.tsx">
+"use client";
+
+import * as React from "react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Calendar as CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+export interface DatePickerProps {
+  date?: Date;
+  onDateChange: (date: Date | undefined) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  minDate?: Date;
+  maxDate?: Date;
+}
+
+export function DatePicker({
+  date,
+  onDateChange,
+  placeholder = "Chọn ngày",
+  disabled,
+  className,
+  minDate,
+  maxDate,
+}: DatePickerProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "PPP", { locale: vi }) : <span>{placeholder}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={onDateChange}
+          disabled={(date) => {
+            if (minDate && date < minDate) return true;
+            if (maxDate && date > maxDate) return true;
+            return false;
+          }}
+          initialFocus
+          locale={vi}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+</file>
+
+<file path="src/components/forms/form-field.tsx">
+"use client";
+
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+
+export interface FormFieldProps {
+  label: string;
+  htmlFor?: string;
+  error?: string;
+  required?: boolean;
+  description?: string;
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function FormField({
+  label,
+  htmlFor,
+  error,
+  required,
+  description,
+  className,
+  children,
+}: FormFieldProps) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      <Label htmlFor={htmlFor} className="text-sm font-medium">
+        {label}
+        {required && <span className="text-destructive ml-1">*</span>}
+      </Label>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      {children}
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/forms/index.ts">
+export { CurrencyInput } from "./currency-input";
+export type { CurrencyInputProps } from "./currency-input";
+
+export { QuantityInput } from "./quantity-input";
+export type { QuantityInputProps } from "./quantity-input";
+
+export { DatePicker } from "./date-picker";
+export type { DatePickerProps } from "./date-picker";
+
+export { MultiSelectCheckbox } from "./multi-select-checkbox";
+export type { MultiSelectCheckboxProps } from "./multi-select-checkbox";
+
+export { FormField } from "./form-field";
+export type { FormFieldProps } from "./form-field";
+</file>
+
+<file path="src/components/forms/multi-select-checkbox.tsx">
+"use client";
+
+import * as React from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+export interface MultiSelectCheckboxProps<T> {
+  items: T[];
+  selectedIds: string[];
+  onSelectionChange: (ids: string[]) => void;
+  renderItem: (item: T, isSelected: boolean, isDisabled: boolean) => React.ReactNode;
+  getItemId: (item: T) => string;
+  isItemDisabled?: (item: T) => boolean;
+  disabledMessage?: string;
+  className?: string;
+  showSelectAll?: boolean;
+  showSelectedCount?: boolean;
+}
+
+export function MultiSelectCheckbox<T>({
+  items,
+  selectedIds,
+  onSelectionChange,
+  renderItem,
+  getItemId,
+  isItemDisabled = () => false,
+  disabledMessage = "This item cannot be selected",
+  className,
+  showSelectAll = true,
+  showSelectedCount = true,
+}: MultiSelectCheckboxProps<T>) {
+  const [lastSelectedIndex, setLastSelectedIndex] = React.useState<number | null>(null);
+
+  // Calculate enabled items
+  const enabledItems = React.useMemo(
+    () => items.filter((item) => !isItemDisabled(item)),
+    [items, isItemDisabled]
+  );
+
+  const enabledItemIds = React.useMemo(
+    () => enabledItems.map((item) => getItemId(item)),
+    [enabledItems, getItemId]
+  );
+
+  // Check if all enabled items are selected
+  const allSelected = React.useMemo(() => {
+    if (enabledItemIds.length === 0) return false;
+    return enabledItemIds.every((id) => selectedIds.includes(id));
+  }, [enabledItemIds, selectedIds]);
+
+  // Check if some (but not all) enabled items are selected
+  const someSelected = React.useMemo(() => {
+    return selectedIds.length > 0 && !allSelected;
+  }, [selectedIds, allSelected]);
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      // Deselect all enabled items
+      const newSelection = selectedIds.filter((id) => !enabledItemIds.includes(id));
+      onSelectionChange(newSelection);
+    } else {
+      // Select all enabled items
+      const newSelection = Array.from(new Set([...selectedIds, ...enabledItemIds]));
+      onSelectionChange(newSelection);
+    }
+  };
+
+  const handleSelectNone = () => {
+    // Deselect all items (both enabled and disabled)
+    onSelectionChange([]);
+  };
+
+  const handleToggle = (itemId: string, index: number, event: React.MouseEvent) => {
+    const isCurrentlySelected = selectedIds.includes(itemId);
+
+    // Handle Shift+Click for range selection
+    if (event.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== index) {
+      const start = Math.min(lastSelectedIndex, index);
+      const end = Math.max(lastSelectedIndex, index);
+
+      // Get IDs in the range
+      const rangeIds = items
+        .slice(start, end + 1)
+        .filter((item) => !isItemDisabled(item))
+        .map((item) => getItemId(item));
+
+      // Add range to selection
+      const newSelection = Array.from(new Set([...selectedIds, ...rangeIds]));
+      onSelectionChange(newSelection);
+    } else {
+      // Normal toggle
+      if (isCurrentlySelected) {
+        onSelectionChange(selectedIds.filter((id) => id !== itemId));
+      } else {
+        onSelectionChange([...selectedIds, itemId]);
+      }
+    }
+
+    setLastSelectedIndex(index);
+  };
+
+  const selectedCount = selectedIds.length;
+  const totalCount = items.length;
+  const enabledCount = enabledItems.length;
+
+  return (
+    <div className={cn("space-y-4", className)}>
+      {/* Header with controls */}
+      {(showSelectAll || showSelectedCount) && (
+        <div className="flex items-center justify-between gap-4 pb-2 border-b">
+          <div className="flex items-center gap-2">
+            {showSelectAll && enabledCount > 0 && (
+              <>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all items"
+                    className={cn(someSelected && "data-[state=checked]:bg-primary/50")}
+                  />
+                  <label
+                    htmlFor="select-all"
+                    className="text-sm font-medium cursor-pointer select-none"
+                  >
+                    {allSelected ? "Deselect All" : "Select All"}
+                  </label>
+                </div>
+                {selectedCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectNone}
+                    className="h-8 text-xs"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+
+          {showSelectedCount && (
+            <Badge variant="secondary" className="font-normal">
+              {selectedCount} / {totalCount} selected
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Items list */}
+      <div className="space-y-2">
+        {items.map((item, index) => {
+          const itemId = getItemId(item);
+          const isSelected = selectedIds.includes(itemId);
+          const isDisabled = isItemDisabled(item);
+
+          return (
+            <div
+              key={itemId}
+              className={cn(
+                "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+                isSelected && !isDisabled && "border-primary bg-primary/5",
+                isDisabled && "opacity-50 cursor-not-allowed bg-muted",
+                !isDisabled && "cursor-pointer hover:bg-accent/50"
+              )}
+              onClick={(e) => {
+                if (!isDisabled) {
+                  handleToggle(itemId, index, e);
+                }
+              }}
+              title={isDisabled ? disabledMessage : undefined}
+            >
+              <Checkbox
+                id={`item-${itemId}`}
+                checked={isSelected}
+                disabled={isDisabled}
+                onCheckedChange={() => {}}
+                className="mt-1"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="flex-1 min-w-0">
+                {renderItem(item, isSelected, isDisabled)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {items.length === 0 && (
+        <div className="text-center py-8 text-sm text-muted-foreground">
+          No items available
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/forms/quantity-input.tsx">
+"use client";
+
+import * as React from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Minus, Plus } from "lucide-react";
+
+export interface QuantityInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "type"> {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string; // e.g., "công", "kg", "hours"
+  showButtons?: boolean; // Show +/- buttons (default: true on desktop)
+}
+
+export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputProps>(
+  (
+    {
+      className,
+      value,
+      onChange,
+      min = 0,
+      max,
+      step = 1,
+      unit,
+      showButtons = true,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    const handleIncrement = () => {
+      const newValue = value + step;
+      if (max === undefined || newValue <= max) {
+        onChange(newValue);
+      }
+    };
+
+    const handleDecrement = () => {
+      const newValue = value - step;
+      if (newValue >= min) {
+        onChange(newValue);
+      }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value;
+
+      // Allow empty input for better UX
+      if (inputValue === "") {
+        onChange(min);
+        return;
+      }
+
+      const parsed = parseFloat(inputValue);
+
+      if (!isNaN(parsed)) {
+        // Apply min/max constraints
+        let constrained = parsed;
+        if (constrained < min) {
+          constrained = min;
+        }
+        if (max !== undefined && constrained > max) {
+          constrained = max;
+        }
+
+        onChange(constrained);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Arrow keys for increment/decrement
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        handleIncrement();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        handleDecrement();
+      }
+    };
+
+    const canDecrement = value > min;
+    const canIncrement = max === undefined || value < max;
+
+    return (
+      <div className={cn("flex items-center gap-2", className)}>
+        {showButtons && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleDecrement}
+            disabled={disabled || !canDecrement}
+            className="h-9 w-9 shrink-0"
+            aria-label="Decrease quantity"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+        )}
+
+        <div className="relative flex-1">
+          <Input
+            ref={ref}
+            type="number"
+            inputMode="decimal"
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            min={min}
+            max={max}
+            step={step}
+            className={cn("text-center", unit && "pr-16")}
+            {...props}
+          />
+          {unit && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+              {unit}
+            </span>
+          )}
+        </div>
+
+        {showButtons && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleIncrement}
+            disabled={disabled || !canIncrement}
+            className="h-9 w-9 shrink-0"
+            aria-label="Increase quantity"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+);
+
+QuantityInput.displayName = "QuantityInput";
+</file>
+
+<file path="src/components/layout/app-shell.tsx">
+"use client";
+
+import { cn } from "@/lib/utils";
+import { Sidebar } from "./sidebar/sidebar";
+import { Header } from "./header/header";
+
+interface AppShellProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function AppShell({ children, className }: AppShellProps) {
+  return (
+    <div className="relative flex min-h-screen">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col transition-all duration-300 ml-64">
+        {/* Header */}
+        <Header />
+
+        {/* Page Content */}
+        <main className={cn("flex-1 overflow-y-auto bg-background", className)}>
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/layout/content-section.tsx">
+import { cn } from "@/lib/utils";
+
+interface ContentSectionProps {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+  actions?: React.ReactNode;
+  className?: string;
+}
+
+export function ContentSection({
+  children,
+  title,
+  description,
+  actions,
+  className,
+}: ContentSectionProps) {
+  return (
+    <section className={cn("space-y-4", className)}>
+      {(title || description || actions) && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            {title && (
+              <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+            )}
+            {description && (
+              <p className="text-sm text-muted-foreground">{description}</p>
+            )}
+          </div>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+</file>
+
+<file path="src/components/layout/header/breadcrumbs.tsx">
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronRight, Home } from "lucide-react";
+import { getNavItemByHref } from "@/config/navigation";
+import { cn } from "@/lib/utils";
+
+export function Breadcrumbs() {
+  const pathname = usePathname();
+
+  // Generate breadcrumb items from pathname
+  const generateBreadcrumbs = () => {
+    const segments = pathname.split("/").filter(Boolean);
+    const breadcrumbs = [];
+
+    // Always add home
+    breadcrumbs.push({
+      label: "Dashboard",
+      href: "/dashboard",
+      isHome: true,
+    });
+
+    // Build breadcrumbs from path segments
+    let currentPath = "";
+    for (const segment of segments) {
+      currentPath += `/${segment}`;
+
+      // Try to get label from navigation config
+      const navItem = getNavItemByHref(currentPath);
+      const label = navItem?.label || segment.charAt(0).toUpperCase() + segment.slice(1);
+
+      breadcrumbs.push({
+        label,
+        href: currentPath,
+        isHome: false,
+      });
+    }
+
+    return breadcrumbs;
+  };
+
+  const breadcrumbs = generateBreadcrumbs();
+
+  // Don't show breadcrumbs if we're on the dashboard
+  if (pathname === "/dashboard" || pathname === "/") {
+    return null;
+  }
+
+  return (
+    <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+      {breadcrumbs.map((crumb, index) => {
+        const isLast = index === breadcrumbs.length - 1;
+
+        return (
+          <div key={crumb.href} className="flex items-center">
+            {index > 0 && <ChevronRight className="mx-2 h-4 w-4" />}
+
+            {isLast ? (
+              <span className="font-medium text-foreground">{crumb.label}</span>
+            ) : (
+              <Link
+                href={crumb.href}
+                className={cn(
+                  "flex items-center gap-1 transition-colors hover:text-foreground",
+                  crumb.isHome && "text-primary hover:text-primary/80"
+                )}
+              >
+                {crumb.isHome && <Home className="h-4 w-4" />}
+                <span>{crumb.label}</span>
+              </Link>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+</file>
+
+<file path="src/components/layout/header/header.tsx">
+"use client";
+
+import { Bell, Search, Settings, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Breadcrumbs } from "./breadcrumbs";
+import { cn } from "@/lib/utils";
+
+interface HeaderProps {
+  className?: string;
+}
+
+export function Header({ className }: HeaderProps) {
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        className
+      )}
+    >
+      {/* Breadcrumbs */}
+      <div className="flex-1">
+        <Breadcrumbs />
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        {/* Search */}
+        <Button variant="ghost" size="icon" title="Search">
+          <Search className="h-5 w-5" />
+        </Button>
+
+        {/* Notifications */}
+        <Button variant="ghost" size="icon" title="Notifications">
+          <Bell className="h-5 w-5" />
+        </Button>
+
+        {/* User Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="User menu">
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive">
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="src/components/layout/header/index.ts">
+export { Header } from "./header";
+export { Breadcrumbs } from "./breadcrumbs";
+</file>
+
+<file path="src/components/layout/index.ts">
+export { AppShell } from "./app-shell";
+export { Header } from "./header";
+export { Sidebar } from "./sidebar";
+export { PageContainer } from "./page-container";
+export { ContentSection } from "./content-section";
+</file>
+
+<file path="src/components/layout/page-container.tsx">
+import { cn } from "@/lib/utils";
+
+interface PageContainerProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function PageContainer({ children, className }: PageContainerProps) {
+  return (
+    <div className={cn("flex flex-col gap-6 p-6", className)}>{children}</div>
+  );
+}
+</file>
+
+<file path="src/components/layout/sidebar/index.ts">
+export { Sidebar } from "./sidebar";
+export { SidebarNav } from "./sidebar-nav";
+</file>
+
+<file path="src/components/layout/sidebar/sidebar-nav.tsx">
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { navigationConfig, type NavItem } from "@/config/navigation";
+import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+interface SidebarNavProps {
+  collapsed?: boolean;
+}
+
+export function SidebarNav({ collapsed = false }: SidebarNavProps) {
+  const pathname = usePathname();
+
+  const isActive = (item: NavItem) => {
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  };
+
+  return (
+    <nav className="flex flex-col gap-1">
+      {navigationConfig.map((group, groupIndex) => (
+        <div key={group.id} className="space-y-1">
+          {groupIndex > 0 && <Separator className="my-2" />}
+
+          {!collapsed && (
+            <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </h3>
+          )}
+
+          {group.items
+            .filter((item) => item.enabled)
+            .map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item);
+
+              return (
+                <Link key={item.id} href={item.href}>
+                  <Button
+                    variant={active ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 transition-colors",
+                      active &&
+                        "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary",
+                      collapsed && "justify-center px-2"
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <Icon className={cn("h-5 w-5", collapsed && "h-6 w-6")} />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {item.badge && (
+                          <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                            {item.badge}
+                          </span>
+                        )}
+                        {active && (
+                          <ChevronRight className="h-4 w-4 text-primary" />
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
+        </div>
+      ))}
+    </nav>
+  );
+}
+</file>
+
+<file path="src/components/layout/sidebar/sidebar.tsx">
+"use client";
+
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { SidebarNav } from "./sidebar-nav";
+import { Tractor, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { siteConfig } from "@/config/site";
+
+interface SidebarProps {
+  className?: string;
+}
+
+export function Sidebar({ className }: SidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen border-r bg-sidebar transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+        className
+      )}
+    >
+      <div className="flex h-full flex-col">
+        {/* Header */}
+        <div className="flex h-16 items-center border-b px-4">
+          {!collapsed ? (
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Tractor className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold leading-none">
+                  {siteConfig.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {siteConfig.tagline.split(",")[0]}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Tractor className="h-5 w-5" />
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <SidebarNav collapsed={collapsed} />
+        </div>
+
+        {/* Footer - Collapse Toggle */}
+        <div className="border-t p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("w-full", collapsed && "px-2")}
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-5 w-5" />
+            ) : (
+              <>
+                <PanelLeftClose className="mr-2 h-5 w-5" />
+                <span>Collapse</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+</file>
+
+<file path="src/components/status/bill-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { BillStatus } from "@/types";
+import { FileText, DollarSign, CheckCircle } from "lucide-react";
+
+const BILL_STATUS_CONFIG: Record<
+  BillStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof FileText;
+  }
+> = {
+  [BillStatus.Open]: {
+    variant: "open",
+    label: "Chưa thanh toán",
+    icon: FileText,
+  },
+  [BillStatus.PartialPaid]: {
+    variant: "partial",
+    label: "Thanh toán một phần",
+    icon: DollarSign,
+  },
+  [BillStatus.Completed]: {
+    variant: "completed",
+    label: "Đã thanh toán",
+    icon: CheckCircle,
+  },
+};
+
+export interface BillStatusBadgeProps {
+  status: BillStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function BillStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: BillStatusBadgeProps) {
+  const config = BILL_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/booking-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { BookingStatus } from "@/types";
+import { Circle, Clock, CheckCircle, XCircle, Ban } from "lucide-react";
+
+const BOOKING_STATUS_CONFIG: Record<
+  BookingStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof Circle;
+  }
+> = {
+  [BookingStatus.New]: {
+    variant: "new",
+    label: "Mới",
+    icon: Circle,
+  },
+  [BookingStatus.InProgress]: {
+    variant: "in-progress",
+    label: "Đang thực hiện",
+    icon: Clock,
+  },
+  [BookingStatus.Completed]: {
+    variant: "completed",
+    label: "Hoàn thành",
+    icon: CheckCircle,
+  },
+  [BookingStatus.Blocked]: {
+    variant: "blocked",
+    label: "Tạm dừng",
+    icon: Ban,
+  },
+  [BookingStatus.Canceled]: {
+    variant: "canceled",
+    label: "Đã hủy",
+    icon: XCircle,
+  },
+};
+
+export interface BookingStatusBadgeProps {
+  status: BookingStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function BookingStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: BookingStatusBadgeProps) {
+  const config = BOOKING_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/index.ts">
+export { StatusBadge } from "./status-badge";
+export type { StatusBadgeProps } from "./status-badge";
+
+export { BookingStatusBadge } from "./booking-status";
+export type { BookingStatusBadgeProps } from "./booking-status";
+
+export { JobStatusBadge } from "./job-status";
+export type { JobStatusBadgeProps } from "./job-status";
+
+export { PaymentStatusBadge } from "./payment-status";
+export type { PaymentStatusBadgeProps } from "./payment-status";
+
+export { BillStatusBadge } from "./bill-status";
+export type { BillStatusBadgeProps } from "./bill-status";
+
+export { PayrollStatusBadge } from "./payroll-status";
+export type { PayrollStatusBadgeProps } from "./payroll-status";
+
+export { MachineStatusBadge } from "./machine-status";
+export type { MachineStatusBadgeProps } from "./machine-status";
+</file>
+
+<file path="src/components/status/job-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { JobStatus } from "@/types";
+import { Circle, Clock, CheckCircle, XCircle, Ban } from "lucide-react";
+
+const JOB_STATUS_CONFIG: Record<
+  JobStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof Circle;
+  }
+> = {
+  [JobStatus.New]: {
+    variant: "new",
+    label: "Mới",
+    icon: Circle,
+  },
+  [JobStatus.InProgress]: {
+    variant: "in-progress",
+    label: "Đang thực hiện",
+    icon: Clock,
+  },
+  [JobStatus.Completed]: {
+    variant: "completed",
+    label: "Hoàn thành",
+    icon: CheckCircle,
+  },
+  [JobStatus.Blocked]: {
+    variant: "blocked",
+    label: "Tạm dừng",
+    icon: Ban,
+  },
+  [JobStatus.Canceled]: {
+    variant: "canceled",
+    label: "Đã hủy",
+    icon: XCircle,
+  },
+};
+
+export interface JobStatusBadgeProps {
+  status: JobStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function JobStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: JobStatusBadgeProps) {
+  const config = JOB_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/machine-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { MachineStatus } from "@/types";
+import { CheckCircle, Zap, Wrench } from "lucide-react";
+
+const MACHINE_STATUS_CONFIG: Record<
+  MachineStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof CheckCircle;
+  }
+> = {
+  [MachineStatus.Available]: {
+    variant: "available",
+    label: "Sẵn sàng",
+    icon: CheckCircle,
+  },
+  [MachineStatus.InUse]: {
+    variant: "in-use",
+    label: "Đang sử dụng",
+    icon: Zap,
+  },
+  [MachineStatus.Maintenance]: {
+    variant: "maintenance",
+    label: "Bảo trì",
+    icon: Wrench,
+  },
+};
+
+export interface MachineStatusBadgeProps {
+  status: MachineStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function MachineStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: MachineStatusBadgeProps) {
+  const config = MACHINE_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/payment-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { PaymentStatus } from "@/types";
+import { Clock, FileText, CheckCircle } from "lucide-react";
+
+const PAYMENT_STATUS_CONFIG: Record<
+  PaymentStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof Clock;
+  }
+> = {
+  [PaymentStatus.PendingBill]: {
+    variant: "pending",
+    label: "Chờ lập hóa đơn",
+    icon: Clock,
+  },
+  [PaymentStatus.AddedBill]: {
+    variant: "partial",
+    label: "Đã lập hóa đơn",
+    icon: FileText,
+  },
+  [PaymentStatus.FullyPaid]: {
+    variant: "paid",
+    label: "Đã thanh toán",
+    icon: CheckCircle,
+  },
+};
+
+export interface PaymentStatusBadgeProps {
+  status: PaymentStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function PaymentStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: PaymentStatusBadgeProps) {
+  const config = PAYMENT_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/payroll-status.tsx">
+import { StatusBadge, StatusBadgeProps } from "./status-badge";
+import { PayrollStatus } from "@/types";
+import { FileText, DollarSign, CheckCircle } from "lucide-react";
+
+const PAYROLL_STATUS_CONFIG: Record<
+  PayrollStatus,
+  {
+    variant: StatusBadgeProps["variant"];
+    label: string;
+    icon: typeof FileText;
+  }
+> = {
+  [PayrollStatus.Open]: {
+    variant: "open",
+    label: "Chưa thanh toán",
+    icon: FileText,
+  },
+  [PayrollStatus.PartialPaid]: {
+    variant: "partial",
+    label: "Thanh toán một phần",
+    icon: DollarSign,
+  },
+  [PayrollStatus.Completed]: {
+    variant: "completed",
+    label: "Đã thanh toán",
+    icon: CheckCircle,
+  },
+};
+
+export interface PayrollStatusBadgeProps {
+  status: PayrollStatus;
+  className?: string;
+  showIcon?: boolean;
+}
+
+export function PayrollStatusBadge({
+  status,
+  className,
+  showIcon = true,
+}: PayrollStatusBadgeProps) {
+  const config = PAYROLL_STATUS_CONFIG[status];
+
+  return (
+    <StatusBadge
+      variant={config.variant}
+      label={config.label}
+      icon={config.icon}
+      className={className}
+      showIcon={showIcon}
+    />
+  );
+}
+</file>
+
+<file path="src/components/status/status-badge.tsx">
+import * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { StatusVariant } from "@/types";
+import { LucideIcon } from "lucide-react";
+
+export interface StatusBadgeProps {
+  variant: StatusVariant;
+  label: string;
+  icon?: LucideIcon;
+  className?: string;
+  showIcon?: boolean;
+}
+
+// Status style configuration with WCAG AA compliant colors
+const STATUS_STYLES: Record<
+  StatusVariant,
+  {
+    bg: string;
+    text: string;
+    border: string;
+  }
+> = {
+  new: {
+    bg: "bg-blue-100 dark:bg-blue-950",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-700 dark:border-blue-300",
+  },
+  "in-progress": {
+    bg: "bg-orange-100 dark:bg-orange-950",
+    text: "text-orange-700 dark:text-orange-300",
+    border: "border-orange-700 dark:border-orange-300",
+  },
+  completed: {
+    bg: "bg-green-100 dark:bg-green-950",
+    text: "text-green-700 dark:text-green-300",
+    border: "border-green-700 dark:border-green-300",
+  },
+  blocked: {
+    bg: "bg-gray-100 dark:bg-gray-800",
+    text: "text-gray-700 dark:text-gray-300",
+    border: "border-gray-700 dark:border-gray-300",
+  },
+  canceled: {
+    bg: "bg-red-100 dark:bg-red-950",
+    text: "text-red-700 dark:text-red-300",
+    border: "border-red-700 dark:border-red-300",
+  },
+  pending: {
+    bg: "bg-yellow-100 dark:bg-yellow-950",
+    text: "text-yellow-700 dark:text-yellow-300",
+    border: "border-yellow-700 dark:border-yellow-300",
+  },
+  partial: {
+    bg: "bg-amber-100 dark:bg-amber-950",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-amber-700 dark:border-amber-300",
+  },
+  paid: {
+    bg: "bg-emerald-100 dark:bg-emerald-950",
+    text: "text-emerald-700 dark:text-emerald-300",
+    border: "border-emerald-700 dark:border-emerald-300",
+  },
+  open: {
+    bg: "bg-sky-100 dark:bg-sky-950",
+    text: "text-sky-700 dark:text-sky-300",
+    border: "border-sky-700 dark:border-sky-300",
+  },
+  available: {
+    bg: "bg-teal-100 dark:bg-teal-950",
+    text: "text-teal-700 dark:text-teal-300",
+    border: "border-teal-700 dark:border-teal-300",
+  },
+  "in-use": {
+    bg: "bg-violet-100 dark:bg-violet-950",
+    text: "text-violet-700 dark:text-violet-300",
+    border: "border-violet-700 dark:border-violet-300",
+  },
+  maintenance: {
+    bg: "bg-rose-100 dark:bg-rose-950",
+    text: "text-rose-700 dark:text-rose-300",
+    border: "border-rose-700 dark:border-rose-300",
+  },
+};
+
+export function StatusBadge({
+  variant,
+  label,
+  icon: Icon,
+  className,
+  showIcon = true,
+}: StatusBadgeProps) {
+  const style = STATUS_STYLES[variant];
+
+  return (
+    <Badge
+      className={cn(
+        "font-medium border",
+        style.bg,
+        style.text,
+        style.border,
+        className
+      )}
+    >
+      {showIcon && Icon && <Icon className="h-3 w-3 mr-1" />}
+      {label}
+    </Badge>
+  );
+}
+</file>
+
+<file path="src/components/ui/badge.tsx">
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+        destructive:
+          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function Badge({
+  className,
+  variant,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : "span"
+
+  return (
+    <Comp
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
+  )
+}
+
+export { Badge, badgeVariants }
+</file>
+
+<file path="src/components/ui/button.tsx">
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+        "icon-sm": "size-8",
+        "icon-lg": "size-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+</file>
+
+<file path="src/components/ui/calendar.tsx">
+"use client"
+
+import * as React from "react"
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "lucide-react"
+import {
+  DayPicker,
+  getDefaultClassNames,
+  type DayButton,
+} from "react-day-picker"
+
+import { cn } from "@/lib/utils"
+import { Button, buttonVariants } from "@/components/ui/button"
+
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  captionLayout = "label",
+  buttonVariant = "ghost",
+  formatters,
+  components,
+  ...props
+}: React.ComponentProps<typeof DayPicker> & {
+  buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+}) {
+  const defaultClassNames = getDefaultClassNames()
+
+  return (
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn(
+        "bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+        String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
+        String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
+        className
+      )}
+      captionLayout={captionLayout}
+      formatters={{
+        formatMonthDropdown: (date) =>
+          date.toLocaleString("default", { month: "short" }),
+        ...formatters,
+      }}
+      classNames={{
+        root: cn("w-fit", defaultClassNames.root),
+        months: cn(
+          "flex gap-4 flex-col md:flex-row relative",
+          defaultClassNames.months
+        ),
+        month: cn("flex flex-col w-full gap-4", defaultClassNames.month),
+        nav: cn(
+          "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
+          defaultClassNames.nav
+        ),
+        button_previous: cn(
+          buttonVariants({ variant: buttonVariant }),
+          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          defaultClassNames.button_previous
+        ),
+        button_next: cn(
+          buttonVariants({ variant: buttonVariant }),
+          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          defaultClassNames.button_next
+        ),
+        month_caption: cn(
+          "flex items-center justify-center h-(--cell-size) w-full px-(--cell-size)",
+          defaultClassNames.month_caption
+        ),
+        dropdowns: cn(
+          "w-full flex items-center text-sm font-medium justify-center h-(--cell-size) gap-1.5",
+          defaultClassNames.dropdowns
+        ),
+        dropdown_root: cn(
+          "relative has-focus:border-ring border border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md",
+          defaultClassNames.dropdown_root
+        ),
+        dropdown: cn(
+          "absolute bg-popover inset-0 opacity-0",
+          defaultClassNames.dropdown
+        ),
+        caption_label: cn(
+          "select-none font-medium",
+          captionLayout === "label"
+            ? "text-sm"
+            : "rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8 [&>svg]:text-muted-foreground [&>svg]:size-3.5",
+          defaultClassNames.caption_label
+        ),
+        table: "w-full border-collapse",
+        weekdays: cn("flex", defaultClassNames.weekdays),
+        weekday: cn(
+          "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] select-none",
+          defaultClassNames.weekday
+        ),
+        week: cn("flex w-full mt-2", defaultClassNames.week),
+        week_number_header: cn(
+          "select-none w-(--cell-size)",
+          defaultClassNames.week_number_header
+        ),
+        week_number: cn(
+          "text-[0.8rem] select-none text-muted-foreground",
+          defaultClassNames.week_number
+        ),
+        day: cn(
+          "relative w-full h-full p-0 text-center [&:last-child[data-selected=true]_button]:rounded-r-md group/day aspect-square select-none",
+          props.showWeekNumber
+            ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-md"
+            : "[&:first-child[data-selected=true]_button]:rounded-l-md",
+          defaultClassNames.day
+        ),
+        range_start: cn(
+          "rounded-l-md bg-accent",
+          defaultClassNames.range_start
+        ),
+        range_middle: cn("rounded-none", defaultClassNames.range_middle),
+        range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
+        today: cn(
+          "bg-accent text-accent-foreground rounded-md data-[selected=true]:rounded-none",
+          defaultClassNames.today
+        ),
+        outside: cn(
+          "text-muted-foreground aria-selected:text-muted-foreground",
+          defaultClassNames.outside
+        ),
+        disabled: cn(
+          "text-muted-foreground opacity-50",
+          defaultClassNames.disabled
+        ),
+        hidden: cn("invisible", defaultClassNames.hidden),
+        ...classNames,
+      }}
+      components={{
+        Root: ({ className, rootRef, ...props }) => {
+          return (
+            <div
+              data-slot="calendar"
+              ref={rootRef}
+              className={cn(className)}
+              {...props}
+            />
+          )
+        },
+        Chevron: ({ className, orientation, ...props }) => {
+          if (orientation === "left") {
+            return (
+              <ChevronLeftIcon className={cn("size-4", className)} {...props} />
+            )
+          }
+
+          if (orientation === "right") {
+            return (
+              <ChevronRightIcon
+                className={cn("size-4", className)}
+                {...props}
+              />
+            )
+          }
+
+          return (
+            <ChevronDownIcon className={cn("size-4", className)} {...props} />
+          )
+        },
+        DayButton: CalendarDayButton,
+        WeekNumber: ({ children, ...props }) => {
+          return (
+            <td {...props}>
+              <div className="flex size-(--cell-size) items-center justify-center text-center">
+                {children}
+              </div>
+            </td>
+          )
+        },
+        ...components,
+      }}
+      {...props}
+    />
+  )
+}
+
+function CalendarDayButton({
+  className,
+  day,
+  modifiers,
+  ...props
+}: React.ComponentProps<typeof DayButton>) {
+  const defaultClassNames = getDefaultClassNames()
+
+  const ref = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => {
+    if (modifiers.focused) ref.current?.focus()
+  }, [modifiers.focused])
+
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      size="icon"
+      data-day={day.date.toLocaleDateString()}
+      data-selected-single={
+        modifiers.selected &&
+        !modifiers.range_start &&
+        !modifiers.range_end &&
+        !modifiers.range_middle
+      }
+      data-range-start={modifiers.range_start}
+      data-range-end={modifiers.range_end}
+      data-range-middle={modifiers.range_middle}
+      className={cn(
+        "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md [&>span]:text-xs [&>span]:opacity-70",
+        defaultClassNames.day,
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Calendar, CalendarDayButton }
+</file>
+
+<file path="src/components/ui/card.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+}
+</file>
+
+<file path="src/components/ui/checkbox.tsx">
+"use client"
+
+import * as React from "react"
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { CheckIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Checkbox({
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  return (
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        "peer border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    >
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="grid place-content-center text-current transition-none"
+      >
+        <CheckIcon className="size-3.5" />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  )
+}
+
+export { Checkbox }
+</file>
+
+<file path="src/components/ui/dialog.tsx">
+"use client"
+
+import * as React from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { XIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Dialog({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}
+
+function DialogTrigger({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+}
+
+function DialogPortal({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+}
+
+function DialogClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+}
+
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      data-slot="dialog-overlay"
+      className={cn(
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogContent({
+  className,
+  children,
+  showCloseButton = true,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean
+}) {
+  return (
+    <DialogPortal data-slot="dialog-portal">
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        data-slot="dialog-content"
+        className={cn(
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-lg",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close
+            data-slot="dialog-close"
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+}
+
+function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-header"
+      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      data-slot="dialog-title"
+      className={cn("text-lg leading-none font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      data-slot="dialog-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+}
+</file>
+
+<file path="src/components/ui/dropdown-menu.tsx">
+"use client"
+
+import * as React from "react"
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function DropdownMenu({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}
+
+function DropdownMenuPortal({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
+  return (
+    <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+  )
+}
+
+function DropdownMenuTrigger({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  return (
+    <DropdownMenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuContent({
+  className,
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        data-slot="dropdown-menu-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
+          className
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  )
+}
+
+function DropdownMenuGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
+  return (
+    <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
+  )
+}
+
+function DropdownMenuItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}) {
+  return (
+    <DropdownMenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      data-inset={inset}
+      data-variant={variant}
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  checked,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+  return (
+    <DropdownMenuPrimitive.CheckboxItem
+      data-slot="dropdown-menu-checkbox-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      checked={checked}
+      {...props}
+    >
+      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CheckIcon className="size-4" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.CheckboxItem>
+  )
+}
+
+function DropdownMenuRadioGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
+  return (
+    <DropdownMenuPrimitive.RadioGroup
+      data-slot="dropdown-menu-radio-group"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      data-slot="dropdown-menu-radio-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CircleIcon className="size-2 fill-current" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.RadioItem>
+  )
+}
+
+function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.Label
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(
+        "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn("bg-border -mx-1 my-1 h-px", className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="dropdown-menu-shortcut"
+      className={cn(
+        "text-muted-foreground ml-auto text-xs tracking-widest",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSub({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
+  return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />
+}
+
+function DropdownMenuSubTrigger({
+  className,
+  inset,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      data-slot="dropdown-menu-sub-trigger"
+      data-inset={inset}
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRightIcon className="ml-auto size-4" />
+    </DropdownMenuPrimitive.SubTrigger>
+  )
+}
+
+function DropdownMenuSubContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  return (
+    <DropdownMenuPrimitive.SubContent
+      data-slot="dropdown-menu-sub-content"
+      className={cn(
+        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+}
+</file>
+
+<file path="src/components/ui/form.tsx">
+"use client"
+
+import * as React from "react"
+import type * as LabelPrimitive from "@radix-ui/react-label"
+import { Slot } from "@radix-ui/react-slot"
+import {
+  Controller,
+  FormProvider,
+  useFormContext,
+  useFormState,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form"
+
+import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label"
+
+const Form = FormProvider
+
+type FormFieldContextValue<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
+  name: TName
+}
+
+const FormFieldContext = React.createContext<FormFieldContextValue>(
+  {} as FormFieldContextValue
+)
+
+const FormField = <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>({
+  ...props
+}: ControllerProps<TFieldValues, TName>) => {
+  return (
+    <FormFieldContext.Provider value={{ name: props.name }}>
+      <Controller {...props} />
+    </FormFieldContext.Provider>
+  )
+}
+
+const useFormField = () => {
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const { getFieldState } = useFormContext()
+  const formState = useFormState({ name: fieldContext.name })
+  const fieldState = getFieldState(fieldContext.name, formState)
+
+  if (!fieldContext) {
+    throw new Error("useFormField should be used within <FormField>")
+  }
+
+  const { id } = itemContext
+
+  return {
+    id,
+    name: fieldContext.name,
+    formItemId: `${id}-form-item`,
+    formDescriptionId: `${id}-form-item-description`,
+    formMessageId: `${id}-form-item-message`,
+    ...fieldState,
+  }
+}
+
+type FormItemContextValue = {
+  id: string
+}
+
+const FormItemContext = React.createContext<FormItemContextValue>(
+  {} as FormItemContextValue
+)
+
+function FormItem({ className, ...props }: React.ComponentProps<"div">) {
+  const id = React.useId()
+
+  return (
+    <FormItemContext.Provider value={{ id }}>
+      <div
+        data-slot="form-item"
+        className={cn("grid gap-2", className)}
+        {...props}
+      />
+    </FormItemContext.Provider>
+  )
+}
+
+function FormLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  const { error, formItemId } = useFormField()
+
+  return (
+    <Label
+      data-slot="form-label"
+      data-error={!!error}
+      className={cn("data-[error=true]:text-destructive", className)}
+      htmlFor={formItemId}
+      {...props}
+    />
+  )
+}
+
+function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+
+  return (
+    <Slot
+      data-slot="form-control"
+      id={formItemId}
+      aria-describedby={
+        !error
+          ? `${formDescriptionId}`
+          : `${formDescriptionId} ${formMessageId}`
+      }
+      aria-invalid={!!error}
+      {...props}
+    />
+  )
+}
+
+function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
+  const { formDescriptionId } = useFormField()
+
+  return (
+    <p
+      data-slot="form-description"
+      id={formDescriptionId}
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+  const { error, formMessageId } = useFormField()
+  const body = error ? String(error?.message ?? "") : props.children
+
+  if (!body) {
+    return null
+  }
+
+  return (
+    <p
+      data-slot="form-message"
+      id={formMessageId}
+      className={cn("text-destructive text-sm", className)}
+      {...props}
+    >
+      {body}
+    </p>
+  )
+}
+
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
+}
+</file>
+
+<file path="src/components/ui/input.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+</file>
+
+<file path="src/components/ui/label.tsx">
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+
+import { cn } from "@/lib/utils"
+
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+</file>
+
+<file path="src/components/ui/popover.tsx">
+"use client"
+
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+function Popover({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+}
+
+function PopoverTrigger({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}
+
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+  return (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
+}
+
+function PopoverAnchor({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+</file>
+
+<file path="src/components/ui/select.tsx">
+"use client"
+
+import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Select({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  return <SelectPrimitive.Root data-slot="select" {...props} />
+}
+
+function SelectGroup({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Group>) {
+  return <SelectPrimitive.Group data-slot="select-group" {...props} />
+}
+
+function SelectValue({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Value>) {
+  return <SelectPrimitive.Value data-slot="select-value" {...props} />
+}
+
+function SelectTrigger({
+  className,
+  size = "default",
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: "sm" | "default"
+}) {
+  return (
+    <SelectPrimitive.Trigger
+      data-slot="select-trigger"
+      data-size={size}
+      className={cn(
+        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDownIcon className="size-4 opacity-50" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+}
+
+function SelectContent({
+  className,
+  children,
+  position = "item-aligned",
+  align = "center",
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  return (
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Content
+        data-slot="select-content"
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
+          position === "popper" &&
+            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+          className
+        )}
+        position={position}
+        align={align}
+        {...props}
+      >
+        <SelectScrollUpButton />
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-1",
+            position === "popper" &&
+              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"
+          )}
+        >
+          {children}
+        </SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
+  )
+}
+
+function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+  return (
+    <SelectPrimitive.Label
+      data-slot="select-label"
+      className={cn("text-muted-foreground px-2 py-1.5 text-xs", className)}
+      {...props}
+    />
+  )
+}
+
+function SelectItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  return (
+    <SelectPrimitive.Item
+      data-slot="select-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        className
+      )}
+      {...props}
+    >
+      <span
+        data-slot="select-item-indicator"
+        className="absolute right-2 flex size-3.5 items-center justify-center"
+      >
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon className="size-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  )
+}
+
+function SelectSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+  return (
+    <SelectPrimitive.Separator
+      data-slot="select-separator"
+      className={cn("bg-border pointer-events-none -mx-1 my-1 h-px", className)}
+      {...props}
+    />
+  )
+}
+
+function SelectScrollUpButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+  return (
+    <SelectPrimitive.ScrollUpButton
+      data-slot="select-scroll-up-button"
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      {...props}
+    >
+      <ChevronUpIcon className="size-4" />
+    </SelectPrimitive.ScrollUpButton>
+  )
+}
+
+function SelectScrollDownButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+  return (
+    <SelectPrimitive.ScrollDownButton
+      data-slot="select-scroll-down-button"
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      {...props}
+    >
+      <ChevronDownIcon className="size-4" />
+    </SelectPrimitive.ScrollDownButton>
+  )
+}
+
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+}
+</file>
+
+<file path="src/components/ui/separator.tsx">
+"use client"
+
+import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "@/lib/utils"
+
+function Separator({
+  className,
+  orientation = "horizontal",
+  decorative = true,
+  ...props
+}: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
+  return (
+    <SeparatorPrimitive.Root
+      data-slot="separator"
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Separator }
+</file>
+
+<file path="src/components/ui/sheet.tsx">
+"use client"
+
+import * as React from "react"
+import * as SheetPrimitive from "@radix-ui/react-dialog"
+import { XIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
+  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+}
+
+function SheetTrigger({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+}
+
+function SheetClose({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+}
+
+function SheetPortal({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+}
+
+function SheetOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+  return (
+    <SheetPrimitive.Overlay
+      data-slot="sheet-overlay"
+      className={cn(
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SheetContent({
+  className,
+  children,
+  side = "right",
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: "top" | "right" | "bottom" | "left"
+}) {
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        data-slot="sheet-content"
+        className={cn(
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          side === "right" &&
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+          side === "left" &&
+            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+          side === "top" &&
+            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
+          side === "bottom" &&
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+          <XIcon className="size-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+}
+
+function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-header"
+      className={cn("flex flex-col gap-1.5 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-footer"
+      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+  return (
+    <SheetPrimitive.Title
+      data-slot="sheet-title"
+      className={cn("text-foreground font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+  return (
+    <SheetPrimitive.Description
+      data-slot="sheet-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+}
+</file>
+
+<file path="src/components/ui/skeleton.tsx">
+import { cn } from "@/lib/utils"
+
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="skeleton"
+      className={cn("bg-accent animate-pulse rounded-md", className)}
+      {...props}
+    />
+  )
+}
+
+export { Skeleton }
+</file>
+
+<file path="src/components/ui/sonner.tsx">
+"use client"
+
+import {
+  CircleCheckIcon,
+  InfoIcon,
+  Loader2Icon,
+  OctagonXIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
+import { useTheme } from "next-themes"
+import { Toaster as Sonner, type ToasterProps } from "sonner"
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      icons={{
+        success: <CircleCheckIcon className="size-4" />,
+        info: <InfoIcon className="size-4" />,
+        warning: <TriangleAlertIcon className="size-4" />,
+        error: <OctagonXIcon className="size-4" />,
+        loading: <Loader2Icon className="size-4 animate-spin" />,
+      }}
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
+      {...props}
+    />
+  )
+}
+
+export { Toaster }
+</file>
+
+<file path="src/components/ui/table.tsx">
+"use client"
+
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Table({ className, ...props }: React.ComponentProps<"table">) {
+  return (
+    <div
+      data-slot="table-container"
+      className="relative w-full overflow-x-auto"
+    >
+      <table
+        data-slot="table"
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  )
+}
+
+function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+  return (
+    <thead
+      data-slot="table-header"
+      className={cn("[&_tr]:border-b", className)}
+      {...props}
+    />
+  )
+}
+
+function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+  return (
+    <tbody
+      data-slot="table-body"
+      className={cn("[&_tr:last-child]:border-0", className)}
+      {...props}
+    />
+  )
+}
+
+function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
+  return (
+    <tfoot
+      data-slot="table-footer"
+      className={cn(
+        "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+  return (
+    <tr
+      data-slot="table-row"
+      className={cn(
+        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+  return (
+    <th
+      data-slot="table-head"
+      className={cn(
+        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+  return (
+    <td
+      data-slot="table-cell"
+      className={cn(
+        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TableCaption({
+  className,
+  ...props
+}: React.ComponentProps<"caption">) {
+  return (
+    <caption
+      data-slot="table-caption"
+      className={cn("text-muted-foreground mt-4 text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+}
+</file>
+
+<file path="src/components/ui/tabs.tsx">
+"use client"
+
+import * as React from "react"
+import * as TabsPrimitive from "@radix-ui/react-tabs"
+
+import { cn } from "@/lib/utils"
+
+function Tabs({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  return (
+    <TabsPrimitive.Root
+      data-slot="tabs"
+      className={cn("flex flex-col gap-2", className)}
+      {...props}
+    />
+  )
+}
+
+function TabsList({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.List>) {
+  return (
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      className={cn(
+        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TabsTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+  return (
+    <TabsPrimitive.Trigger
+      data-slot="tabs-trigger"
+      className={cn(
+        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TabsContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  return (
+    <TabsPrimitive.Content
+      data-slot="tabs-content"
+      className={cn("flex-1 outline-none", className)}
+      {...props}
+    />
+  )
+}
+
+export { Tabs, TabsList, TabsTrigger, TabsContent }
+</file>
+
+<file path="src/config/navigation.ts">
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Briefcase,
+  Users,
+  MapPin,
+  Receipt,
+  Wallet,
+  Tractor,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
+
+export interface NavItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
+  enabled: boolean;
+}
+
+export interface NavGroup {
+  id: string;
+  label: string;
+  items: NavItem[];
+}
+
+export const navigationConfig: NavGroup[] = [
+  {
+    id: "main",
+    label: "Main",
+    items: [
+      {
+        id: "dashboard",
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        enabled: true,
+      },
+    ],
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    items: [
+      {
+        id: "bookings",
+        label: "Bookings",
+        href: "/bookings",
+        icon: CalendarDays,
+        enabled: true,
+      },
+      {
+        id: "jobs",
+        label: "Jobs",
+        href: "/jobs",
+        icon: Briefcase,
+        enabled: true,
+      },
+    ],
+  },
+  {
+    id: "people",
+    label: "People & Land",
+    items: [
+      {
+        id: "customers",
+        label: "Customers",
+        href: "/customers",
+        icon: Users,
+        enabled: true,
+      },
+      {
+        id: "workers",
+        label: "Workers",
+        href: "/workers",
+        icon: Users,
+        enabled: true,
+      },
+    ],
+  },
+  {
+    id: "financial",
+    label: "Financial",
+    items: [
+      {
+        id: "billing",
+        label: "Billing",
+        href: "/billing",
+        icon: Receipt,
+        enabled: true,
+      },
+      {
+        id: "payroll",
+        label: "Payroll",
+        href: "/payroll",
+        icon: Wallet,
+        enabled: true,
+      },
+    ],
+  },
+  {
+    id: "assets",
+    label: "Assets & Services",
+    items: [
+      {
+        id: "machines",
+        label: "Machines",
+        href: "/machines",
+        icon: Tractor,
+        enabled: true,
+      },
+      {
+        id: "services",
+        label: "Services",
+        href: "/services",
+        icon: Wrench,
+        enabled: true,
+      },
+    ],
+  },
+];
+
+// Flatten navigation for quick access
+export const allNavItems = navigationConfig.flatMap((group) => group.items);
+
+// Get navigation item by ID
+export function getNavItem(id: string): NavItem | undefined {
+  return allNavItems.find((item) => item.id === id);
+}
+
+// Get navigation item by href
+export function getNavItemByHref(href: string): NavItem | undefined {
+  return allNavItems.find((item) => item.href === href);
+}
+</file>
+
+<file path="src/config/site.ts">
+export const siteConfig = {
+  name: "Agri-ERP",
+  description: "Agricultural Service Management System",
+  tagline: "Comprehensive management for bookings, jobs, billing, and payroll",
+  version: "1.0.0",
+  author: "Agri-ERP Team",
+
+  // Business settings
+  currency: "VND",
+  currencySymbol: "đ",
+  locale: "vi-VN",
+
+  // UI Settings
+  defaultPageSize: 20,
+  maxPageSize: 100,
+
+  // Feature flags
+  features: {
+    darkMode: true,
+    notifications: true,
+    exportData: true,
+    advancedSearch: true,
+  },
+};
+
+export type SiteConfig = typeof siteConfig;
+</file>
+
+<file path="src/lib/format.ts">
+/**
+ * Formatting utilities for currency, numbers, and dates
+ */
+
+/**
+ * Format a number as Vietnamese Dong (VND) currency
+ * @param value - The numeric value to format
+ * @param showSymbol - Whether to include the đ symbol (default: true)
+ * @returns Formatted string (e.g., "1.000.000 đ")
+ */
+export function formatCurrency(value: number, showSymbol: boolean = true): string {
+  // Format with Vietnamese thousand separator (.)
+  const formatted = value.toLocaleString('vi-VN');
+  return showSymbol ? `${formatted} đ` : formatted;
+}
+
+/**
+ * Parse a VND currency string to a number
+ * Handles formats like:
+ * - "1.000.000" → 1000000
+ * - "1,000,000" → 1000000
+ * - "1000000 đ" → 1000000
+ * - "1.000.000 đ" → 1000000
+ * @param value - The string to parse
+ * @returns Numeric value or 0 if invalid
+ */
+export function parseCurrency(value: string): number {
+  if (!value) return 0;
+
+  // Remove all non-numeric characters except decimal point
+  // First remove the đ symbol and any spaces
+  let cleaned = value.replace(/đ/g, '').trim();
+
+  // Remove thousand separators (both . and ,)
+  cleaned = cleaned.replace(/\./g, '').replace(/,/g, '');
+
+  // Parse to number
+  const parsed = parseFloat(cleaned);
+
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Format a number with Vietnamese thousand separators
+ * @param value - The numeric value to format
+ * @returns Formatted string (e.g., "1.000.000")
+ */
+export function formatNumber(value: number): string {
+  return value.toLocaleString('vi-VN');
+}
+
+/**
+ * Format a date in Vietnamese locale
+ * @param date - The date to format
+ * @param options - Intl.DateTimeFormatOptions
+ * @returns Formatted date string
+ */
+export function formatDate(
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }
+): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('vi-VN', options);
+}
+
+/**
+ * Format a date as short format (DD/MM/YYYY)
+ * @param date - The date to format
+ * @returns Formatted date string (e.g., "15/01/2026")
+ */
+export function formatDateShort(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Format a date with time
+ * @param date - The date to format
+ * @returns Formatted date-time string (e.g., "15/01/2026 14:30")
+ */
+export function formatDateTime(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Format a relative date (e.g., "2 days ago", "in 3 hours")
+ * @param date - The date to format
+ * @returns Relative time string
+ */
+export function formatRelativeDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 7) {
+    return formatDateShort(dateObj);
+  } else if (diffDays > 0) {
+    return `${diffDays} ngày trước`;
+  } else if (diffHours > 0) {
+    return `${diffHours} giờ trước`;
+  } else if (diffMins > 0) {
+    return `${diffMins} phút trước`;
+  } else if (diffSecs > 0) {
+    return `${diffSecs} giây trước`;
+  } else {
+    return 'Vừa xong';
+  }
+}
+</file>
+
+<file path="src/lib/utils.ts">
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="src/types/enums.ts">
+/**
+ * Status enums for the Agricultural ERP System
+ * These enums provide type safety and prevent typos in status values
+ */
+
+// Booking workflow statuses
+export enum BookingStatus {
+  New = "NEW",
+  InProgress = "IN_PROGRESS",
+  Blocked = "BLOCKED",
+  Completed = "COMPLETED",
+  Canceled = "CANCELED",
+}
+
+// Booking payment tracking
+export enum PaymentStatus {
+  PendingBill = "PENDING_BILL",
+  AddedBill = "ADDED_BILL",
+  FullyPaid = "FULLY_PAID",
+}
+
+// Job execution statuses
+export enum JobStatus {
+  New = "NEW",
+  InProgress = "IN_PROGRESS",
+  Blocked = "BLOCKED",
+  Completed = "COMPLETED",
+  Canceled = "CANCELED",
+}
+
+// Job payment tracking (for payroll)
+export enum JobPaymentStatus {
+  PendingPayroll = "PENDING_PAYROLL",
+  AddedPayroll = "ADDED_PAYROLL",
+  FullyPaid = "FULLY_PAID",
+}
+
+// Bill statuses
+export enum BillStatus {
+  Open = "OPEN",
+  PartialPaid = "PARTIAL_PAID",
+  Completed = "COMPLETED",
+}
+
+// Payroll statuses
+export enum PayrollStatus {
+  Open = "OPEN",
+  PartialPaid = "PARTIAL_PAID",
+  Completed = "COMPLETED",
+}
+
+// Machine availability
+export enum MachineStatus {
+  Available = "AVAILABLE",
+  InUse = "IN_USE",
+  Maintenance = "MAINTENANCE",
+}
+
+// Payment methods
+export enum PaymentMethod {
+  Cash = "CASH",
+  BankTransfer = "BANK_TRANSFER",
+}
+
+// Advance payment statuses
+export enum AdvanceStatus {
+  Unprocessed = "UNPROCESSED",
+  Processed = "PROCESSED",
+}
+
+// Generic status variants for badge styling
+export type StatusVariant =
+  | "new"
+  | "in-progress"
+  | "completed"
+  | "blocked"
+  | "canceled"
+  | "pending"
+  | "partial"
+  | "paid"
+  | "open"
+  | "available"
+  | "in-use"
+  | "maintenance";
+</file>
+
+<file path="src/types/index.ts">
+export * from "./enums";
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# claude code
+.claude
+
+# documents
+docs/
+</file>
+
+<file path="package.json">
+{
+  "name": "agr-pal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "next-themes": "^0.4.6",
+    "react": "19.2.3",
+    "react-day-picker": "^9.13.0",
+    "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="src/app/globals.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Color mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar colors */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Border radius tokens */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Font - Inter for professional agricultural ERP */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+}
+
+:root {
+  /* Agricultural ERP Brand Colors */
+  --radius: 0.75rem; /* 12px - rounded-xl */
+
+  /* Core Colors */
+  --background: 248 250 252; /* Slate 50 - Light gray background */
+  --foreground: 15 23 42; /* Slate 900 - Dark text */
+
+  /* Primary - Agricultural Green */
+  --primary: 21 128 61; /* Green 700 - Agricultural theme */
+  --primary-foreground: 255 255 255; /* White text on primary */
+
+  /* Secondary - Professional Slate */
+  --secondary: 30 41 59; /* Slate 800 - Professional */
+  --secondary-foreground: 248 250 252; /* Light text on secondary */
+
+  /* Accent - Machinery Yellow */
+  --accent: 234 179 8; /* Yellow 500 - Machinery accent */
+  --accent-foreground: 30 41 59; /* Dark text on accent */
+
+  /* Status Colors */
+  --success: 34 197 94; /* Green 500 - Completed status */
+  --warning: 245 158 11; /* Orange 500 - In-progress/pending */
+  --destructive: 239 68 68; /* Red 500 - Debt/Canceled */
+
+  /* Muted */
+  --muted: 241 245 249; /* Slate 100 */
+  --muted-foreground: 100 116 139; /* Slate 500 */
+
+  /* Card */
+  --card: 255 255 255; /* White */
+  --card-foreground: 15 23 42; /* Slate 900 */
+
+  /* Popover */
+  --popover: 255 255 255; /* White */
+  --popover-foreground: 15 23 42; /* Slate 900 */
+
+  /* Border & Input */
+  --border: 226 232 240; /* Slate 200 */
+  --input: 226 232 240; /* Slate 200 */
+  --ring: 21 128 61; /* Green 700 - Focus ring matches primary */
+
+  /* Chart Colors - Agricultural themed */
+  --chart-1: 34 197 94; /* Green 500 - Revenue/Growth */
+  --chart-2: 234 179 8; /* Yellow 500 - Machinery */
+  --chart-3: 59 130 246; /* Blue 500 - Water/Irrigation */
+  --chart-4: 168 85 247; /* Purple 500 - Services */
+  --chart-5: 236 72 153; /* Pink 500 - Additional metric */
+
+  /* Sidebar */
+  --sidebar: 255 255 255; /* White sidebar */
+  --sidebar-foreground: 15 23 42; /* Dark text */
+  --sidebar-primary: 21 128 61; /* Green active items */
+  --sidebar-primary-foreground: 255 255 255; /* White text on active */
+  --sidebar-accent: 240 253 244; /* Green 50 - Hover state */
+  --sidebar-accent-foreground: 21 128 61; /* Green text on hover */
+  --sidebar-border: 226 232 240; /* Slate 200 */
+  --sidebar-ring: 21 128 61; /* Green focus ring */
+}
+
+.dark {
+  /* Dark Mode - Agricultural ERP Theme */
+  --background: 15 23 42; /* Slate 900 - Dark background */
+  --foreground: 248 250 252; /* Slate 50 - Light text */
+
+  /* Primary - Lighter green for dark mode */
+  --primary: 34 197 94; /* Green 500 - Brighter for dark bg */
+  --primary-foreground: 15 23 42; /* Dark text on primary */
+
+  /* Secondary */
+  --secondary: 51 65 85; /* Slate 700 */
+  --secondary-foreground: 248 250 252; /* Light text */
+
+  /* Accent - Brighter yellow for dark mode */
+  --accent: 250 204 21; /* Yellow 400 - Brighter for dark bg */
+  --accent-foreground: 15 23 42; /* Dark text on accent */
+
+  /* Status Colors - Adjusted for dark mode */
+  --success: 34 197 94; /* Green 500 */
+  --warning: 251 146 60; /* Orange 400 */
+  --destructive: 248 113 113; /* Red 400 */
+
+  /* Muted */
+  --muted: 51 65 85; /* Slate 700 */
+  --muted-foreground: 148 163 184; /* Slate 400 */
+
+  /* Card */
+  --card: 30 41 59; /* Slate 800 */
+  --card-foreground: 248 250 252; /* Light text */
+
+  /* Popover */
+  --popover: 30 41 59; /* Slate 800 */
+  --popover-foreground: 248 250 252; /* Light text */
+
+  /* Border & Input */
+  --border: 51 65 85; /* Slate 700 */
+  --input: 51 65 85; /* Slate 700 */
+  --ring: 34 197 94; /* Green 500 - Focus ring */
+
+  /* Chart Colors - Brighter for dark mode */
+  --chart-1: 34 197 94; /* Green 500 */
+  --chart-2: 250 204 21; /* Yellow 400 */
+  --chart-3: 96 165 250; /* Blue 400 */
+  --chart-4: 192 132 252; /* Purple 400 */
+  --chart-5: 244 114 182; /* Pink 400 */
+
+  /* Sidebar */
+  --sidebar: 30 41 59; /* Slate 800 */
+  --sidebar-foreground: 248 250 252; /* Light text */
+  --sidebar-primary: 34 197 94; /* Green 500 */
+  --sidebar-primary-foreground: 15 23 42; /* Dark text on active */
+  --sidebar-accent: 51 65 85; /* Slate 700 - Hover state */
+  --sidebar-accent-foreground: 34 197 94; /* Green text on hover */
+  --sidebar-border: 51 65 85; /* Slate 700 */
+  --sidebar-ring: 34 197 94; /* Green focus ring */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Desktop-optimized interactions */
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Smooth focus transitions */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  transition: all 0.2s ease;
+}
+
+/* Touch targets for responsive views */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px; /* iOS recommended touch target */
+    min-width: 44px;
+  }
+}
+
+/* Agricultural ERP Custom Utilities */
+.text-success {
+  color: rgb(var(--success));
+}
+
+.text-warning {
+  color: rgb(var(--warning));
+}
+
+.bg-success {
+  background-color: rgb(var(--success));
+}
+
+.bg-warning {
+  background-color: rgb(var(--warning));
+}
+
+.border-success {
+  border-color: rgb(var(--success));
+}
+
+.border-warning {
+  border-color: rgb(var(--warning));
+}
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Agri-ERP | Agricultural Service Management System",
+  description: "Comprehensive agricultural service management system for bookings, jobs, billing, and payroll",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="src/app/page.tsx">
+import { redirect } from "next/navigation";
+
+export default function Home() {
+  redirect("/dashboard");
+}
+</file>
+
+</files>

@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// MASTERS (5 tables)
+// ============================================
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  unit        String   // "hectare", "ton", "hour"
+  description String?
+  price       Decimal  @db.Decimal(12, 2) // Current price
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  bookings  Booking[]
+  job_types Job_Type[]
+
+  @@map("services")
+}
+
+model Job_Type {
+  id                  String   @id @default(cuid())
+  service_id          String
+  name                String // "Driver", "Bagger", "Helper"
+  default_base_salary Decimal  @db.Decimal(12, 2)
+  created_at          DateTime @default(now())
+
+  service        Service         @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  worker_weights Worker_Weight[]
+  jobs           Job[]
+
+  @@index([service_id])
+  @@map("job_types")
+}
+
+model Worker {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  address    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  job_workers      Job_Worker[]
+  worker_weights   Worker_Weight[]
+  advance_payments Advance_Payment[]
+  payroll_sheets   Payroll_Sheet[]
+
+  @@map("workers")
+}
+
+model Worker_Weight {
+  id          String   @id @default(cuid())
+  worker_id   String
+  job_type_id String
+  weight      Decimal  @db.Decimal(5, 2) // 0.8 to 2.0 (multiplier)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  worker   Worker   @relation(fields: [worker_id], references: [id], onDelete: Cascade)
+  job_type Job_Type @relation(fields: [job_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([worker_id, job_type_id])
+  @@index([worker_id])
+  @@index([job_type_id])
+  @@map("worker_weights")
+}
+
+model Machine {
+  id            String        @id @default(cuid())
+  name          String
+  model         String?
+  type          String?
+  purchase_date DateTime?
+  status        MachineStatus @default(AVAILABLE)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+
+  jobs Job[]
+
+  @@map("machines")
+}
+
+enum MachineStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+// ============================================
+// OPERATIONS (5 tables)
+// ============================================
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  address    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lands    Land[]
+  bookings Booking[]
+  bills    Bill[]
+
+  @@map("customers")
+}
+
+model Land {
+  id          String   @id @default(cuid())
+  customer_id String
+  name        String // "Ruộng ông Bảy"
+  gps_lat     Decimal? @db.Decimal(10, 7)
+  gps_lng     Decimal? @db.Decimal(10, 7)
+  created_at  DateTime @default(now())
+
+  customer Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([customer_id])
+  @@map("lands")
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  customer_id    String
+  land_id        String
+  service_id     String
+  quantity       Decimal       @db.Decimal(10, 2)
+  captured_price Decimal       @db.Decimal(12, 2) // Price snapshot
+  total_amount   Decimal       @db.Decimal(12, 2) // qty × captured_price
+  status         BookingStatus @default(NEW)
+  payment_status PaymentStatus @default(PENDING_BILL)
+  bill_id        String?
+  notes          String?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  customer Customer @relation(fields: [customer_id], references: [id])
+  land     Land     @relation(fields: [land_id], references: [id])
+  service  Service  @relation(fields: [service_id], references: [id])
+  bill     Bill?    @relation(fields: [bill_id], references: [id])
+  jobs     Job[]
+
+  @@index([customer_id])
+  @@index([status])
+  @@index([payment_status])
+  @@index([bill_id])
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  NEW
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING_BILL
+  ADDED_BILL
+  FULLY_PAID
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  booking_id  String
+  job_type_id String
+  machine_id  String?
+  status      JobStatus @default(NEW)
+  notes       String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  booking     Booking      @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  job_type    Job_Type     @relation(fields: [job_type_id], references: [id])
+  machine     Machine?     @relation(fields: [machine_id], references: [id])
+  job_workers Job_Worker[]
+
+  @@index([booking_id])
+  @@index([status])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  NEW
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELED
+}
+
+model Job_Worker {
+  id             String           @id @default(cuid())
+  job_id         String
+  worker_id      String
+  actual_qty     Decimal          @db.Decimal(10, 2)
+  applied_base   Decimal          @db.Decimal(12, 2) // Snapshot
+  applied_weight Decimal          @db.Decimal(5, 2) // Snapshot
+  final_pay      Decimal          @db.Decimal(12, 2) // Calculated snapshot
+  payment_status JobPaymentStatus @default(PENDING_PAYROLL)
+  payroll_id     String?
+  created_at     DateTime         @default(now())
+
+  job     Job            @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  worker  Worker         @relation(fields: [worker_id], references: [id])
+  payroll Payroll_Sheet? @relation(fields: [payroll_id], references: [id])
+
+  @@index([job_id])
+  @@index([worker_id])
+  @@index([payment_status])
+  @@index([payroll_id])
+  @@map("job_workers")
+}
+
+enum JobPaymentStatus {
+  PENDING_PAYROLL
+  ADDED_PAYROLL
+  FULLY_PAID
+}
+
+// ============================================
+// FINANCIALS (3 tables)
+// ============================================
+
+model Bill {
+  id           String     @id @default(cuid())
+  customer_id  String
+  total_amount Decimal    @db.Decimal(12, 2)
+  total_paid   Decimal    @db.Decimal(12, 2) @default(0)
+  status       BillStatus @default(OPEN)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+
+  customer Customer  @relation(fields: [customer_id], references: [id])
+  bookings Booking[]
+
+  @@index([customer_id])
+  @@index([status])
+  @@map("bills")
+}
+
+enum BillStatus {
+  OPEN
+  PARTIAL_PAID
+  COMPLETED
+}
+
+model Advance_Payment {
+  id         String        @id @default(cuid())
+  worker_id  String
+  amount     Decimal       @db.Decimal(12, 2)
+  status     AdvanceStatus @default(UNPROCESSED)
+  payroll_id String?
+  notes      String?
+  created_at DateTime      @default(now())
+
+  worker  Worker         @relation(fields: [worker_id], references: [id])
+  payroll Payroll_Sheet? @relation(fields: [payroll_id], references: [id])
+
+  @@index([worker_id])
+  @@index([status])
+  @@index([payroll_id])
+  @@map("advance_payments")
+}
+
+enum AdvanceStatus {
+  UNPROCESSED
+  PROCESSED
+}
+
+model Payroll_Sheet {
+  id          String        @id @default(cuid())
+  worker_id   String
+  total_wages Decimal       @db.Decimal(12, 2)
+  total_adv   Decimal       @db.Decimal(12, 2) @default(0)
+  net_payable Decimal       @db.Decimal(12, 2) // total_wages - total_adv
+  total_paid  Decimal       @db.Decimal(12, 2) @default(0)
+  status      PayrollStatus @default(OPEN)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  worker           Worker            @relation(fields: [worker_id], references: [id])
+  job_workers      Job_Worker[]
+  advance_payments Advance_Payment[]
+
+  @@index([worker_id])
+  @@index([status])
+  @@map("payroll_sheets")
+}
+
+enum PayrollStatus {
+  OPEN
+  PARTIAL_PAID
+  COMPLETED
+}

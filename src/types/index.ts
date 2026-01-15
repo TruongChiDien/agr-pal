@@ -1,4 +1,5 @@
 export * from "./enums";
+export * from "./result";
 
 // Export Prisma generated types
 export type {

@@ -1,0 +1,173 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useToast } from '@/hooks/use-toast'
+import {
+  listJobs,
+  createJob,
+  updateJob,
+  deleteJob,
+  getJob,
+  createJobWorker,
+  updateJobWorker,
+  deleteJobWorker
+} from '@/actions/jobs'
+
+export function useJobs() {
+  return useQuery({
+    queryKey: ['jobs'],
+    queryFn: listJobs,
+  })
+}
+
+export function useJob(id: string) {
+  return useQuery({
+    queryKey: ['jobs', id],
+    queryFn: () => getJob(id),
+    enabled: !!id,
+  })
+}
+
+export function useCreateJob() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: createJob,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast({
+          title: 'Thành công',
+          description: 'Job đã được tạo',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+export function useUpdateJob() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => updateJob(id, data),
+    onSuccess: (result, { id }) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['jobs', id] })
+        toast({
+          title: 'Thành công',
+          description: 'Job đã được cập nhật',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+export function useDeleteJob() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: deleteJob,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast({
+          title: 'Thành công',
+          description: 'Job đã được xóa',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+// Job Worker hooks
+export function useCreateJobWorker() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: createJobWorker,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast({
+          title: 'Thành công',
+          description: 'Công nhân đã được thêm vào job',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+export function useUpdateJobWorker() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => updateJobWorker(id, data),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast({
+          title: 'Thành công',
+          description: 'Thông tin công nhân đã được cập nhật',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+export function useDeleteJobWorker() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: deleteJobWorker,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast({
+          title: 'Thành công',
+          description: 'Công nhân đã được xóa khỏi job',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}

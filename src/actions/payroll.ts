@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { createPayrollSchema } from '@/schemas/payroll'
-import { JobPaymentStatus, AdvanceStatus } from '@/types/enums'
+import { addPayrollPaymentSchema } from '@/schemas/payment'
+import { JobPaymentStatus, AdvanceStatus, PayrollStatus } from '@/types/enums'
 import type { Result } from '@/types/result'
 import type { Payroll_Sheet } from '@prisma/client'
 
@@ -13,20 +14,20 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
     await requireAuth()
     const validated = createPayrollSchema.parse(input)
 
-    // Validate job_workers
-    const jobWorkers = await prisma.job_Worker.findMany({
+    // Validate jobs (previously job_workers)
+    const jobs = await prisma.job.findMany({
       where: {
-        id: { in: validated.job_worker_ids },
+        id: { in: validated.job_ids },
         worker_id: validated.worker_id,
         payment_status: JobPaymentStatus.PendingPayroll,
       },
     })
 
-    if (jobWorkers.length !== validated.job_worker_ids.length) {
-      return { success: false, error: 'Một số job worker đã có trong phiếu lương hoặc không hợp lệ' }
+    if (jobs.length !== validated.job_ids.length) {
+      return { success: false, error: 'Một số công việc đã có trong phiếu lương hoặc không hợp lệ' }
     }
 
-    const total_wages = jobWorkers.reduce((sum, jw) => sum + Number(jw.final_pay), 0)
+    const total_wages = jobs.reduce((sum: number, job: any) => sum + Number(job.final_pay), 0)
 
     // Validate advance payments if provided
     let total_adv = 0
@@ -48,8 +49,9 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
 
     const net_payable = total_wages - total_adv
 
-    // Transaction: create payroll + update job_workers + update advances
-    const payroll = await prisma.$transaction(async (tx) => {
+    // Transaction: create payroll + update jobs + update advances
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    const payroll = (await prisma.$transaction(async (tx: any) => {
       const newPayroll = await tx.payroll_Sheet.create({
         data: {
           worker_id: validated.worker_id,
@@ -60,8 +62,8 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
         },
       })
 
-      await tx.job_Worker.updateMany({
-        where: { id: { in: validated.job_worker_ids } },
+      await tx.job.updateMany({
+        where: { id: { in: validated.job_ids } },
         data: {
           payroll_id: newPayroll.id,
           payment_status: JobPaymentStatus.AddedPayroll,
@@ -79,7 +81,7 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
       }
 
       return newPayroll
-    })
+    })) as Payroll_Sheet
 
     revalidatePath('/dashboard/payroll')
     revalidatePath('/dashboard/jobs')
@@ -97,18 +99,15 @@ export async function listPayrolls() {
   return await prisma.payroll_Sheet.findMany({
     include: {
       worker: true,
-      job_workers: {
+      jobs: {
         include: {
-          job: {
+          booking: {
             include: {
-              booking: {
-                include: {
-                  customer: true,
-                  service: true,
-                },
-              },
+              customer: true,
+              service: true,
             },
           },
+          job_type: true,
         },
       },
       advance_payments: true,
@@ -123,23 +122,24 @@ export async function getPayroll(id: string) {
     where: { id },
     include: {
       worker: true,
-      job_workers: {
+      jobs: {
         include: {
-          job: {
+          booking: {
             include: {
-              booking: {
-                include: {
-                  customer: true,
-                  land: true,
-                  service: true,
-                },
-              },
-              job_type: true,
+              customer: true,
+              land: true,
+              service: true,
             },
           },
+          job_type: true,
         },
       },
       advance_payments: true,
+      payments: {
+        orderBy: {
+          payment_date: 'desc',
+        },
+      },
     },
   })
 }
@@ -162,9 +162,10 @@ export async function deletePayroll(id: string): Promise<Result<void>> {
       return { success: false, error: 'Không thể xóa phiếu lương đã có thanh toán' }
     }
 
-    // Transaction: delete payroll + reset job_workers + reset advances
-    await prisma.$transaction(async (tx) => {
-      await tx.job_Worker.updateMany({
+    // Transaction: delete payroll + reset jobs + reset advances
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    await prisma.$transaction(async (tx: any) => {
+      await tx.job.updateMany({
         where: { payroll_id: id },
         data: {
           payroll_id: null,
@@ -193,5 +194,89 @@ export async function deletePayroll(id: string): Promise<Result<void>> {
       return { success: false, error: error.message }
     }
     return { success: false, error: 'Đã xảy ra lỗi khi xóa phiếu lương' }
+  }
+}
+
+export async function addPayrollPayment(input: unknown): Promise<Result<Payroll_Sheet>> {
+  try {
+    await requireAuth()
+    const validated = addPayrollPaymentSchema.parse(input)
+
+    // Get current payroll
+    const payroll = await prisma.payroll_Sheet.findUnique({
+      where: { id: validated.payroll_id },
+    })
+
+    if (!payroll) {
+      return { success: false, error: 'Phiếu lương không tồn tại' }
+    }
+
+    const netPayable = Number(payroll.net_payable)
+    const currentPaid = Number(payroll.total_paid)
+    const remainingBalance = netPayable - currentPaid
+
+    // Validate payment amount
+    if (validated.amount > remainingBalance) {
+      return {
+        success: false,
+        error: `Số tiền thanh toán (${validated.amount.toLocaleString('vi-VN')} đ) vượt quá số tiền còn lại (${remainingBalance.toLocaleString('vi-VN')} đ)`
+      }
+    }
+
+    // Calculate new total_paid and status
+    const newTotalPaid = currentPaid + validated.amount
+    let newStatus = payroll.status
+
+    if (newTotalPaid >= netPayable) {
+      newStatus = PayrollStatus.Completed
+    } else if (newTotalPaid > 0) {
+      newStatus = PayrollStatus.PartialPaid
+    }
+
+    // Transaction: create payment record + update payroll
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    const updatedPayroll = (await prisma.$transaction(async (tx: any) => {
+      // Create payment record
+      await tx.payroll_Payment.create({
+        data: {
+          payroll_id: validated.payroll_id,
+          amount: validated.amount,
+          payment_date: validated.payment_date,
+          method: validated.method,
+          notes: validated.notes || null,
+        },
+      })
+
+      // Update payroll
+      const updated = await tx.payroll_Sheet.update({
+        where: { id: validated.payroll_id },
+        data: {
+          total_paid: newTotalPaid,
+          status: newStatus,
+        },
+      })
+
+      // If payroll completed, update job payment status
+      if (newStatus === PayrollStatus.Completed) {
+        await tx.job.updateMany({
+          where: { payroll_id: validated.payroll_id },
+          data: {
+            payment_status: JobPaymentStatus.FullyPaid,
+          },
+        })
+      }
+
+      return updated
+    })) as Payroll_Sheet
+
+    revalidatePath('/dashboard/payroll')
+    revalidatePath(`/dashboard/payroll/${validated.payroll_id}`)
+    revalidatePath('/dashboard/jobs')
+    return { success: true, data: updatedPayroll }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Đã xảy ra lỗi khi thêm thanh toán' }
   }
 }

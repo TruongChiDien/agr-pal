@@ -87,7 +87,7 @@ export const navigationConfig: NavGroup[] = [
       {
         id: "billing",
         label: "Billing",
-        href: "/billing",
+        href: "/bills",
         icon: Receipt,
         enabled: true,
       },

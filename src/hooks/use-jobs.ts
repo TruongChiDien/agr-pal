@@ -6,9 +6,6 @@ import {
   updateJob,
   deleteJob,
   getJob,
-  createJobWorker,
-  updateJobWorker,
-  deleteJobWorker
 } from '@/actions/jobs'
 
 export function useJobs() {
@@ -87,79 +84,6 @@ export function useDeleteJob() {
         toast({
           title: 'Thành công',
           description: 'Job đã được xóa',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-// Job Worker hooks
-export function useCreateJobWorker() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: createJobWorker,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['jobs'] })
-        toast({
-          title: 'Thành công',
-          description: 'Công nhân đã được thêm vào job',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-export function useUpdateJobWorker() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: unknown }) => updateJobWorker(id, data),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['jobs'] })
-        toast({
-          title: 'Thành công',
-          description: 'Thông tin công nhân đã được cập nhật',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-export function useDeleteJobWorker() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: deleteJobWorker,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['jobs'] })
-        toast({
-          title: 'Thành công',
-          description: 'Công nhân đã được xóa khỏi job',
         })
       } else {
         toast({

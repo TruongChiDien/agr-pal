@@ -66,18 +66,56 @@ export async function deleteCustomer(id: string): Promise<Result<void>> {
 
 export async function listCustomers() {
   await requireAuth()
-  return await prisma.customer.findMany({
-    include: { lands: true },
+  const customers = await prisma.customer.findMany({
+    include: { lands: true, bills: true },
     orderBy: { name: 'asc' },
   })
+
+  // Convert Decimal to number for serialization
+  return customers.map(customer => ({
+    ...customer,
+    lands: customer.lands?.map(land => ({
+      ...land,
+      gps_lat: land.gps_lat ? Number(land.gps_lat) : null,
+      gps_lng: land.gps_lng ? Number(land.gps_lng) : null,
+    })),
+    bills: customer.bills?.map(bill => ({
+      ...bill,
+      total_amount: Number(bill.total_amount),
+      total_paid: Number(bill.total_paid),
+    })),
+  }))
 }
 
 export async function getCustomer(id: string) {
   await requireAuth()
-  return await prisma.customer.findUnique({
+  const customer = await prisma.customer.findUnique({
     where: { id },
     include: { lands: true, bookings: true, bills: true },
   })
+
+  if (!customer) return null
+
+  // Convert Decimal to number for serialization
+  return {
+    ...customer,
+    lands: customer.lands?.map(land => ({
+      ...land,
+      gps_lat: land.gps_lat ? Number(land.gps_lat) : null,
+      gps_lng: land.gps_lng ? Number(land.gps_lng) : null,
+    })),
+    bookings: customer.bookings?.map(booking => ({
+      ...booking,
+      quantity: Number(booking.quantity),
+      captured_price: Number(booking.captured_price),
+      total_amount: Number(booking.total_amount),
+    })),
+    bills: customer.bills?.map(bill => ({
+      ...bill,
+      total_amount: Number(bill.total_amount),
+      total_paid: Number(bill.total_paid),
+    })),
+  }
 }
 
 // Land CRUD
@@ -91,7 +129,16 @@ export async function createLand(input: unknown): Promise<Result<Land>> {
     })
 
     revalidatePath('/dashboard/customers')
-    return { success: true, data: land }
+
+    // Convert Decimal to number for serialization
+    return {
+      success: true,
+      data: {
+        ...land,
+        gps_lat: land.gps_lat ? Number(land.gps_lat) : null,
+        gps_lng: land.gps_lng ? Number(land.gps_lng) : null,
+      } as Land
+    }
   } catch (error) {
     if (error instanceof Error) {
       return { success: false, error: error.message }
@@ -111,7 +158,16 @@ export async function updateLand(id: string, input: unknown): Promise<Result<Lan
     })
 
     revalidatePath('/dashboard/customers')
-    return { success: true, data: land }
+
+    // Convert Decimal to number for serialization
+    return {
+      success: true,
+      data: {
+        ...land,
+        gps_lat: land.gps_lat ? Number(land.gps_lat) : null,
+        gps_lng: land.gps_lng ? Number(land.gps_lng) : null,
+      } as Land
+    }
   } catch (error) {
     if (error instanceof Error) {
       return { success: false, error: error.message }

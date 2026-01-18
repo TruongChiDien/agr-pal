@@ -23,7 +23,8 @@ export async function createBooking(input: unknown): Promise<Result<Booking>> {
     }
 
     const captured_price = validated.captured_price ?? Number(service.price)
-    const total_amount = validated.quantity * captured_price
+    const quantity = validated.quantity ?? 0
+    const total_amount = quantity * captured_price
 
     const booking = await prisma.booking.create({
       data: {
@@ -52,9 +53,30 @@ export async function updateBooking(id: string, input: unknown): Promise<Result<
     await requireAuth()
     const validated = updateBookingSchema.parse(input)
 
+    // Fetch current booking to recalculate total if quantity changes
+    const currentBooking = await prisma.booking.findUnique({
+      where: { id },
+      select: { captured_price: true, quantity: true },
+    })
+
+    if (!currentBooking) {
+      return { success: false, error: 'Booking không tồn tại' }
+    }
+
+    // Recalculate total_amount if quantity is being updated
+    let total_amount: number | undefined
+    if (validated.quantity !== undefined) {
+      const quantity = validated.quantity
+      const captured_price = Number(currentBooking.captured_price)
+      total_amount = quantity * captured_price
+    }
+
     const booking = await prisma.booking.update({
       where: { id },
-      data: validated,
+      data: {
+        ...validated,
+        ...(total_amount !== undefined && { total_amount }),
+      },
     })
 
     revalidatePath('/dashboard/bookings')
@@ -101,7 +123,11 @@ export async function listBookings() {
     include: {
       customer: true,
       land: true,
-      service: true,
+      service: {
+        include: {
+          job_types: true,
+        },
+      },
     },
     orderBy: { created_at: 'desc' },
   })
@@ -115,7 +141,16 @@ export async function getBooking(id: string) {
       customer: true,
       land: true,
       service: true,
-      jobs: true,
+      jobs: {
+        include: {
+          job_type: {
+            include: {
+              service: true,
+            },
+          },
+          worker: true,
+        },
+      },
       bill: true,
     },
   })

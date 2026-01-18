@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-import { listPayrolls, createPayroll, deletePayroll, getPayroll } from '@/actions/payroll'
+import { listPayrolls, createPayroll, deletePayroll, getPayroll, addPayrollPayment } from '@/actions/payroll'
 
 export function usePayrolls() {
   return useQuery({
@@ -63,6 +63,18 @@ export function useDeletePayroll() {
           variant: 'destructive',
         })
       }
+    },
+  })
+}
+
+export function useAddPayrollPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: addPayrollPayment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] })
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 }

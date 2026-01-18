@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { createBillSchema } from '@/schemas/bill'
-import { PaymentStatus } from '@/types/enums'
+import { addBillPaymentSchema } from '@/schemas/payment'
+import { PaymentStatus, BillStatus } from '@/types/enums'
 import type { Result } from '@/types/result'
 import type { Bill } from '@prisma/client'
 
@@ -26,13 +27,25 @@ export async function createBill(input: unknown): Promise<Result<Bill>> {
       return { success: false, error: 'Một số booking đã có hóa đơn hoặc không hợp lệ' }
     }
 
-    const total_amount = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0)
+    const subtotal = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0)
+    const discount_amount = validated.discount_amount || 0
+
+    // Validate discount doesn't exceed subtotal
+    if (discount_amount > subtotal) {
+      return { success: false, error: 'Số tiền giảm giá không thể lớn hơn tổng tiền hàng' }
+    }
+
+    const total_amount = subtotal - discount_amount
 
     // Transaction: create bill + update bookings
-    const bill = await prisma.$transaction(async (tx) => {
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    const bill = (await prisma.$transaction(async (tx: any) => {
       const newBill = await tx.bill.create({
         data: {
           customer_id: validated.customer_id,
+          subtotal,
+          discount_amount,
+          discount_reason: validated.discount_reason || null,
           total_amount,
           total_paid: 0,
         },
@@ -47,7 +60,7 @@ export async function createBill(input: unknown): Promise<Result<Bill>> {
       })
 
       return newBill
-    })
+    })) as Bill
 
     revalidatePath('/dashboard/bills')
     revalidatePath('/dashboard/bookings')
@@ -83,6 +96,11 @@ export async function getBill(id: string) {
           service: true,
         },
       },
+      payments: {
+        orderBy: {
+          payment_date: 'desc',
+        },
+      },
     },
   })
 }
@@ -106,7 +124,8 @@ export async function deleteBill(id: string): Promise<Result<void>> {
     }
 
     // Transaction: delete bill + reset bookings
-    await prisma.$transaction(async (tx) => {
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    await prisma.$transaction(async (tx: any) => {
       await tx.booking.updateMany({
         where: { bill_id: id },
         data: {
@@ -128,5 +147,90 @@ export async function deleteBill(id: string): Promise<Result<void>> {
       return { success: false, error: error.message }
     }
     return { success: false, error: 'Đã xảy ra lỗi khi xóa hóa đơn' }
+  }
+}
+
+export async function addBillPayment(input: unknown): Promise<Result<Bill>> {
+  try {
+    await requireAuth()
+    const validated = addBillPaymentSchema.parse(input)
+
+    // Get current bill
+    const bill = await prisma.bill.findUnique({
+      where: { id: validated.bill_id },
+    })
+
+    if (!bill) {
+      return { success: false, error: 'Hóa đơn không tồn tại' }
+    }
+
+    const totalAmount = Number(bill.total_amount)
+    const currentPaid = Number(bill.total_paid)
+    const remainingBalance = totalAmount - currentPaid
+
+    // Validate payment amount
+    if (validated.amount > remainingBalance) {
+      return {
+        success: false,
+        error: `Số tiền thanh toán (${validated.amount.toLocaleString('vi-VN')} đ) vượt quá số tiền còn lại (${remainingBalance.toLocaleString('vi-VN')} đ)`
+      }
+    }
+
+    // Calculate new total_paid and status
+    const newTotalPaid = currentPaid + validated.amount
+    let newStatus = bill.status
+
+    if (newTotalPaid >= totalAmount) {
+      newStatus = BillStatus.Completed
+    } else if (newTotalPaid > 0) {
+      newStatus = BillStatus.PartialPaid
+    }
+
+    // Transaction: create payment record + update bill
+    // @ts-expect-error - Prisma v7 transaction callback type mismatch
+    const updatedBill = (await prisma.$transaction(async (tx: any) => {
+      // Create payment record
+      await tx.billPayment.create({
+        data: {
+          bill_id: validated.bill_id,
+          amount: validated.amount,
+          payment_date: validated.payment_date,
+          method: validated.method,
+          notes: validated.notes || null,
+        },
+      })
+
+      // Update bill
+      return await tx.bill.update({
+        where: { id: validated.bill_id },
+        data: {
+          total_paid: newTotalPaid,
+          status: newStatus,
+        },
+        include: {
+          customer: true,
+          bookings: {
+            include: {
+              land: true,
+              service: true,
+            },
+          },
+          payments: {
+            orderBy: {
+              payment_date: 'desc',
+            },
+          },
+        },
+      })
+    })) as Bill
+
+    revalidatePath('/dashboard/bills')
+    revalidatePath(`/dashboard/bills/${validated.bill_id}`)
+    return { success: true, data: updatedBill }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Đã xảy ra lỗi khi thêm thanh toán' }
   }
 }

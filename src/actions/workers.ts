@@ -97,16 +97,12 @@ export async function getWorker(id: string) {
           },
         },
       },
-      job_workers: {
+      jobs: {
         include: {
-          job: {
+          booking: {
             include: {
-              booking: {
-                include: {
-                  customer: true,
-                  service: true,
-                },
-              },
+              customer: true,
+              service: true,
             },
           },
         },

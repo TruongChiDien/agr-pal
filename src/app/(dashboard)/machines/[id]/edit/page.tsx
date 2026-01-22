@@ -3,7 +3,7 @@
 import { use, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMachine, useUpdateMachine } from "@/hooks/use-machines";
 import { updateMachineSchema } from "@/schemas/machine";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -20,12 +20,16 @@ type UpdateMachineInput = z.infer<typeof updateMachineSchema>;
 
 export default function EditMachinePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: machine, isLoading } = useMachine(id);
   const updateMachine = useUpdateMachine();
 
   const form = useForm<UpdateMachineInput>({
     resolver: zodResolver(updateMachineSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       model: "",
@@ -52,7 +56,7 @@ export default function EditMachinePage({ params }: { params: Promise<{ id: stri
     await updateMachine.mutateAsync(
       { id, data },
       {
-        onSuccess: () => router.push(`/machines/${id}`),
+        onSuccess: () => router.push(redirectTo || `/machines/${id}`),
       }
     );
   };

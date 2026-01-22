@@ -1,14 +1,22 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMachine } from "@/hooks/use-machines";
+import { useMachine, useDeleteMachine } from "@/hooks/use-machines";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatDateShort } from "@/lib/format";
-import { Edit, ArrowLeft } from "lucide-react";
+import { Edit, ArrowLeft, Trash2 } from "lucide-react";
 import { MachineStatus } from "@/types/enums";
 
 const statusConfig = {
@@ -21,6 +29,17 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { id } = use(params);
   const { data: machine, isLoading } = useMachine(id);
+  const deleteMachine = useDeleteMachine();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    await deleteMachine.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        router.push("/machines");
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -44,9 +63,9 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
           title="Không tìm thấy"
           description="Máy không tồn tại hoặc đã bị xóa"
           actions={
-            <Button variant="outline" onClick={() => router.push("/machines")}>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách
+              Quay lại
             </Button>
           }
         >
@@ -71,11 +90,15 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
         description={`Mã máy: ${machine.id}`}
         actions={
           <div className="flex gap-2">
-            <Button onClick={() => router.push(`/machines/${id}/edit`)}>
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
+            <Button variant="outline" onClick={() => router.push(`/machines/${id}/edit`)}>
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
             </Button>
-            <Button variant="outline" onClick={() => router.push("/machines")}>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
@@ -121,6 +144,30 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Future: Job history, maintenance logs */}
       </ContentSection>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa máy "{machine.name}"? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteMachine.isPending}
+            >
+              {deleteMachine.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

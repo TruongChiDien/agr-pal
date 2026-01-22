@@ -3,7 +3,7 @@
 import { use, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useService, useUpdateService } from "@/hooks/use-services";
 import { updateServiceSchema } from "@/schemas/service";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -18,6 +18,8 @@ type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
 
 export default function EditServicePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: service, isLoading } = useService(id);
   const updateService = useUpdateService();
@@ -48,7 +50,7 @@ export default function EditServicePage({ params }: { params: Promise<{ id: stri
     await updateService.mutateAsync(
       { id, data },
       {
-        onSuccess: () => router.push(`/services/${id}`),
+        onSuccess: () => router.push(redirectTo || `/services/${id}`),
       }
     );
   };

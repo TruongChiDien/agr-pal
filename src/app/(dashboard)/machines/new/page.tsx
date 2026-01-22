@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateMachine } from "@/hooks/use-machines";
 import { createMachineSchema } from "@/schemas/machine";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -17,10 +17,14 @@ type CreateMachineInput = z.infer<typeof createMachineSchema>;
 
 export default function CreateMachinePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const createMachine = useCreateMachine();
 
   const form = useForm<CreateMachineInput>({
     resolver: zodResolver(createMachineSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       model: "",
@@ -31,7 +35,11 @@ export default function CreateMachinePage() {
 
   const onSubmit = async (data: CreateMachineInput) => {
     await createMachine.mutateAsync(data, {
-      onSuccess: () => router.push("/machines"),
+      onSuccess: (result) => {
+        if (result.success && result.data?.id) {
+          router.push(redirectTo || `/machines/${result.data.id}`);
+        }
+      },
     });
   };
 

@@ -185,6 +185,7 @@ export function useCreateAdvancePayment() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['workers'] })
         queryClient.invalidateQueries({ queryKey: ['payrolls'] })
+        queryClient.invalidateQueries({ queryKey: ['advances'] })
         toast({
           title: 'Thành công',
           description: 'Tạm ứng đã được tạo',
@@ -210,6 +211,7 @@ export function useDeleteAdvancePayment() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['workers'] })
         queryClient.invalidateQueries({ queryKey: ['payrolls'] })
+        queryClient.invalidateQueries({ queryKey: ['advances'] })
         toast({
           title: 'Thành công',
           description: 'Tạm ứng đã được xóa',

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const advances = await prisma.advance_Payment.findMany({
       where: {
         worker_id: workerId,
-        ...(status && { status: status }),
+        ...(status && { status: status as any }),
       },
       orderBy: {
         created_at: 'desc',

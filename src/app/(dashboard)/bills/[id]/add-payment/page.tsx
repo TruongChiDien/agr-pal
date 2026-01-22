@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useBill, useAddBillPayment } from "@/hooks/use-bills";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ type AddBillPaymentInput = z.infer<typeof addBillPaymentSchema>;
 export default function AddBillPaymentPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const billId = params.id as string;
   const { data: bill, isLoading } = useBill(billId);
   const addPayment = useAddBillPayment();
@@ -46,6 +48,8 @@ export default function AddBillPaymentPage() {
 
   const form = useForm<AddBillPaymentInput>({
     resolver: zodResolver(addBillPaymentSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       bill_id: billId,
       amount: 0,
@@ -117,7 +121,8 @@ export default function AddBillPaymentPage() {
           title: "Thành công",
           description: "Đã thêm thanh toán",
         });
-        router.push(`/bills/${billId}`);
+        // Redirect to specified path or default to bill detail page
+        router.push(redirectTo || `/bills/${billId}`);
       } else {
         toast({
           title: "Lỗi",

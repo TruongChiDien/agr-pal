@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useCustomers, useDeleteCustomer } from "@/hooks/use-customers";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/format";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { formatDateShort } from "@/lib/format";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,24 +18,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Customer, Land, Bill } from "@prisma/client";
+import type { Customer, Land, Bill } from "@/types";
 
-type CustomerWithRelations = Customer & {
-  lands?: Land[];
-  bills?: Bill[];
+type LandWithNumbers = Omit<Land, 'gps_lat' | 'gps_lng'> & {
+  gps_lat: number | null;
+  gps_lng: number | null;
 };
 
-// Calculate total debt from bills (OPEN + PARTIAL_PAID)
-function calculateDebt(bills?: Bill[]): number {
-  if (!bills) return 0;
-  return bills
-    .filter((b) => b.status !== "COMPLETED")
-    .reduce((sum, b) => {
-      const totalAmount = Number(b.total_amount);
-      const totalPaid = Number(b.total_paid);
-      return sum + (totalAmount - totalPaid);
-    }, 0);
-}
+type BillWithNumbers = Omit<Bill, 'total_amount' | 'total_paid' | 'discount_amount' | 'subtotal'> & {
+  total_amount: number;
+  total_paid: number;
+  discount_amount: number;
+  subtotal: number;
+};
+
+type CustomerWithRelations = Customer & {
+  lands?: LandWithNumbers[];
+  bills?: BillWithNumbers[];
+};
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function CustomersPage() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -79,21 +81,19 @@ export default function CustomersPage() {
     }
   };
 
+  // Filter data by search query
+  const filteredData = customers
+    ? customers.filter((customer) =>
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   // Sort data
-  const sortedData = customers ? [...customers].sort((a, b) => {
+  const sortedData = filteredData.sort((a, b) => {
     if (!sortKey || !sortDirection) return 0;
 
-    let aValue: any;
-    let bValue: any;
-
-    // Special handling for debt column
-    if (sortKey === "debt") {
-      aValue = calculateDebt(a.bills);
-      bValue = calculateDebt(b.bills);
-    } else {
-      aValue = (a as any)[sortKey];
-      bValue = (b as any)[sortKey];
-    }
+    const aValue = (a as any)[sortKey];
+    const bValue = (b as any)[sortKey];
 
     if (aValue instanceof Date && bValue instanceof Date) {
       return sortDirection === "asc"
@@ -112,7 +112,7 @@ export default function CustomersPage() {
     }
 
     return 0;
-  }) : [];
+  });
 
   // Paginate data
   const startIndex = (currentPage - 1) * pageSize;
@@ -147,25 +147,13 @@ export default function CustomersPage() {
       ),
     },
     {
-      key: "debt",
-      label: "Công nợ",
-      align: "right",
-      width: "150px",
+      key: "created_at",
+      label: "Ngày tạo",
+      width: "110px",
       sortable: true,
-      render: (item) => {
-        const debt = calculateDebt(item.bills);
-        return (
-          <span
-            className={
-              debt > 0
-                ? "font-bold text-destructive"
-                : "text-muted-foreground"
-            }
-          >
-            {formatCurrency(debt)}
-          </span>
-        );
-      },
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">{formatDateShort(item.created_at)}</span>
+      ),
     },
     {
       key: "actions",
@@ -179,7 +167,7 @@ export default function CustomersPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/customers/${item.id}/edit`);
+              router.push(`/customers/${item.id}/edit?redirect=${encodeURIComponent(`/customers/${item.id}`)}`);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -214,10 +202,24 @@ export default function CustomersPage() {
         title="Khách hàng"
         description="Quản lý thông tin khách hàng và thửa ruộng"
         actions={
-          <Button onClick={() => router.push("/customers/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Thêm khách hàng
-          </Button>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm theo tên..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
+                className="pl-8 w-[250px]"
+              />
+            </div>
+            <Button onClick={() => router.push("/customers/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm khách hàng
+            </Button>
+          </div>
         }
       >
         <DataTable

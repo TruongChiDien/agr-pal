@@ -1,10 +1,10 @@
 "use client";
 
-import { use, useEffect, useMemo } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useBooking, useUpdateBooking } from "@/hooks/use-bookings";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
 import { useCustomers } from "@/hooks/use-customers";
 import { updateBookingSchema } from "@/schemas/booking";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -27,11 +27,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { BookingStatus } from "@/types/enums";
 import { formatCurrency } from "@/lib/format";
 import { z } from "zod";
+import { checkBookingIncompleteJobs } from "@/actions/bookings";
 
 type UpdateBookingInput = z.infer<typeof updateBookingSchema>;
 
@@ -41,13 +50,21 @@ export default function EditBookingPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: booking, isLoading } = useBooking(id);
   const { data: customers } = useCustomers();
-  const updateBooking = useUpdateBooking();
+  const updateBookingWithJobs = useUpdateBookingWithJobs();
+
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingData, setPendingData] = useState<UpdateBookingInput | null>(null);
+  const [incompleteJobCount, setIncompleteJobCount] = useState(0);
 
   const form = useForm<UpdateBookingInput>({
     resolver: zodResolver(updateBookingSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       status: undefined,
       land_id: undefined,
@@ -89,12 +106,51 @@ export default function EditBookingPage({
       notes: data.notes || undefined,
     };
 
-    await updateBooking.mutateAsync(
-      { id, data: cleanedData },
+    // If changing to COMPLETED, check for incomplete jobs
+    if (cleanedData.status === BookingStatus.Completed && booking?.status !== BookingStatus.Completed) {
+      const result = await checkBookingIncompleteJobs(id);
+      if (result.success && result.data.hasIncompleteJobs) {
+        // Show confirmation dialog
+        setPendingData(cleanedData);
+        setIncompleteJobCount(result.data.jobCount);
+        setConfirmDialogOpen(true);
+        return;
+      }
+    }
+
+    // Normal update (no incomplete jobs or not completing)
+    await updateBookingWithJobs.mutateAsync(
+      { id, data: cleanedData, completeJobs: false },
       {
-        onSuccess: () => router.push(`/bookings/${id}`),
+        onSuccess: () => router.push(redirectTo || `/bookings/${id}`),
       }
     );
+  };
+
+  const handleConfirmCompleteJobs = async () => {
+    if (pendingData) {
+      await updateBookingWithJobs.mutateAsync(
+        { id, data: pendingData, completeJobs: true },
+        {
+          onSuccess: () => router.push(redirectTo || `/bookings/${id}`),
+        }
+      );
+      setConfirmDialogOpen(false);
+      setPendingData(null);
+    }
+  };
+
+  const handleDeclineCompleteJobs = async () => {
+    if (pendingData) {
+      await updateBookingWithJobs.mutateAsync(
+        { id, data: pendingData, completeJobs: false },
+        {
+          onSuccess: () => router.push(redirectTo || `/bookings/${id}`),
+        }
+      );
+      setConfirmDialogOpen(false);
+      setPendingData(null);
+    }
   };
 
   if (isLoading) {
@@ -329,8 +385,8 @@ export default function EditBookingPage({
             />
 
             <div className="flex gap-2">
-              <Button type="submit" disabled={updateBooking.isPending || isLocked}>
-                {updateBooking.isPending ? "Đang cập nhật..." : "Cập nhật"}
+              <Button type="submit" disabled={updateBookingWithJobs.isPending || isLocked}>
+                {updateBookingWithJobs.isPending ? "Đang cập nhật..." : "Cập nhật"}
               </Button>
               <Button
                 type="button"
@@ -343,6 +399,36 @@ export default function EditBookingPage({
           </form>
         </Form>
       </ContentSection>
+
+      {/* Confirmation Dialog for Completing Jobs */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hoàn thành các công việc?</DialogTitle>
+            <DialogDescription>
+              Đơn hàng này có {incompleteJobCount} công việc chưa hoàn thành (trạng thái Mới hoặc Đang xử lý).
+              <br />
+              <br />
+              Bạn có muốn đánh dấu tất cả các công việc này là Hoàn thành không?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeclineCompleteJobs}
+              disabled={updateBookingWithJobs.isPending}
+            >
+              Không, chỉ cập nhật đơn hàng
+            </Button>
+            <Button
+              onClick={handleConfirmCompleteJobs}
+              disabled={updateBookingWithJobs.isPending}
+            >
+              {updateBookingWithJobs.isPending ? "Đang cập nhật..." : "Có, hoàn thành tất cả"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

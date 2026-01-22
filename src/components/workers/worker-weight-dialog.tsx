@@ -58,6 +58,8 @@ export function WorkerWeightDialog({
 
   const form = useForm<CreateWorkerWeightInput>({
     resolver: zodResolver(createWorkerWeightSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       worker_id: workerId,
       job_type_id: "",

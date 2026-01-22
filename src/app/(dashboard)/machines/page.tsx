@@ -150,7 +150,7 @@ export default function MachinesPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/machines/${item.id}/edit`);
+              router.push(`/machines/${item.id}/edit?redirect=${encodeURIComponent(`/machines/${item.id}`)}`);
             }}
           >
             <Edit className="h-4 w-4" />

@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateWorker } from "@/hooks/use-workers";
 import { createWorkerSchema } from "@/schemas/worker";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -16,10 +16,14 @@ type CreateWorkerInput = z.infer<typeof createWorkerSchema>;
 
 export default function CreateWorkerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const createWorker = useCreateWorker();
 
   const form = useForm<CreateWorkerInput>({
     resolver: zodResolver(createWorkerSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       phone: "",
@@ -29,7 +33,11 @@ export default function CreateWorkerPage() {
 
   const onSubmit = async (data: CreateWorkerInput) => {
     await createWorker.mutateAsync(data, {
-      onSuccess: () => router.push("/workers"),
+      onSuccess: (result) => {
+        if (result.success && result.data?.id) {
+          router.push(redirectTo || `/workers/${result.data.id}`);
+        }
+      },
     });
   };
 

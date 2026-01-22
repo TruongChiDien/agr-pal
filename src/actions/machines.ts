@@ -98,11 +98,7 @@ export async function getMachine(id: string) {
             },
           },
           job_type: true,
-          job_workers: {
-            include: {
-              worker: true,
-            },
-          },
+          worker: true,
         },
         orderBy: { created_at: 'desc' },
       },

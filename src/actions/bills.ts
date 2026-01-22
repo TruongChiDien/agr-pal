@@ -38,7 +38,6 @@ export async function createBill(input: unknown): Promise<Result<Bill>> {
     const total_amount = subtotal - discount_amount
 
     // Transaction: create bill + update bookings
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     const bill = (await prisma.$transaction(async (tx: any) => {
       const newBill = await tx.bill.create({
         data: {
@@ -124,7 +123,6 @@ export async function deleteBill(id: string): Promise<Result<void>> {
     }
 
     // Transaction: delete bill + reset bookings
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     await prisma.$transaction(async (tx: any) => {
       await tx.booking.updateMany({
         where: { bill_id: id },
@@ -187,7 +185,6 @@ export async function addBillPayment(input: unknown): Promise<Result<Bill>> {
     }
 
     // Transaction: create payment record + update bill
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     const updatedBill = (await prisma.$transaction(async (tx: any) => {
       // Create payment record
       await tx.billPayment.create({

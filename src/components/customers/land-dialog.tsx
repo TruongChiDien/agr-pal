@@ -48,6 +48,8 @@ export function LandDialog({
 
   const form = useForm<CreateLandInput>({
     resolver: zodResolver(createLandSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       customer_id: customerId,
       name: "",

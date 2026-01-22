@@ -1,8 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePayroll } from "@/hooks/use-payroll";
+import { usePayroll, useDeletePayroll } from "@/hooks/use-payroll";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,17 @@ import { StatusBadge } from "@/components/status/status-badge";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { PayrollPaymentHistory } from "@/components/payroll/payroll-payment-history";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { PayrollStatus } from "@/types/enums";
-import type { Job, Booking, Customer, Land, Service, Job_Type, Advance_Payment, Payroll_Payment } from "@prisma/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { Job, Booking, Customer, Land, Service, Job_Type, Advance_Payment } from "@prisma/client";
 
 type JobWithRelations = Job & {
   booking: Booking & {
@@ -61,6 +69,17 @@ export default function PayrollDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const { data: payroll, isLoading } = usePayroll(id);
+  const deletePayroll = useDeletePayroll();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    await deletePayroll.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        router.push("/payroll");
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -80,9 +99,9 @@ export default function PayrollDetailPage({
         <ContentSection title="Không tìm thấy" description="Phiếu lương không tồn tại">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <p className="text-muted-foreground">Phiếu lương không tồn tại hoặc đã bị xóa</p>
-            <Button onClick={() => router.push("/payroll")}>
+            <Button onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách
+              Quay lại
             </Button>
           </div>
         </ContentSection>
@@ -222,10 +241,16 @@ export default function PayrollDetailPage({
         title="Chi tiết phiếu lương"
         description={`Phiếu lương cho ${payroll.worker.name}`}
         actions={
-          <Button variant="outline" onClick={() => router.push("/payroll")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -304,7 +329,7 @@ export default function PayrollDetailPage({
                   />
                 </div>
                 {balance > 0 && (
-                  <Button onClick={() => router.push(`/payroll/${id}/add-payment`)}>
+                  <Button onClick={() => router.push(`/payroll/${id}/add-payment?redirect=${encodeURIComponent(`/payroll/${id}`)}`)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm thanh toán
                   </Button>
@@ -373,9 +398,33 @@ export default function PayrollDetailPage({
           )}
 
           {/* Table 3: Payment History */}
-          <PayrollPaymentHistory payments={(payroll.payments || []) as Payroll_Payment[]} />
+          <PayrollPaymentHistory payments={payroll.payments || []} />
         </div>
       </ContentSection>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa phiếu lương cho công nhân "{payroll.worker.name}"? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deletePayroll.isPending}
+            >
+              {deletePayroll.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

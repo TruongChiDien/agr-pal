@@ -50,7 +50,6 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
     const net_payable = total_wages - total_adv
 
     // Transaction: create payroll + update jobs + update advances
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     const payroll = (await prisma.$transaction(async (tx: any) => {
       const newPayroll = await tx.payroll_Sheet.create({
         data: {
@@ -163,7 +162,6 @@ export async function deletePayroll(id: string): Promise<Result<void>> {
     }
 
     // Transaction: delete payroll + reset jobs + reset advances
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     await prisma.$transaction(async (tx: any) => {
       await tx.job.updateMany({
         where: { payroll_id: id },
@@ -234,7 +232,6 @@ export async function addPayrollPayment(input: unknown): Promise<Result<Payroll_
     }
 
     // Transaction: create payment record + update payroll
-    // @ts-expect-error - Prisma v7 transaction callback type mismatch
     const updatedPayroll = (await prisma.$transaction(async (tx: any) => {
       // Create payment record
       await tx.payroll_Payment.create({

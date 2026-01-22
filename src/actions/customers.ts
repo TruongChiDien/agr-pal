@@ -83,6 +83,8 @@ export async function listCustomers() {
       ...bill,
       total_amount: Number(bill.total_amount),
       total_paid: Number(bill.total_paid),
+      discount_amount: Number(bill.discount_amount),
+      subtotal: Number(bill.subtotal),
     })),
   }))
 }
@@ -91,7 +93,16 @@ export async function getCustomer(id: string) {
   await requireAuth()
   const customer = await prisma.customer.findUnique({
     where: { id },
-    include: { lands: true, bookings: true, bills: true },
+    include: {
+      lands: true,
+      bookings: {
+        include: {
+          service: true,
+          land: true,
+        }
+      },
+      bills: true
+    },
   })
 
   if (!customer) return null
@@ -114,6 +125,8 @@ export async function getCustomer(id: string) {
       ...bill,
       total_amount: Number(bill.total_amount),
       total_paid: Number(bill.total_paid),
+      discount_amount: Number(bill.discount_amount),
+      subtotal: Number(bill.subtotal),
     })),
   }
 }

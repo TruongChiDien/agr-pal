@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateService } from "@/hooks/use-services";
 import { createServiceSchema } from "@/schemas/service";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -17,10 +17,14 @@ type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
 export default function CreateServicePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const createService = useCreateService();
 
   const form = useForm<CreateServiceInput>({
     resolver: zodResolver(createServiceSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       unit: "",
@@ -31,7 +35,11 @@ export default function CreateServicePage() {
 
   const onSubmit = async (data: CreateServiceInput) => {
     await createService.mutateAsync(data, {
-      onSuccess: () => router.push("/services"),
+      onSuccess: (result) => {
+        if (result.success && result.data?.id) {
+          router.push(redirectTo || `/services/${result.data.id}`);
+        }
+      },
     });
   };
 

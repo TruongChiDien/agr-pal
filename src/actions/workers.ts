@@ -78,6 +78,12 @@ export async function listWorkers() {
           },
         },
       },
+      jobs: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
     orderBy: { name: 'asc' },
   })

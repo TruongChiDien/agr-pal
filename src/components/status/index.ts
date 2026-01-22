@@ -18,3 +18,10 @@ export type { PayrollStatusBadgeProps } from "./payroll-status";
 
 export { MachineStatusBadge } from "./machine-status";
 export type { MachineStatusBadgeProps } from "./machine-status";
+
+export { JobPaymentStatusBadge } from "./job-payment-status";
+export type { JobPaymentStatusBadgeProps } from "./job-payment-status";
+
+export { AdvanceStatusBadge } from "./advance-status";
+export type { AdvanceStatusBadgeProps } from "./advance-status";
+

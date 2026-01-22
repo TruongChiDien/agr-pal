@@ -3,7 +3,7 @@
 import { use, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useWorker, useUpdateWorker } from "@/hooks/use-workers";
 import { updateWorkerSchema } from "@/schemas/worker";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -17,12 +17,16 @@ type UpdateWorkerInput = z.infer<typeof updateWorkerSchema>;
 
 export default function EditWorkerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: worker, isLoading } = useWorker(id);
   const updateWorker = useUpdateWorker();
 
   const form = useForm<UpdateWorkerInput>({
     resolver: zodResolver(updateWorkerSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       phone: "",
@@ -45,7 +49,7 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
     await updateWorker.mutateAsync(
       { id, data },
       {
-        onSuccess: () => router.push(`/workers/${id}`),
+        onSuccess: () => router.push(redirectTo || `/workers/${id}`),
       }
     );
   };

@@ -1,8 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBill } from "@/hooks/use-bills";
+import { useBill, useDeleteBill } from "@/hooks/use-bills";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,17 @@ import { StatusBadge } from "@/components/status/status-badge";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { BillPaymentHistory } from "@/components/bills/bill-payment-history";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { BillStatus } from "@/types/enums";
-import type { Booking, Land, Service, BillPayment } from "@prisma/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { Booking, Land, Service } from "@prisma/client";
 
 type BookingWithRelations = Booking & {
   land: Land | null;
@@ -57,6 +65,17 @@ export default function BillDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const { data: bill, isLoading } = useBill(id);
+  const deleteBill = useDeleteBill();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    await deleteBill.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        router.push("/bills");
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -76,9 +95,9 @@ export default function BillDetailPage({
         <ContentSection title="Không tìm thấy" description="Hóa đơn không tồn tại">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <p className="text-muted-foreground">Hóa đơn không tồn tại hoặc đã bị xóa</p>
-            <Button onClick={() => router.push("/bills")}>
+            <Button onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách
+              Quay lại
             </Button>
           </div>
         </ContentSection>
@@ -147,10 +166,16 @@ export default function BillDetailPage({
         title="Chi tiết hóa đơn"
         description={`Hóa đơn cho ${bill.customer.name}`}
         actions={
-          <Button variant="outline" onClick={() => router.push("/bills")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -236,7 +261,7 @@ export default function BillDetailPage({
                   />
                 </div>
                 {balance > 0 && (
-                  <Button onClick={() => router.push(`/bills/${id}/add-payment`)}>
+                  <Button onClick={() => router.push(`/bills/${id}/add-payment?redirect=${encodeURIComponent(`/bills/${id}`)}`)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm thanh toán
                   </Button>
@@ -278,9 +303,33 @@ export default function BillDetailPage({
           </Card>
 
           {/* Payment History */}
-          <BillPaymentHistory payments={(bill.payments || []) as BillPayment[]} />
+          <BillPaymentHistory payments={bill.payments || []} />
         </div>
       </ContentSection>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa hóa đơn cho khách hàng "{bill.customer.name}"? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteBill.isPending}
+            >
+              {deleteBill.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

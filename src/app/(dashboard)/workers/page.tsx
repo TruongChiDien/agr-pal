@@ -6,9 +6,10 @@ import { useWorkers, useDeleteWorker } from "@/hooks/use-workers";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatDateShort } from "@/lib/format";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Worker, Worker_Weight, Job } from "@prisma/client";
+import type { Worker, Worker_Weight } from "@prisma/client";
 
 type WorkerWithRelations = Worker & {
   worker_weights?: Worker_Weight[];
-  jobs?: Job[]; // Changed from job_workers to jobs
+  jobs?: { id: string; status: string }[];
 };
 
 export default function WorkersPage() {
@@ -30,11 +31,12 @@ export default function WorkersPage() {
   const deleteWorker = useDeleteWorker();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workerToDelete, setWorkerToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [sortKey, setSortKey] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("desc");
+  const [sortKey, setSortKey] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("asc");
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -66,8 +68,15 @@ export default function WorkersPage() {
     }
   };
 
+  // Filter data by search query
+  const filteredData = workers
+    ? workers.filter((worker) =>
+        worker.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   // Sort data
-  const sortedData = workers ? [...workers].sort((a, b) => {
+  const sortedData = filteredData.sort((a, b) => {
     if (!sortKey || !sortDirection) return 0;
 
     const aValue = (a as any)[sortKey];
@@ -90,7 +99,7 @@ export default function WorkersPage() {
     }
 
     return 0;
-  }) : [];
+  });
 
   // Paginate data
   const startIndex = (currentPage - 1) * pageSize;
@@ -128,11 +137,15 @@ export default function WorkersPage() {
       label: "Số công việc",
       width: "120px",
       align: "right",
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {item.jobs?.length || 0}
-        </span>
-      ),
+      render: (item) => {
+        // Count only non-completed jobs
+        const notCompletedJobsCount = item.jobs?.filter(job => ["NEW", "IN_PROGRESS"].includes(job.status)).length || 0;
+        return (
+          <span className="text-muted-foreground">
+            {notCompletedJobsCount}
+          </span>
+        );
+      },
     },
     {
       key: "created_at",
@@ -153,7 +166,7 @@ export default function WorkersPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/workers/${item.id}/edit`);
+              router.push(`/workers/${item.id}/edit?redirect=${encodeURIComponent(`/workers/${item.id}`)}`);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -191,10 +204,24 @@ export default function WorkersPage() {
         title="Quản lý công nhân"
         description="Danh sách công nhân và hệ số lương"
         actions={
-          <Button onClick={() => router.push("/workers/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo mới
-          </Button>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm theo tên..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
+                className="pl-8 w-[250px]"
+              />
+            </div>
+            <Button onClick={() => router.push("/workers/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tạo mới
+            </Button>
+          </div>
         }
       >
         <DataTable

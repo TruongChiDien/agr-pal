@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useBookings, useDeleteBooking } from "@/hooks/use-bookings";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { StatusBadge } from "@/components/status/status-badge";
-import { formatCurrency } from "@/lib/format";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { formatCurrency, formatDateShort } from "@/lib/format";
+import { Plus, Edit, Trash2, FilterX, ChevronDown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -96,6 +102,7 @@ function getBookingStatusLabel(status: string): string {
 
 export default function BookingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: bookings, isLoading } = useBookings();
   const deleteBooking = useDeleteBooking();
 
@@ -106,6 +113,32 @@ export default function BookingsPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sortKey, setSortKey] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("desc");
+
+  const [statusFilter, setStatusFilter] = useState<string[]>(
+    searchParams.get("status")?.split(",").filter(Boolean) || []
+  );
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(
+    searchParams.get("payment_status")?.split(",").filter(Boolean) || []
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter.length > 0) params.set("status", statusFilter.join(","));
+    if (paymentStatusFilter.length > 0) params.set("payment_status", paymentStatusFilter.join(","));
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `/bookings?${queryString}` : "/bookings";
+    router.replace(newUrl, { scroll: false });
+  }, [statusFilter, paymentStatusFilter, router]);
+
+  const handleResetFilters = () => {
+    setStatusFilter([]);
+    setPaymentStatusFilter([]);
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = statusFilter.length > 0 || paymentStatusFilter.length > 0;
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -137,45 +170,52 @@ export default function BookingsPage() {
     }
   };
 
-  // Sort data
-  const sortedData = bookings
-    ? [...bookings].sort((a, b) => {
-        if (!sortKey || !sortDirection) return 0;
-
-        let aValue: any;
-        let bValue: any;
-
-        // Special handling for nested fields
-        if (sortKey === "customer") {
-          aValue = a.customer.name;
-          bValue = b.customer.name;
-        } else if (sortKey === "service") {
-          aValue = a.service.name;
-          bValue = b.service.name;
-        } else {
-          aValue = (a as any)[sortKey];
-          bValue = (b as any)[sortKey];
-        }
-
-        if (aValue instanceof Date && bValue instanceof Date) {
-          return sortDirection === "asc"
-            ? aValue.getTime() - bValue.getTime()
-            : bValue.getTime() - aValue.getTime();
-        }
-
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-        }
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortDirection === "asc"
-            ? aValue.localeCompare(bValue, "vi-VN")
-            : bValue.localeCompare(aValue, "vi-VN");
-        }
-
-        return 0;
+  // Filter data by status filters
+  const filteredData = bookings
+    ? bookings.filter((booking) => {
+        const matchesStatus = statusFilter.length === 0 || statusFilter.includes(booking.status);
+        const matchesPaymentStatus = paymentStatusFilter.length === 0 || paymentStatusFilter.includes(booking.payment_status);
+        return matchesStatus && matchesPaymentStatus;
       })
     : [];
+
+  // Sort data
+  const sortedData = filteredData.sort((a, b) => {
+    if (!sortKey || !sortDirection) return 0;
+
+    let aValue: any;
+    let bValue: any;
+
+    // Special handling for nested fields
+    if (sortKey === "customer") {
+      aValue = a.customer.name;
+      bValue = b.customer.name;
+    } else if (sortKey === "service") {
+      aValue = a.service.name;
+      bValue = b.service.name;
+    } else {
+      aValue = (a as any)[sortKey];
+      bValue = (b as any)[sortKey];
+    }
+
+    if (aValue instanceof Date && bValue instanceof Date) {
+      return sortDirection === "asc"
+        ? aValue.getTime() - bValue.getTime()
+        : bValue.getTime() - aValue.getTime();
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+    }
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortDirection === "asc"
+        ? aValue.localeCompare(bValue, "vi-VN")
+        : bValue.localeCompare(aValue, "vi-VN");
+    }
+
+    return 0;
+  });
 
   // Paginate data
   const startIndex = (currentPage - 1) * pageSize;
@@ -183,6 +223,15 @@ export default function BookingsPage() {
   const paginatedData = sortedData.slice(startIndex, endIndex);
 
   const columns: ColumnDef<BookingWithRelations>[] = [
+    {
+      key: "created_at",
+      label: "Ngày tạo",
+      width: "110px",
+      sortable: true,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">{formatDateShort(item.created_at)}</span>
+      ),
+    },
     {
       key: "customer",
       label: "Khách hàng",
@@ -259,7 +308,7 @@ export default function BookingsPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/bookings/${item.id}/edit`);
+              router.push(`/bookings/${item.id}/edit?redirect=${encodeURIComponent(`/bookings/${item.id}`)}`);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -295,10 +344,106 @@ export default function BookingsPage() {
         title="Đơn hàng"
         description="Quản lý đơn hàng và theo dõi trạng thái thanh toán"
         actions={
-          <Button onClick={() => router.push("/bookings/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo đơn hàng
-          </Button>
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={handleResetFilters}>
+                <FilterX className="h-4 w-4 mr-2" />
+                Xóa bộ lọc
+              </Button>
+            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Trạng thái
+                  {statusFilter.length > 0 && (
+                    <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {statusFilter.length}
+                    </span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 bg-popover z-[100]" align="start">
+                <div className="p-2 space-y-2">
+                  {[
+                    { value: BookingStatus.New, label: "Mới" },
+                    { value: BookingStatus.InProgress, label: "Đang xử lý" },
+                    { value: BookingStatus.Completed, label: "Hoàn thành" },
+                    { value: BookingStatus.Blocked, label: "Bị chặn" },
+                    { value: BookingStatus.Canceled, label: "Đã hủy" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${option.value}`}
+                        checked={statusFilter.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setStatusFilter([...statusFilter, option.value]);
+                          } else {
+                            setStatusFilter(statusFilter.filter((v) => v !== option.value));
+                          }
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <label
+                        htmlFor={`status-${option.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Thanh toán
+                  {paymentStatusFilter.length > 0 && (
+                    <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {paymentStatusFilter.length}
+                    </span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 bg-popover z-[100]" align="start">
+                <div className="p-2 space-y-2">
+                  {[
+                    { value: PaymentStatus.PendingBill, label: "Chưa tạo HĐ" },
+                    { value: PaymentStatus.AddedBill, label: "Đã tạo HĐ" },
+                    { value: PaymentStatus.FullyPaid, label: "Đã thanh toán" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`payment-${option.value}`}
+                        checked={paymentStatusFilter.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPaymentStatusFilter([...paymentStatusFilter, option.value]);
+                          } else {
+                            setPaymentStatusFilter(paymentStatusFilter.filter((v) => v !== option.value));
+                          }
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <label
+                        htmlFor={`payment-${option.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Button onClick={() => router.push("/bookings/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tạo đơn hàng
+            </Button>
+          </div>
         }
       >
         <DataTable

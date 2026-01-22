@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const jobs = await prisma.job.findMany({
       where: {
         worker_id: workerId,
-        ...(paymentStatus && { payment_status: paymentStatus }),
+        ...(paymentStatus && { payment_status: paymentStatus as any }),
       },
       include: {
         booking: {

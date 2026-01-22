@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useJobs, useDeleteJob } from "@/hooks/use-jobs";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status/status-badge";
-import { Plus, Edit, Trash2, ExternalLink } from "lucide-react";
+import { formatDateShort } from "@/lib/format";
+import { Plus, Edit, Trash2, ExternalLink, FilterX, ChevronDown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +105,7 @@ function getPaymentStatusLabel(status: string): string {
 
 export default function JobsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: jobs, isLoading } = useJobs();
   const deleteJob = useDeleteJob();
 
@@ -108,6 +116,32 @@ export default function JobsPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sortKey, setSortKey] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("desc");
+
+  const [statusFilter, setStatusFilter] = useState<string[]>(
+    searchParams.get("status")?.split(",").filter(Boolean) || []
+  );
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(
+    searchParams.get("payment_status")?.split(",").filter(Boolean) || []
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter.length > 0) params.set("status", statusFilter.join(","));
+    if (paymentStatusFilter.length > 0) params.set("payment_status", paymentStatusFilter.join(","));
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `/jobs?${queryString}` : "/jobs";
+    router.replace(newUrl, { scroll: false });
+  }, [statusFilter, paymentStatusFilter, router]);
+
+  const handleResetFilters = () => {
+    setStatusFilter([]);
+    setPaymentStatusFilter([]);
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = statusFilter.length > 0 || paymentStatusFilter.length > 0;
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -139,9 +173,18 @@ export default function JobsPage() {
     }
   };
 
+  // Filter data by status filters
+  const filteredData = jobs
+    ? jobs.filter((job) => {
+        const matchesStatus = statusFilter.length === 0 || statusFilter.includes(job.status);
+        const matchesPaymentStatus = paymentStatusFilter.length === 0 || paymentStatusFilter.includes(job.payment_status);
+        return matchesStatus && matchesPaymentStatus;
+      })
+    : [];
+
   // Sort data
-  const sortedData = jobs
-    ? [...jobs].sort((a, b) => {
+  const sortedData = filteredData
+    ? [...filteredData].sort((a, b) => {
         if (!sortKey || !sortDirection) return 0;
 
         let aValue: any;
@@ -188,6 +231,15 @@ export default function JobsPage() {
   const paginatedData = sortedData.slice(startIndex, endIndex);
 
   const columns: ColumnDef<JobWithRelations>[] = [
+    {
+      key: "created_at",
+      label: "Ngày tạo",
+      sortable: true,
+      width: "110px",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">{formatDateShort(item.created_at)}</span>
+      ),
+    },
     {
       key: "worker",
       label: "Công nhân",
@@ -249,42 +301,40 @@ export default function JobsPage() {
       ),
     },
     {
-      key: "created_at",
-      label: "Ngày tạo",
-      sortable: true,
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm">
-          {new Date(item.created_at).toLocaleDateString("vi-VN")}
-        </span>
-      ),
-    },
-    {
       key: "actions",
       label: "",
       width: "100px",
       align: "right",
-      render: (item) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/jobs/${item.id}/edit`);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteClick(item.id, e)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
+      render: (item) => {
+        // Only show delete button if job is not completed, not fully paid, and not added to bill
+        const canDelete =
+          item.status !== "COMPLETED" &&
+          item.payment_status == "PENDING_PAYROLL";
+
+        return (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/jobs/${item.id}/edit?redirect=${encodeURIComponent(`/jobs/${item.id}`)}`);
+              }}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => handleDeleteClick(item.id, e)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -306,10 +356,106 @@ export default function JobsPage() {
         title="Công việc"
         description="Quản lý công việc và phân công công nhân"
         actions={
-          <Button onClick={() => router.push("/jobs/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo công việc
-          </Button>
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={handleResetFilters}>
+                <FilterX className="h-4 w-4 mr-2" />
+                Xóa bộ lọc
+              </Button>
+            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Trạng thái
+                  {statusFilter.length > 0 && (
+                    <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {statusFilter.length}
+                    </span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 bg-popover z-[100]" align="start">
+                <div className="p-2 space-y-2">
+                  {[
+                    { value: "NEW", label: "Mới" },
+                    { value: "IN_PROGRESS", label: "Đang xử lý" },
+                    { value: "COMPLETED", label: "Hoàn thành" },
+                    { value: "BLOCKED", label: "Bị chặn" },
+                    { value: "CANCELED", label: "Đã hủy" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${option.value}`}
+                        checked={statusFilter.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setStatusFilter([...statusFilter, option.value]);
+                          } else {
+                            setStatusFilter(statusFilter.filter((v) => v !== option.value));
+                          }
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <label
+                        htmlFor={`status-${option.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Thanh toán
+                  {paymentStatusFilter.length > 0 && (
+                    <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {paymentStatusFilter.length}
+                    </span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 bg-popover z-[100]" align="start">
+                <div className="p-2 space-y-2">
+                  {[
+                    { value: "PENDING_PAYROLL", label: "Chưa tạo lương" },
+                    { value: "ADDED_PAYROLL", label: "Đã tạo lương" },
+                    { value: "FULLY_PAID", label: "Đã thanh toán" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`payment-${option.value}`}
+                        checked={paymentStatusFilter.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPaymentStatusFilter([...paymentStatusFilter, option.value]);
+                          } else {
+                            setPaymentStatusFilter(paymentStatusFilter.filter((v) => v !== option.value));
+                          }
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <label
+                        htmlFor={`payment-${option.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Button onClick={() => router.push("/jobs/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tạo công việc
+            </Button>
+          </div>
         }
       >
         <DataTable

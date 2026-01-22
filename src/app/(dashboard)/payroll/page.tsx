@@ -61,6 +61,27 @@ export default function PayrollListPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [payrollToDelete, setPayrollToDelete] = useState<string | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("desc");
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortKey("");
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
   const handleDeleteClick = (payrollId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setPayrollToDelete(payrollId);
@@ -75,11 +96,68 @@ export default function PayrollListPage() {
     setPayrollToDelete(null);
   };
 
+  // Sort data
+  const sortedData = payrolls
+    ? [...payrolls].sort((a, b) => {
+        if (!sortKey || !sortDirection) return 0;
+
+        let aValue: any;
+        let bValue: any;
+
+        // Special handling for nested fields
+        if (sortKey === "worker") {
+          aValue = a.worker.name;
+          bValue = b.worker.name;
+        } else if (sortKey === "balance") {
+          aValue = Number(a.net_payable) - Number(a.total_paid);
+          bValue = Number(b.net_payable) - Number(b.total_paid);
+        } else {
+          aValue = (a as any)[sortKey];
+          bValue = (b as any)[sortKey];
+        }
+
+        if (aValue instanceof Date && bValue instanceof Date) {
+          return sortDirection === "asc"
+            ? aValue.getTime() - bValue.getTime()
+            : bValue.getTime() - aValue.getTime();
+        }
+
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+        }
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortDirection === "asc"
+            ? aValue.localeCompare(bValue, "vi-VN")
+            : bValue.localeCompare(aValue, "vi-VN");
+        }
+
+        return 0;
+      })
+    : [];
+
+  // Paginate data
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = sortedData.slice(startIndex, endIndex);
+
   const columns: ColumnDef<PayrollWithRelations>[] = [
+    {
+      key: "created_at",
+      label: "Ngày tạo",
+      width: "110px",
+      sortable: true,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDateShort(item.created_at)}
+        </span>
+      ),
+    },
     {
       key: "worker",
       label: "Công nhân",
       width: "200px",
+      sortable: true,
       render: (item) => (
         <div>
           <p className="text-sm font-medium">{item.worker.name}</p>
@@ -94,6 +172,7 @@ export default function PayrollListPage() {
       label: "Tổng lương",
       align: "right",
       width: "140px",
+      sortable: true,
       render: (item) => (
         <span className="text-sm font-semibold">
           {formatCurrency(Number(item.total_wages))}
@@ -105,6 +184,7 @@ export default function PayrollListPage() {
       label: "Tạm ứng",
       align: "right",
       width: "140px",
+      sortable: true,
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {formatCurrency(Number(item.total_adv))}
@@ -116,6 +196,7 @@ export default function PayrollListPage() {
       label: "Thực nhận",
       align: "right",
       width: "140px",
+      sortable: true,
       render: (item) => (
         <span className="text-sm font-bold text-primary">
           {formatCurrency(Number(item.net_payable))}
@@ -127,6 +208,7 @@ export default function PayrollListPage() {
       label: "Đã trả",
       align: "right",
       width: "140px",
+      sortable: true,
       render: (item) => (
         <span className="text-sm font-semibold text-green-600">
           {formatCurrency(Number(item.total_paid))}
@@ -138,6 +220,7 @@ export default function PayrollListPage() {
       label: "Còn lại",
       align: "right",
       width: "140px",
+      sortable: true,
       render: (item) => {
         const balance = Number(item.net_payable) - Number(item.total_paid);
         return (
@@ -155,21 +238,12 @@ export default function PayrollListPage() {
       key: "status",
       label: "Trạng thái",
       width: "120px",
+      sortable: true,
       render: (item) => (
         <StatusBadge
           variant={getPayrollStatusVariant(item.status)}
           label={getPayrollStatusLabel(item.status)}
         />
-      ),
-    },
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDateShort(item.created_at)}
-        </span>
       ),
     },
     {
@@ -213,8 +287,6 @@ export default function PayrollListPage() {
     );
   }
 
-  const payrollsData = (payrolls || []) as PayrollWithRelations[];
-
   return (
     <PageContainer>
       <ContentSection
@@ -229,16 +301,19 @@ export default function PayrollListPage() {
       >
         <DataTable
           columns={columns}
-          data={payrollsData}
-          currentPage={1}
-          pageSize={20}
-          totalPages={1}
-          totalItems={payrollsData.length}
-          onPageChange={() => {}}
-          onPageSizeChange={() => {}}
-          sortKey=""
-          sortDirection={null}
-          onSort={() => {}}
+          data={paginatedData}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={Math.ceil(sortedData.length / pageSize)}
+          totalItems={sortedData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={handleSort}
           getRowId={(item) => item.id}
           onRowClick={(item) => router.push(`/payroll/${item.id}`)}
           emptyMessage="Không có phiếu lương nào"

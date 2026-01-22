@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBooking } from "@/hooks/use-bookings";
+import { useBooking, useDeleteBooking } from "@/hooks/use-bookings";
 import { useDeleteJob } from "@/hooks/use-jobs";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -95,9 +95,11 @@ export default function BookingDetailPage({
   const { id } = use(params);
   const { data: booking, isLoading } = useBooking(id);
   const deleteJob = useDeleteJob();
+  const deleteBooking = useDeleteBooking();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false);
 
   const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -111,6 +113,15 @@ export default function BookingDetailPage({
       setDeleteDialogOpen(false);
       setJobToDelete(null);
     }
+  };
+
+  const handleDeleteBookingConfirm = async () => {
+    await deleteBooking.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteBookingDialogOpen(false);
+        router.push("/bookings");
+      },
+    });
   };
 
   if (isLoading) {
@@ -131,9 +142,9 @@ export default function BookingDetailPage({
         <ContentSection title="Không tìm thấy">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <p className="text-muted-foreground">Không tìm thấy đơn hàng</p>
-            <Button onClick={() => router.push("/bookings")}>
+            <Button onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách
+              Quay lại
             </Button>
           </div>
         </ContentSection>
@@ -154,6 +165,10 @@ export default function BookingDetailPage({
         description={`Mã đơn: ${booking.id.slice(0, 8).toUpperCase()}`}
         actions={
           <div className="flex gap-2">
+            <Button variant="destructive" onClick={() => setDeleteBookingDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/bookings/${id}/edit`)}
@@ -161,7 +176,7 @@ export default function BookingDetailPage({
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
             </Button>
-            <Button variant="outline" onClick={() => router.push("/bookings")}>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
@@ -297,7 +312,7 @@ export default function BookingDetailPage({
               <CardTitle>Các công việc ({booking.jobs?.length || 0})</CardTitle>
               <Button
                 size="sm"
-                onClick={() => router.push(`/jobs/new?booking_id=${booking.id}`)}
+                onClick={() => router.push(`/jobs/new?booking_id=${booking.id}&redirect=${encodeURIComponent(`/bookings/${booking.id}`)}`)}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo công việc
@@ -311,7 +326,7 @@ export default function BookingDetailPage({
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => router.push(`/jobs/new?booking_id=${booking.id}`)}
+                    onClick={() => router.push(`/jobs/new?booking_id=${booking.id}&redirect=${encodeURIComponent(`/bookings/${booking.id}`)}`)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Tạo công việc đầu tiên
@@ -434,6 +449,30 @@ export default function BookingDetailPage({
             </Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>
               Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Booking Confirmation Dialog */}
+      <Dialog open={deleteBookingDialogOpen} onOpenChange={setDeleteBookingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteBookingDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteBookingConfirm}
+              disabled={deleteBooking.isPending}
+            >
+              {deleteBooking.isPending ? "Đang xóa..." : "Xóa"}
             </Button>
           </DialogFooter>
         </DialogContent>

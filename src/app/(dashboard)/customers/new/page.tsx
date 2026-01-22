@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateCustomer } from "@/hooks/use-customers";
 import { createCustomerSchema } from "@/schemas/customer";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -16,10 +16,14 @@ type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 
 export default function CreateCustomerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const createCustomer = useCreateCustomer();
 
   const form = useForm<CreateCustomerInput>({
     resolver: zodResolver(createCustomerSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       phone: "",
@@ -29,8 +33,8 @@ export default function CreateCustomerPage() {
 
   const onSubmit = async (data: CreateCustomerInput) => {
     const result = await createCustomer.mutateAsync(data);
-    if (result.success) {
-      router.push("/customers");
+    if (result.success && result.data?.id) {
+      router.push(redirectTo || `/customers/${result.data.id}`);
     }
   };
 

@@ -1,16 +1,24 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useJob } from "@/hooks/use-jobs";
+import { useJob, useDeleteJob } from "@/hooks/use-jobs";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/status/status-badge";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Edit, Info, ExternalLink } from "lucide-react";
+import { ArrowLeft, Edit, Info, ExternalLink, Trash2 } from "lucide-react";
 import { JobStatus, JobPaymentStatus } from "@/types/enums";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Map status enum to badge variant and label
 function getJobStatusVariant(
@@ -85,6 +93,17 @@ export default function JobDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const { data: job, isLoading } = useJob(id);
+  const deleteJob = useDeleteJob();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    await deleteJob.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        router.push("/jobs");
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -104,9 +123,9 @@ export default function JobDetailPage({
         <ContentSection title="Không tìm thấy">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <p className="text-muted-foreground">Không tìm thấy công việc</p>
-            <Button onClick={() => router.push("/jobs")}>
+            <Button onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách
+              Quay lại
             </Button>
           </div>
         </ContentSection>
@@ -134,6 +153,10 @@ export default function JobDetailPage({
         description={`Mã công việc: ${job.id.slice(0, 8).toUpperCase()}`}
         actions={
           <div className="flex gap-2">
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/jobs/${id}/edit`)}
@@ -141,7 +164,7 @@ export default function JobDetailPage({
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
             </Button>
-            <Button variant="outline" onClick={() => router.push("/jobs")}>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
@@ -328,6 +351,30 @@ export default function JobDetailPage({
           </Card>
         </div>
       </ContentSection>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa công việc này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteJob.isPending}
+            >
+              {deleteJob.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

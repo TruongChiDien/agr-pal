@@ -27,6 +27,7 @@ export function useCreateBill() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['bills'] })
         queryClient.invalidateQueries({ queryKey: ['bookings'] })
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
         toast({
           title: 'Thành công',
           description: 'Hóa đơn đã được tạo',
@@ -76,6 +77,7 @@ export function useAddBillPayment() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['bills'] })
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
         toast({
           title: 'Thành công',
           description: 'Đã thêm thanh toán',

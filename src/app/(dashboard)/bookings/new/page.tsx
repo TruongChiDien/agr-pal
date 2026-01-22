@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateBooking } from "@/hooks/use-bookings";
 import { useCustomers } from "@/hooks/use-customers";
 import { useServices } from "@/hooks/use-services";
@@ -44,15 +44,20 @@ type CreateBookingInput = z.infer<typeof createBookingSchema>;
 
 export default function CreateBookingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+  const customerIdFromUrl = searchParams.get("customer_id");
   const createBooking = useCreateBooking();
   const { data: customers, isLoading: customersLoading } = useCustomers();
   const { data: services, isLoading: servicesLoading } = useServices();
 
   const form = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       service_id: "",
-      customer_id: "",
+      customer_id: customerIdFromUrl || "",
       land_id: "",
       quantity: 0,
       captured_price: undefined,
@@ -103,8 +108,9 @@ export default function CreateBookingPage() {
     };
 
     const result = await createBooking.mutateAsync(payload);
-    if (result.success) {
-      router.push("/bookings");
+    if (result.success && result.data?.id) {
+      // Redirect to specified path or default to booking detail page
+      router.push(redirectTo || `/bookings/${result.data.id}`);
     }
   };
 

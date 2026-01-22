@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { usePayroll, useAddPayrollPayment } from "@/hooks/use-payroll";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ type AddPayrollPaymentInput = z.infer<typeof addPayrollPaymentSchema>;
 export default function AddPayrollPaymentPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const payrollId = params.id as string;
   const { data: payroll, isLoading } = usePayroll(payrollId);
   const addPayment = useAddPayrollPayment();
@@ -46,6 +48,8 @@ export default function AddPayrollPaymentPage() {
 
   const form = useForm<AddPayrollPaymentInput>({
     resolver: zodResolver(addPayrollPaymentSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       payroll_id: payrollId,
       amount: 0,
@@ -117,7 +121,8 @@ export default function AddPayrollPaymentPage() {
           title: "Thành công",
           description: "Đã thêm thanh toán",
         });
-        router.push(`/payroll/${payrollId}`);
+        // Redirect to specified path or default to payroll detail page
+        router.push(redirectTo || `/payroll/${payrollId}`);
       } else {
         toast({
           title: "Lỗi",

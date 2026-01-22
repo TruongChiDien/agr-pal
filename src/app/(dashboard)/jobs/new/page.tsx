@@ -42,6 +42,7 @@ export default function CreateJobPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bookingIdFromUrl = searchParams.get("booking_id");
+  const redirectTo = searchParams.get("redirect");
 
   const createJob = useCreateJob();
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
@@ -49,7 +50,9 @@ export default function CreateJobPage() {
   const { data: workers, isLoading: workersLoading } = useWorkers();
 
   const form = useForm<CreateJobInput>({
-    resolver: zodResolver(createJobSchema),
+    resolver: zodResolver(createJobSchema) as any,
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       booking_id: bookingIdFromUrl || "",
       job_type_id: "",
@@ -149,7 +152,8 @@ export default function CreateJobPage() {
 
     const result = await createJob.mutateAsync(payload);
     if (result.success && result.data) {
-      router.push(`/jobs/${result.data.id}`);
+      // Redirect to specified path or default to job detail page
+      router.push(redirectTo || `/jobs/${result.data.id}`);
     }
   };
 

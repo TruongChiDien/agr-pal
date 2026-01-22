@@ -32,6 +32,8 @@ export function useCreateJob() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['bookings'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
         toast({
           title: 'Thành công',
           description: 'Job đã được tạo',
@@ -57,6 +59,8 @@ export function useUpdateJob() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
         queryClient.invalidateQueries({ queryKey: ['jobs', id] })
+        queryClient.invalidateQueries({ queryKey: ['bookings'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
         toast({
           title: 'Thành công',
           description: 'Job đã được cập nhật',
@@ -81,6 +85,8 @@ export function useDeleteJob() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
+        queryClient.invalidateQueries({ queryKey: ['bookings'] })
         toast({
           title: 'Thành công',
           description: 'Job đã được xóa',

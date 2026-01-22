@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreatePayroll } from "@/hooks/use-payroll";
 import { useWorkers } from "@/hooks/use-workers";
 import { JobWorkerSelector } from "@/components/payroll/job-worker-selector";
@@ -35,6 +35,8 @@ type CreatePayrollInput = z.infer<typeof createPayrollSchema>;
 
 export default function CreatePayrollPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const createPayroll = useCreatePayroll();
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { toast } = useToast();
@@ -42,10 +44,15 @@ export default function CreatePayrollPage() {
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [selectedAdvanceIds, setSelectedAdvanceIds] = useState<string[]>([]);
 
+  // Get worker_id from URL if present
+  const workerIdFromUrl = searchParams.get("worker_id");
+
   const form = useForm<CreatePayrollInput>({
     resolver: zodResolver(createPayrollSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
-      worker_id: "",
+      worker_id: workerIdFromUrl || "",
       job_ids: [],
       advance_payment_ids: [],
     },
@@ -89,16 +96,17 @@ export default function CreatePayrollPage() {
 
       const result = await createPayroll.mutateAsync(payload);
 
-      if (result.success) {
+      if (result.success && result.data?.id) {
         toast({
           title: "Thành công",
           description: "Phiếu lương đã được tạo",
         });
-        router.push("/payroll");
+        // Redirect to specified path or default based on context
+        router.push(redirectTo || (workerIdFromUrl ? `/workers/${workerIdFromUrl}?tab=payrolls` : `/payroll/${result.data.id}`));
       } else {
         toast({
           title: "Lỗi",
-          description: result.error || "Không thể tạo phiếu lương",
+          description: (result as any).error || "Không thể tạo phiếu lương",
           variant: "destructive",
         });
       }

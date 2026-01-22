@@ -8,28 +8,14 @@ if (!process.env.DATABASE_URL) {
 }
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: ReturnType<typeof createPrismaClient> | undefined
   pool: Pool | undefined
 }
 
-// Create connection pool (singleton)
-export const pool =
-  globalForPrisma.pool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 10, // Maximum 10 connections for development
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.pool = pool
-
-// Create Prisma adapter
-const adapter = new PrismaPg(pool)
-
-// Create Prisma Client (singleton)
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
+// Function to create Prisma client with extensions
+function createPrismaClient() {
+  return new PrismaClient({
+    adapter: new PrismaPg(pool),
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   }).$extends({
     result: {
@@ -47,7 +33,7 @@ export const prisma =
           const serializeDecimal = (obj: any): any => {
             // Check null/undefined trước
             if (obj === null || obj === undefined) return obj;
-            
+
             // Bỏ qua Date object để tránh loop vô tận hoặc lỗi
             if (obj instanceof Date) return obj;
 
@@ -59,12 +45,12 @@ export const prisma =
 
               for (const key in obj) {
                 const value = obj[key];
-                
+
                 // Kiểm tra nếu value là instance của Decimal
                 if (value instanceof Prisma.Decimal) {
                   obj[key] = value.toNumber();
                   // console.log(`Converted ${key}:`, obj[key]);
-                } 
+                }
                 // Đệ quy nếu là object con (nhưng không phải Decimal)
                 else if (typeof value === 'object' && value !== null) {
                   serializeDecimal(value);
@@ -79,6 +65,20 @@ export const prisma =
       },
     },
   });
+}
+
+// Create connection pool (singleton)
+export const pool =
+  globalForPrisma.pool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10, // Maximum 10 connections for development
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.pool = pool
+
+// Create Prisma Client (singleton)
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 

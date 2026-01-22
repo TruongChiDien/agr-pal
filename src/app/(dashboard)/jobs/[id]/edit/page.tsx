@@ -3,7 +3,7 @@
 import { use, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useJob, useUpdateJob } from "@/hooks/use-jobs";
 import { useMachines } from "@/hooks/use-machines";
 import { useWorkers } from "@/hooks/use-workers";
@@ -43,6 +43,8 @@ export default function EditJobPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: job, isLoading } = useJob(id);
   const { data: machines } = useMachines();
@@ -51,6 +53,8 @@ export default function EditJobPage({
 
   const form = useForm<UpdateJobInput>({
     resolver: zodResolver(updateJobSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     values: job ? {
       status: job.status as JobStatus,
       machine_id: job.machine_id || undefined,
@@ -110,7 +114,7 @@ export default function EditJobPage({
     await updateJob.mutateAsync(
       { id, data: cleanedData },
       {
-        onSuccess: () => router.push(`/jobs/${id}`),
+        onSuccess: () => router.push(redirectTo || `/jobs/${id}`),
       }
     );
   };

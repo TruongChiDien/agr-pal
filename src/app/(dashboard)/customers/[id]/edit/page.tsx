@@ -3,7 +3,7 @@
 import { use, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCustomer, useUpdateCustomer } from "@/hooks/use-customers";
 import { updateCustomerSchema } from "@/schemas/customer";
 import { PageContainer, ContentSection } from "@/components/layout";
@@ -17,12 +17,16 @@ type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 
 export default function EditCustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { id } = use(params);
   const { data: customer, isLoading } = useCustomer(id);
   const updateCustomer = useUpdateCustomer();
 
   const form = useForm<UpdateCustomerInput>({
     resolver: zodResolver(updateCustomerSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: "",
       phone: "",
@@ -45,7 +49,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
     await updateCustomer.mutateAsync(
       { id, data },
       {
-        onSuccess: () => router.push(`/customers/${id}`),
+        onSuccess: () => router.push(redirectTo || `/customers/${id}`),
       }
     );
   };

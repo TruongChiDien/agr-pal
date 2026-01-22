@@ -133,7 +133,7 @@ export default function ServicesPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/services/${item.id}/edit`);
+              router.push(`/services/${item.id}/edit?redirect=${encodeURIComponent(`/services/${item.id}`)}`);
             }}
           >
             <Edit className="h-4 w-4" />

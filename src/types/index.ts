@@ -12,7 +12,6 @@ export type {
   Land,
   Booking,
   Job,
-  Job_Worker,
   Bill,
   Advance_Payment,
   Payroll_Sheet,

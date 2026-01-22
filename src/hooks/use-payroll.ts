@@ -27,6 +27,8 @@ export function useCreatePayroll() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['payrolls'] })
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
+        queryClient.invalidateQueries({ queryKey: ['advances'] })
         toast({
           title: 'Thành công',
           description: 'Phiếu lương đã được tạo',
@@ -52,6 +54,8 @@ export function useDeletePayroll() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['payrolls'] })
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
+        queryClient.invalidateQueries({ queryKey: ['advances'] })
         toast({
           title: 'Thành công',
           description: 'Phiếu lương đã được xóa',
@@ -75,6 +79,8 @@ export function useAddPayrollPayment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] })
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['workers'] })
+      queryClient.invalidateQueries({ queryKey: ['advances'] })
     },
   })
 }

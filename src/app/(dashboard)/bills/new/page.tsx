@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateBill } from "@/hooks/use-bills";
 import { useCustomers } from "@/hooks/use-customers";
 import { BookingSelector } from "@/components/bills/booking-selector";
@@ -35,6 +35,9 @@ type CreateBillInput = z.infer<typeof createBillSchema>;
 
 export default function CreateBillPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+  const customerIdFromUrl = searchParams.get("customer_id");
   const createBill = useCreateBill();
   const { data: customers, isLoading: customersLoading } = useCustomers();
   const { toast } = useToast();
@@ -43,8 +46,10 @@ export default function CreateBillPage() {
 
   const form = useForm<CreateBillInput>({
     resolver: zodResolver(createBillSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
-      customer_id: "",
+      customer_id: customerIdFromUrl || "",
       booking_ids: [],
       discount_amount: 0,
       discount_reason: "",
@@ -90,7 +95,8 @@ export default function CreateBillPage() {
           title: "Thành công",
           description: "Hóa đơn đã được tạo thành công",
         });
-        router.push(`/bills/${result.data.id}`);
+        // Redirect to specified path or default to bill detail page
+        router.push(redirectTo || `/bills/${result.data.id}`);
       } else {
         toast({
           title: "Lỗi",

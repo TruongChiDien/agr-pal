@@ -25,7 +25,7 @@ export function AppShell({ children, className, user }: AppShellProps) {
         <Header user={user} />
 
         {/* Page Content */}
-        <main className={cn("flex-1 overflow-y-auto bg-background", className)}>
+        <main id="main-content" className={cn("flex-1 overflow-y-auto bg-background", className)}>
           {children}
         </main>
       </div>

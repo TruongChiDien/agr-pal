@@ -144,6 +144,17 @@ export default function BillsPage() {
 
   const columns: ColumnDef<BillWithRelations>[] = [
     {
+      key: "created_at",
+      label: "Ngày tạo",
+      width: "110px",
+      sortable: true,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDateShort(item.created_at)}
+        </span>
+      ),
+    },
+    {
       key: "customer",
       label: "Khách hàng",
       sortable: true,
@@ -197,17 +208,6 @@ export default function BillsPage() {
           variant={getBillStatusVariant(item.status)}
           label={getBillStatusLabel(item.status)}
         />
-      ),
-    },
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      sortable: true,
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDateShort(item.created_at)}
-        </span>
       ),
     },
     {

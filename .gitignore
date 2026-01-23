@@ -54,3 +54,5 @@ plans
 # documents
 docs/
 /src/generated/prisma
+
+.vscode

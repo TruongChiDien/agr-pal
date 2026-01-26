@@ -2,16 +2,22 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBooking, useDeleteBooking } from "@/hooks/use-bookings";
-import { useDeleteJob } from "@/hooks/use-jobs";
+import { useBooking, useDeleteBooking, useUpdateBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
+import { useDeleteJob, useUpdateJob } from "@/hooks/use-jobs";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/status/status-badge";
+import { StatusSelect } from "@/components/status/status-select";
 import { formatCurrency, formatDateShort } from "@/lib/format";
+
 import { ArrowLeft, Edit, Info, Plus, Trash2 } from "lucide-react";
-import { BookingStatus, PaymentStatus } from "@/types/enums";
+import { BookingStatus, PaymentStatus, JobStatus } from "@/types/enums";
+import { handleBookingStatusUpdate } from "@/lib/booking-status-utils";
+import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
+import { UpdateJobDialog } from "@/components/jobs/update-job-dialog";
+import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog";
 import {
   Dialog,
   DialogContent,
@@ -20,26 +26,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// Map status enum to badge variant and label
-function getBookingStatusVariant(
-  status: string
-): "new" | "in-progress" | "completed" | "blocked" | "canceled" {
-  switch (status) {
-    case BookingStatus.New:
-      return "new";
-    case BookingStatus.InProgress:
-      return "in-progress";
-    case BookingStatus.Completed:
-      return "completed";
-    case BookingStatus.Blocked:
-      return "blocked";
-    case BookingStatus.Canceled:
-      return "canceled";
-    default:
-      return "new";
-  }
-}
+
+// Status options for Booking Select
+const BOOKING_STATUS_OPTIONS = [
+  { value: BookingStatus.New, label: "Mới", variant: "new" as const },
+  { value: BookingStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
+  { value: BookingStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
+  { value: BookingStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
+  { value: BookingStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
+];
+
+// Status options for Select
+const JOB_STATUS_OPTIONS = [
+  { value: JobStatus.New, label: "Mới", variant: "new" as const },
+  { value: JobStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
+  { value: JobStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
+  { value: JobStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
+  { value: JobStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
+];
 
 function getPaymentStatusVariant(
   status: string
@@ -53,23 +64,6 @@ function getPaymentStatusVariant(
       return "paid";
     default:
       return "pending";
-  }
-}
-
-function getBookingStatusLabel(status: string): string {
-  switch (status) {
-    case BookingStatus.New:
-      return "Mới";
-    case BookingStatus.InProgress:
-      return "Đang xử lý";
-    case BookingStatus.Completed:
-      return "Hoàn thành";
-    case BookingStatus.Blocked:
-      return "Bị chặn";
-    case BookingStatus.Canceled:
-      return "Đã hủy";
-    default:
-      return status;
   }
 }
 
@@ -94,12 +88,56 @@ export default function BookingDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const { data: booking, isLoading } = useBooking(id);
+  const updateBooking = useUpdateBooking();
+  const updateBookingWithJobs = useUpdateBookingWithJobs();
+  const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const deleteBooking = useDeleteBooking();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false);
+
+  // State for completion confirmation
+  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
+  const [incompleteJobCount, setIncompleteJobCount] = useState(0);
+  const [targetStatus, setTargetStatus] = useState<string | null>(null);
+  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
+  const [editBookingDialogOpen, setEditBookingDialogOpen] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!booking) return;
+
+    await handleBookingStatusUpdate({
+      bookingId: booking.id,
+      currentStatus: booking.status,
+      newStatus,
+      onNeedConfirmation: (count) => {
+        setIncompleteJobCount(count);
+        setTargetStatus(newStatus);
+        setCompletionDialogOpen(true);
+      },
+      onProceedWithoutJobs: async () => {
+        await updateBooking.mutateAsync({
+          id: booking.id,
+          data: { status: newStatus },
+        });
+      },
+    });
+  };
+
+  const handleConfirmCompletion = async (completeJobs: boolean) => {
+    if (!booking || !targetStatus) return;
+
+    await updateBookingWithJobs.mutateAsync({
+      id: booking.id,
+      data: { status: targetStatus },
+      completeJobs,
+    });
+    setCompletionDialogOpen(false);
+    setTargetStatus(null);
+  };
 
   const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -165,13 +203,32 @@ export default function BookingDetailPage({
         description={`Mã đơn: ${booking.id.slice(0, 8).toUpperCase()}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={() => setDeleteBookingDialogOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
-            </Button>
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => setDeleteBookingDialogOpen(true)}
+                      disabled={!!booking.bill}
+                      className={!!booking.bill ? "opacity-50 pointer-events-none" : ""}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!!booking.bill && (
+                  <TooltipContent>
+                    <p>Đơn hàng đã có hóa đơn, không thể xóa</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            
             <Button
               variant="outline"
-              onClick={() => router.push(`/bookings/${id}/edit`)}
+              onClick={() => setEditBookingDialogOpen(true)}
             >
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
@@ -189,86 +246,114 @@ export default function BookingDetailPage({
             <CardHeader>
               <CardTitle>Thông tin đơn hàng</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Khách hàng</p>
-                  <p className="font-medium">{booking.customer.name}</p>
-                  {booking.customer.phone && (
-                    <p className="text-sm text-muted-foreground">
-                      {booking.customer.phone}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Thửa ruộng</p>
-                  <p className="font-medium">
-                    {booking.land?.name || <span className="text-muted-foreground">—</span>}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Dịch vụ</p>
-                  <p className="font-medium">{booking.service.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Số lượng</p>
-                  <p className="font-medium">
-                    {quantity !== null ? (
-                      <>
-                        {quantity} {booking.service.unit}
-                      </>
-                    ) : (
-                      <span className="text-amber-600">Chưa cập nhật</span>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Column 1: Customer & Location */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Khách hàng</p>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
+                      onClick={() => router.push(`/customers/${booking.customer.id}`)}
+                    >
+                      {booking.customer.name}
+                    </Button>
+                    {booking.customer.phone && (
+                      <p className="text-sm text-muted-foreground">
+                        {booking.customer.phone}
+                      </p>
                     )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Trạng thái</p>
-                  <div className="mt-1">
-                    <StatusBadge
-                      variant={getBookingStatusVariant(booking.status)}
-                      label={getBookingStatusLabel(booking.status)}
-                    />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ngày tạo</p>
+                    <p className="font-medium">
+                      {formatDateShort(booking.created_at)}
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Thanh toán</p>
-                  <div className="mt-1">
-                    <StatusBadge
-                      variant={getPaymentStatusVariant(booking.payment_status)}
-                      label={getPaymentStatusLabel(booking.payment_status)}
-                    />
+
+                  {/* Column 2: Service & pricing */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dịch vụ</p>
+                    <p className="font-medium">{booking.service.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Thửa ruộng</p>
+                    <p className="font-medium">
+                      {booking.land?.name || <span className="text-muted-foreground">—</span>}
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Ngày tạo</p>
-                  <p className="font-medium">
-                    {formatDateShort(booking.created_at)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tổng giá trị</p>
-                  <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(totalAmount)}
-                  </p>
+                {/* Column 3: Status & Dates */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Trạng thái</p>
+                    <div className="mt-1">
+                      <StatusSelect
+                        value={booking.status}
+                        options={BOOKING_STATUS_OPTIONS}
+                        onValueChange={handleStatusChange}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Thanh toán</p>
+                    <div className="mt-1">
+                      <StatusBadge
+                        variant={getPaymentStatusVariant(booking.payment_status)}
+                        label={getPaymentStatusLabel(booking.payment_status)}
+                      />
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
               {booking.notes && (
-                <div>
+                <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground">Ghi chú</p>
                   <p className="text-sm">{booking.notes}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Payment Details Card - NEW */}
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-blue-900">Chi tiết giá trị đơn hàng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Số lượng:</span>
+                  <span className="font-medium">{Number(booking.quantity ?? 0)} {booking.service.unit}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Đơn giá:</span>
+                  <span className="font-medium">{formatCurrency(Number(booking.captured_price))}</span>
+                </div>
+                
+                {/* Adjustment */}
+                {Number((booking as any).adjustment || 0) !== 0 && (
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-muted-foreground">Điều chỉnh:</span>
+                    <span className={Number((booking as any).adjustment) > 0 ? "text-green-600" : "text-red-600"}>
+                      {Number((booking as any).adjustment) > 0 ? "+" : "-"} {formatCurrency(Math.abs(Number((booking as any).adjustment)))}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
+                  <span className="font-semibold text-blue-900">Tổng giá trị:</span>
+                  <span className="text-xl font-bold text-primary">
+                    {formatCurrency(totalAmount)}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -312,7 +397,7 @@ export default function BookingDetailPage({
               <CardTitle>Các công việc ({booking.jobs?.length || 0})</CardTitle>
               <Button
                 size="sm"
-                onClick={() => router.push(`/jobs/new?booking_id=${booking.id}&redirect=${encodeURIComponent(`/bookings/${booking.id}`)}`)}
+                onClick={() => setCreateJobDialogOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo công việc
@@ -326,7 +411,7 @@ export default function BookingDetailPage({
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => router.push(`/jobs/new?booking_id=${booking.id}&redirect=${encodeURIComponent(`/bookings/${booking.id}`)}`)}
+                    onClick={() => setCreateJobDialogOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Tạo công việc đầu tiên
@@ -348,38 +433,32 @@ export default function BookingDetailPage({
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <StatusBadge
-                            variant={
-                              job.status === "NEW"
-                                ? "new"
-                                : job.status === "IN_PROGRESS"
-                                ? "in-progress"
-                                : job.status === "COMPLETED"
-                                ? "completed"
-                                : job.status === "BLOCKED"
-                                ? "blocked"
-                                : "canceled"
-                            }
-                            label={
-                              job.status === "NEW"
-                                ? "Mới"
-                                : job.status === "IN_PROGRESS"
-                                ? "Đang xử lý"
-                                : job.status === "COMPLETED"
-                                ? "Hoàn thành"
-                                : job.status === "BLOCKED"
-                                ? "Bị chặn"
-                                : "Đã hủy"
-                            }
+                          <StatusSelect
+                            value={job.status}
+                            options={JOB_STATUS_OPTIONS}
+                            onValueChange={(value) => {
+                            }}
                           />
                           {booking.status !== BookingStatus.Completed && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handleDeleteClick(job.id, e)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingJob(job);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteClick(job.id, e)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -477,6 +556,58 @@ export default function BookingDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Complete Jobs Confirmation Dialog */}
+      <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận hoàn thành</DialogTitle>
+            <DialogDescription>
+              Đơn hàng này còn {incompleteJobCount} công việc chưa hoàn thành.
+              Bạn có muốn tự động chuyển tất cả công việc sang trạng thái hoàn thành không?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleConfirmCompletion(false)}
+            >
+              Không, chỉ cập nhật đơn hàng
+            </Button>
+            <Button onClick={() => handleConfirmCompletion(true)}>
+              Có, hoàn thành tất cả
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Create Job Dialog */}
+      <CreateJobDialog
+        open={createJobDialogOpen}
+        onOpenChange={setCreateJobDialogOpen}
+        booking={booking}
+      />
+      
+      {editingJob && (
+        <UpdateJobDialog
+          open={!!editingJob}
+          onOpenChange={(open) => !open && setEditingJob(null)}
+          job={{
+            ...editingJob,
+            booking: booking,
+            job_type: {
+              ...editingJob.job_type,
+              service: booking.service,
+            },
+          }}
+        />
+      )}
+
+      <UpdateBookingDialog
+        open={editBookingDialogOpen}
+        onOpenChange={setEditBookingDialogOpen}
+        booking={booking}
+      />
     </PageContainer>
   );
 }

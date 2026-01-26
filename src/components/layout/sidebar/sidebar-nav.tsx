@@ -38,17 +38,19 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
               const active = isActive(item);
 
               return (
-                <Link key={item.id} href={item.href}>
-                  <Button
-                    variant={active ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-3 transition-colors",
-                      active &&
-                        "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary",
-                      collapsed && "justify-center px-2"
-                    )}
-                    title={collapsed ? item.label : undefined}
-                  >
+                <Button
+                  key={item.id}
+                  asChild
+                  variant={active ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 transition-colors",
+                    active &&
+                      "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary",
+                    collapsed && "justify-center px-2"
+                  )}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Link href={item.href}>
                     <Icon className={cn("h-5 w-5", collapsed && "h-6 w-6")} />
                     {!collapsed && (
                       <>
@@ -63,8 +65,8 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
                         )}
                       </>
                     )}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               );
             })}
         </div>

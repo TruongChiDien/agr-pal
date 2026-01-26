@@ -67,26 +67,10 @@ export async function deleteCustomer(id: string): Promise<Result<void>> {
 export async function listCustomers() {
   await requireAuth()
   const customers = await prisma.customer.findMany({
-    include: { lands: true, bills: true },
     orderBy: { name: 'asc' },
   })
-
-  // Convert Decimal to number for serialization
-  return customers.map(customer => ({
-    ...customer,
-    lands: customer.lands?.map(land => ({
-      ...land,
-      gps_lat: land.gps_lat ? Number(land.gps_lat) : null,
-      gps_lng: land.gps_lng ? Number(land.gps_lng) : null,
-    })),
-    bills: customer.bills?.map(bill => ({
-      ...bill,
-      total_amount: Number(bill.total_amount),
-      total_paid: Number(bill.total_paid),
-      discount_amount: Number(bill.discount_amount),
-      subtotal: Number(bill.subtotal),
-    })),
-  }))
+  
+  return customers
 }
 
 export async function getCustomer(id: string) {
@@ -99,9 +83,24 @@ export async function getCustomer(id: string) {
         include: {
           service: true,
           land: true,
-        }
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
       },
-      bills: true
+      bills: {
+        include: {
+          bookings: {
+            include: {
+              service: true,
+              land: true,
+            }
+          }
+        },
+        orderBy: {
+          created_at: 'desc'
+        }
+      }
     },
   })
 
@@ -125,8 +124,14 @@ export async function getCustomer(id: string) {
       ...bill,
       total_amount: Number(bill.total_amount),
       total_paid: Number(bill.total_paid),
-      discount_amount: Number(bill.discount_amount),
+      adjustment: Number((bill as any).adjustment ?? 0),
       subtotal: Number(bill.subtotal),
+      bookings: bill.bookings?.map(booking => ({
+        ...booking,
+        quantity: Number(booking.quantity),
+        captured_price: Number(booking.captured_price),
+        total_amount: Number(booking.total_amount),
+      })),
     })),
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import type { Advance_Payment } from "@prisma/client";
@@ -10,12 +9,18 @@ interface AdvanceSelectorProps {
   workerId: string;
   selectedAdvanceIds: string[];
   onSelectionChange: (advanceIds: string[]) => void;
+  payrollId?: string;
+  isPaid?: boolean;
+  onLoaded?: (advances: Advance_Payment[]) => void;
 }
 
 export function AdvanceSelector({
   workerId,
   selectedAdvanceIds,
   onSelectionChange,
+  payrollId,
+  isPaid,
+  onLoaded,
 }: AdvanceSelectorProps) {
   const [advances, setAdvances] = useState<Advance_Payment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,11 +31,22 @@ export function AdvanceSelector({
 
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `/api/advances?worker_id=${workerId}&status=UNPROCESSED`
-        );
+        let url = `/api/advances?worker_id=${workerId}`;
+
+        if (isPaid && payrollId) {
+            url += `&include_payroll_id=${payrollId}`;
+        } else {
+            url += `&status=UNPROCESSED`;
+            if (payrollId) {
+                url += `&include_payroll_id=${payrollId}`;
+            }
+        }
+        
+        const response = await fetch(url);
         const data = await response.json();
-        setAdvances(data || []);
+        const loaded = data || [];
+        setAdvances(loaded);
+        if (onLoaded) onLoaded(loaded);
       } catch (error) {
         console.error("Error fetching advances:", error);
         setAdvances([]);
@@ -40,7 +56,7 @@ export function AdvanceSelector({
     };
 
     fetchAdvances();
-  }, [workerId]);
+  }, [workerId, payrollId, isPaid]);
 
   const handleToggle = (advanceId: string) => {
     if (selectedAdvanceIds.includes(advanceId)) {
@@ -64,28 +80,18 @@ export function AdvanceSelector({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tạm ứng (Tùy chọn)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Đang tải...
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col h-full justify-center items-center p-4">
+        <p className="text-sm text-muted-foreground">Đang tải...</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="flex flex-col h-full">
+      <div className="flex-none p-4 pb-2 border-b">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Tạm ứng ({advances.length})</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tùy chọn - Chọn các khoản tạm ứng để trừ vào lương
-            </p>
+            <h3 className="font-semibold leading-none tracking-tight">Tạm ứng ({advances.length})</h3>
           </div>
           {advances.length > 0 && (
             <button
@@ -99,15 +105,15 @@ export function AdvanceSelector({
             </button>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
         {advances.length === 0 ? (
           <div className="text-center py-6">
             <p className="text-sm text-muted-foreground">
-              Không có khoản tạm ứng nào chưa xử lý
+              Không có khoản tạm ứng nào
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Bạn có thể bỏ qua bước này nếu không có tạm ứng
+              Có thể bỏ qua
             </p>
           </div>
         ) : (
@@ -130,7 +136,7 @@ export function AdvanceSelector({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium">
-                        Tạm ứng #{advance.id.slice(0, 8)}
+                        #{advance.id.slice(0, 8)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDateShort(advance.created_at)}
@@ -150,25 +156,9 @@ export function AdvanceSelector({
                 </div>
               </div>
             ))}
-
-            {/* Total Preview */}
-            {selectedAdvanceIds.length > 0 && (
-              <Card className="bg-muted/50 border-destructive/20">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      Tổng tạm ứng ({selectedAdvanceIds.length} khoản):
-                    </span>
-                    <span className="text-xl font-bold text-destructive">
-                      - {formatCurrency(totalAdvances)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

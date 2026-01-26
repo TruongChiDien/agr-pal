@@ -7,6 +7,7 @@ export const createBookingSchema = z.object({
   land_id: z.string().optional(),
   quantity: z.number().min(0, 'Số lượng phải lớn hơn hoặc bằng 0').optional(),
   captured_price: z.number().min(0, 'Giá phải lớn hơn hoặc bằng 0').optional(),
+  adjustment: z.number().optional().default(0),
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 })
 
@@ -14,5 +15,7 @@ export const updateBookingSchema = z.object({
   status: z.nativeEnum(BookingStatus).optional(),
   land_id: z.string().optional(),
   quantity: z.number().min(0, 'Số lượng phải lớn hơn hoặc bằng 0').optional(),
+  captured_price: z.number().min(0, 'Giá phải lớn hơn hoặc bằng 0').optional(),
+  adjustment: z.number().optional(),
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 })

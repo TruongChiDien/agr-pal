@@ -2,9 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useWorker, useDeleteWorkerWeight, useDeleteWorker, useDeleteAdvancePayment } from "@/hooks/use-workers";
-import { useDeleteJob } from "@/hooks/use-jobs";
-import { useDeletePayroll } from "@/hooks/use-payroll";
+import { useWorker, useDeleteWorkerWeight, useDeleteWorker } from "@/hooks/use-workers";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { WorkerWeightDialog } from "@/components/workers/worker-weight-dialog";
-import { AdvancePaymentDialog } from "@/components/workers/advance-payment-dialog";
-import { formatCurrency, formatDateShort } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
-import { JobStatus, AdvanceStatus, PayrollStatus } from "@/types/enums";
-import { JobStatusBadge, JobPaymentStatusBadge, AdvanceStatusBadge, PayrollStatusBadge } from "@/components/status";
+import { JobList } from "@/components/jobs/job-list";
+import { AdvanceList } from "@/components/advances/advance-list";
+import { PayrollList } from "@/components/payroll/payroll-list";
 import {
   Dialog,
   DialogContent,
@@ -25,21 +23,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Worker_Weight, Job_Type, Job, Booking, Customer, Service, Advance_Payment, Payroll_Sheet } from "@/types";
+import { UpdateWorkerDialog } from "@/components/workers/update-worker-dialog";
+import type { Worker_Weight, Job_Type, Advance_Payment } from "@/types";
 
 type WorkerWeightWithJobType = Worker_Weight & {
   job_type?: Job_Type & { service?: { name: string } };
 };
 
-type JobWithRelations = Job & {
-  booking?: Booking & {
-    customer?: Customer;
-    service?: Service;
-  };
-};
-
 type AdvanceWithRelations = Advance_Payment;
-type PayrollWithRelations = Payroll_Sheet;
+
 
 export default function WorkerDetailPage({
   params,
@@ -52,10 +44,6 @@ export default function WorkerDetailPage({
   const { data: worker, isLoading } = useWorker(id);
   const deleteWeight = useDeleteWorkerWeight();
   const deleteWorker = useDeleteWorker();
-  const deleteAdvance = useDeleteAdvancePayment();
-  const deleteJob = useDeleteJob();
-  const deletePayroll = useDeletePayroll();
-
   // Get initial tab from URL or default to "info"
   const tabFromUrl = searchParams.get("tab") || "info";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
@@ -64,13 +52,7 @@ export default function WorkerDetailPage({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [weightToDelete, setWeightToDelete] = useState<string | null>(null);
   const [deleteWorkerDialogOpen, setDeleteWorkerDialogOpen] = useState(false);
-  const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
-  const [deleteAdvanceDialogOpen, setDeleteAdvanceDialogOpen] = useState(false);
-  const [advanceToDelete, setAdvanceToDelete] = useState<string | null>(null);
-  const [deleteJobDialogOpen, setDeleteJobDialogOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
-  const [deletePayrollDialogOpen, setDeletePayrollDialogOpen] = useState(false);
-  const [payrollToDelete, setPayrollToDelete] = useState<string | null>(null);
+  const [updateWorkerDialogOpen, setUpdateWorkerDialogOpen] = useState(false);
 
   // Sync tab with URL parameter
   useEffect(() => {
@@ -122,47 +104,6 @@ export default function WorkerDetailPage({
     setEditingWeight(null);
   };
 
-  const handleDeleteAdvanceClick = (advanceId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setAdvanceToDelete(advanceId);
-    setDeleteAdvanceDialogOpen(true);
-  };
-
-  const handleDeleteAdvanceConfirm = async () => {
-    if (advanceToDelete) {
-      await deleteAdvance.mutateAsync(advanceToDelete);
-      setDeleteAdvanceDialogOpen(false);
-      setAdvanceToDelete(null);
-    }
-  };
-
-  const handleDeleteJobClick = (jobId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setJobToDelete(jobId);
-    setDeleteJobDialogOpen(true);
-  };
-
-  const handleDeleteJobConfirm = async () => {
-    if (jobToDelete) {
-      await deleteJob.mutateAsync(jobToDelete);
-      setDeleteJobDialogOpen(false);
-      setJobToDelete(null);
-    }
-  };
-
-  const handleDeletePayrollClick = (payrollId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setPayrollToDelete(payrollId);
-    setDeletePayrollDialogOpen(true);
-  };
-
-  const handleDeletePayrollConfirm = async () => {
-    if (payrollToDelete) {
-      await deletePayroll.mutateAsync(payrollToDelete);
-      setDeletePayrollDialogOpen(false);
-      setPayrollToDelete(null);
-    }
-  };
 
   // Calculate current balance from unpaid advances
   const calculateBalance = (advances?: AdvanceWithRelations[]): number => {
@@ -252,218 +193,6 @@ export default function WorkerDetailPage({
     },
   ];
 
-  // Jobs Columns
-  const jobColumns: ColumnDef<JobWithRelations>[] = [
-    {
-      key: "booking",
-      label: "Khách hàng / Dịch vụ",
-      render: (item) => (
-        <div>
-          <p className="font-medium">{item.booking?.customer?.name || "N/A"}</p>
-          <p className="text-xs text-muted-foreground">
-            {item.booking?.service?.name || ""}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      label: "Trạng thái",
-      width: "140px",
-      align: "center",
-      render: (item) => <JobStatusBadge status={item.status as JobStatus} />,
-    },
-    {
-      key: "payment_status",
-      label: "Thanh toán",
-      width: "140px",
-      align: "center",
-      render: (item) => <JobPaymentStatusBadge status={item.payment_status as any} />,
-    },
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      align: "right",
-      render: (item) => (
-        <span className="text-muted-foreground text-sm">
-          {formatDateShort(new Date(item.created_at))}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      label: "",
-      width: "80px",
-      align: "right",
-      render: (item) => {
-        // Only show delete button if job is not completed, not fully paid, and not added to bill
-        const canDelete =
-          item.status !== JobStatus.Completed &&
-          item.payment_status == "PENDING_PAYROLL";
-
-        return (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/jobs/${item.id}/edit?redirect=${encodeURIComponent(`/workers/${id}`)}`);
-              }}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleDeleteJobClick(item.id, e)}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            )}
-          </div>
-        );
-      },
-    },
-  ];
-
-  // Advance Payment Columns
-  const advanceColumns: ColumnDef<AdvanceWithRelations>[] = [
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm">
-          {formatDateShort(new Date(item.created_at))}
-        </span>
-      ),
-    },
-    {
-      key: "amount",
-      label: "Số tiền",
-      align: "right",
-      width: "150px",
-      render: (item) => (
-        <span className="font-medium text-primary">
-          {formatCurrency(Number(item.amount))}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      label: "Trạng thái",
-      width: "140px",
-      align: "center",
-      render: (item) => <AdvanceStatusBadge status={item.status as any} />,
-    },
-    {
-      key: "notes",
-      label: "Ghi chú",
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {item.notes || "—"}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      label: "",
-      width: "80px",
-      align: "right",
-      render: (item) => {
-        // Only show delete button if not yet processed
-        if (item.status === "PROCESSED") return null;
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteAdvanceClick(item.id, e)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        );
-      },
-    },
-  ];
-
-  // Payroll Columns
-  const payrollColumns: ColumnDef<PayrollWithRelations>[] = [
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm">
-          {formatDateShort(new Date(item.created_at))}
-        </span>
-      ),
-    },
-    {
-      key: "total_wages",
-      label: "Tổng lương",
-      align: "right",
-      width: "150px",
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {formatCurrency(Number(item.total_wages))}
-        </span>
-      ),
-    },
-    {
-      key: "total_adv",
-      label: "Tạm ứng",
-      align: "right",
-      width: "150px",
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {formatCurrency(Number(item.total_adv))}
-        </span>
-      ),
-    },
-    {
-      key: "net_payable",
-      label: "Thực nhận",
-      align: "right",
-      width: "150px",
-      render: (item) => (
-        <span className="font-medium text-primary">
-          {formatCurrency(Number(item.net_payable))}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      label: "Trạng thái",
-      width: "140px",
-      align: "center",
-      render: (item) => <PayrollStatusBadge status={item.status as any} />,
-    },
-    {
-      key: "actions",
-      label: "",
-      width: "80px",
-      align: "right",
-      render: (item) => {
-        // Only show delete button if payroll has not been paid
-        const canDelete = Number(item.total_paid) === 0;
-
-        if (!canDelete) return null;
-
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeletePayrollClick(item.id, e)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        );
-      },
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -490,8 +219,6 @@ export default function WorkerDetailPage({
     );
   }
 
-  const currentBalance = calculateBalance(worker.advance_payments);
-
   return (
     <PageContainer>
       <ContentSection
@@ -503,7 +230,7 @@ export default function WorkerDetailPage({
               <Trash2 className="h-4 w-4 mr-2" />
               Xóa
             </Button>
-            <Button variant="outline" onClick={() => router.push(`/workers/${id}/edit`)}>
+            <Button variant="outline" onClick={() => setUpdateWorkerDialogOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
             </Button>
@@ -537,32 +264,68 @@ export default function WorkerDetailPage({
               <CardHeader>
                 <CardTitle>Thông tin cá nhân</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Tên</p>
-                  <p className="font-medium">{worker.name}</p>
+              <CardContent className="grid gap-8 md:grid-cols-2 pt-6">
+                {/* Column 1: Personal Info */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tên công nhân</p>
+                    <p className="font-medium">{worker.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Số điện thoại</p>
+                    <p className="font-medium">{worker.phone || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Địa chỉ</p>
+                    <p className="font-medium">{worker.address || "—"}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Số điện thoại</p>
-                  <p className="font-medium">{worker.phone || "—"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm text-muted-foreground">Địa chỉ</p>
-                  <p className="font-medium">{worker.address || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Số loại công việc</p>
-                  <p className="font-medium">
-                    <Badge variant="secondary">
-                      {worker.worker_weights?.length || 0} loại
-                    </Badge>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Số dư tạm ứng</p>
-                  <p className={`font-bold ${currentBalance > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                    {formatCurrency(currentBalance)}
-                  </p>
+
+                {/* Column 2: Financial Info */}
+                <div className="space-y-4">
+                  {(() => {
+                    // Calculate Financials
+                    const wagesDue = worker.payroll_sheets?.reduce((sum, p) => {
+                       const total = Number(p.net_payable) || 0;
+                       const paid = Number(p.total_paid) || 0;
+                       return sum + (total - paid);
+                    }, 0) || 0;
+
+                    const pendingJobsValue = worker.jobs
+                      ?.filter(j => j.payment_status === "PENDING_PAYROLL")
+                      .reduce((sum, j) => sum + Number(j.final_pay || 0), 0) || 0;
+
+                    const pendingAdvancesValue = worker.advance_payments
+                      ?.filter(a => a.status === "UNPROCESSED")
+                      .reduce((sum, a) => sum + Number(a.amount), 0) || 0;
+                    
+                    const estimatedWage = pendingJobsValue - pendingAdvancesValue;
+
+                    const totalWage = wagesDue + estimatedWage;
+
+                    return (
+                      <>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Lương đang nợ</p>
+                          <p className={`font-medium ${wagesDue > 0 ? "text-destructive" : ""}`}>
+                            {formatCurrency(wagesDue)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Lương ước tính</p>
+                          <p className={`font-medium ${estimatedWage > 0 ? "text-orange-600" : ""}`}>
+                            {formatCurrency(estimatedWage)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Tổng lương</p>
+                          <p className={`font-bold ${totalWage > 0 ? "text-destructive" : ""}`}>
+                            {formatCurrency(totalWage)}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -571,17 +334,13 @@ export default function WorkerDetailPage({
           {/* Tab 2: Job Types (Worker Weights) */}
           <TabsContent value="job-types" className="mt-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-end">
                 <div>
-                  <h3 className="text-lg font-semibold">Loại công việc và hệ số lương</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Quản lý loại công việc mà công nhân có thể thực hiện
-                  </p>
+                  <Button onClick={() => setWeightDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Thêm loại công việc
+                  </Button>
                 </div>
-                <Button onClick={() => setWeightDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm loại công việc
-                </Button>
               </div>
 
               {worker.worker_weights && worker.worker_weights.length > 0 ? (
@@ -609,22 +368,8 @@ export default function WorkerDetailPage({
           {/* Tab 3: Jobs */}
           <TabsContent value="jobs" className="mt-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Lịch sử công việc</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Danh sách công việc đã và đang thực hiện
-                  </p>
-                </div>
-              </div>
-
-              {worker.jobs && worker.jobs.length > 0 ? (
-                <DataTable
-                  columns={jobColumns}
-                  data={worker.jobs}
-                  getRowId={(item) => item.id}
-                  onRowClick={(item) => router.push(`/jobs/${item.id}`)}
-                />
+            {worker.jobs && worker.jobs.length > 0 ? (
+                <JobList workerId={id} />
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center h-48">
@@ -637,81 +382,14 @@ export default function WorkerDetailPage({
             </div>
           </TabsContent>
 
-          {/* Tab 4: Advance Payments */}
+            {/* Tab 4: Advance Payments */}
           <TabsContent value="advances" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Lịch sử tạm ứng</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Quản lý các khoản tạm ứng của công nhân
-                  </p>
-                </div>
-                <Button onClick={() => setAdvanceDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tạo tạm ứng mới
-                </Button>
-              </div>
-
-              {worker.advance_payments && worker.advance_payments.length > 0 ? (
-                <DataTable
-                  columns={advanceColumns}
-                  data={worker.advance_payments}
-                  getRowId={(item) => item.id}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có tạm ứng nào
-                    </p>
-                    <Button onClick={() => setAdvanceDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tạo tạm ứng đầu tiên
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            <AdvanceList workerId={id} workerName={worker.name} />
           </TabsContent>
 
           {/* Tab 5: Payrolls */}
           <TabsContent value="payrolls" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Lịch sử phiếu lương</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Danh sách các phiếu lương của công nhân
-                  </p>
-                </div>
-                <Button onClick={() => router.push(`/payroll/new?worker_id=${id}&redirect=${encodeURIComponent(`/workers/${id}?tab=payrolls`)}`)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tạo phiếu lương mới
-                </Button>
-              </div>
-
-              {worker.payroll_sheets && worker.payroll_sheets.length > 0 ? (
-                <DataTable
-                  columns={payrollColumns}
-                  data={worker.payroll_sheets}
-                  getRowId={(item) => item.id}
-                  onRowClick={(item) => router.push(`/payroll/${item.id}`)}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có phiếu lương nào
-                    </p>
-                    <Button onClick={() => router.push(`/payroll/new?worker_id=${id}`)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tạo phiếu lương đầu tiên
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            <PayrollList workerId={id} workerName={worker.name} />
           </TabsContent>
         </Tabs>
       </ContentSection>
@@ -724,13 +402,13 @@ export default function WorkerDetailPage({
         initialData={editingWeight || undefined}
       />
 
-      {/* Advance Payment Dialog */}
-      <AdvancePaymentDialog
-        open={advanceDialogOpen}
-        onClose={() => setAdvanceDialogOpen(false)}
-        workerId={id}
-        workerName={worker.name}
+      <UpdateWorkerDialog
+        open={updateWorkerDialogOpen}
+        onOpenChange={setUpdateWorkerDialogOpen}
+        worker={worker}
       />
+
+
 
       {/* Delete Weight Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -752,25 +430,7 @@ export default function WorkerDetailPage({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Advance Confirmation Dialog */}
-      <Dialog open={deleteAdvanceDialogOpen} onOpenChange={setDeleteAdvanceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa khoản tạm ứng này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteAdvanceDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAdvanceConfirm}>
-              Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Delete Worker Confirmation Dialog */}
       <Dialog open={deleteWorkerDialogOpen} onOpenChange={setDeleteWorkerDialogOpen}>
@@ -778,7 +438,7 @@ export default function WorkerDetailPage({
           <DialogHeader>
             <DialogTitle>Xác nhận xóa</DialogTitle>
             <DialogDescription>
-              Bạn có chắc muốn xóa công nhân "{worker.name}"? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa công nhân này? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -796,53 +456,6 @@ export default function WorkerDetailPage({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Job Confirmation Dialog */}
-      <Dialog open={deleteJobDialogOpen} onOpenChange={setDeleteJobDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc muốn xóa công việc này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteJobDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteJobConfirm}
-              disabled={deleteJob.isPending}
-            >
-              {deleteJob.isPending ? "Đang xóa..." : "Xóa"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Payroll Confirmation Dialog */}
-      <Dialog open={deletePayrollDialogOpen} onOpenChange={setDeletePayrollDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc muốn xóa phiếu lương này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletePayrollDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeletePayrollConfirm}
-              disabled={deletePayroll.isPending}
-            >
-              {deletePayroll.isPending ? "Đang xóa..." : "Xóa"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </PageContainer>
   );
 }

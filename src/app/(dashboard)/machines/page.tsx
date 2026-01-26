@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import type { Machine } from "@prisma/client";
 import { MachineStatus } from "@/types/enums";
+import { CreateMachineDialog } from "@/components/machines/create-machine-dialog";
+import { UpdateMachineDialog } from "@/components/machines/update-machine-dialog";
 
 const statusConfig = {
   [MachineStatus.Available]: { bg: "bg-green-100", text: "text-green-700", label: "Sẵn sàng" },
@@ -32,6 +34,10 @@ export default function MachinesPage() {
   const deleteMachine = useDeleteMachine();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [machineToDelete, setMachineToDelete] = useState<string | null>(null);
+  
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [machineToEdit, setMachineToEdit] = useState<Machine | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -150,7 +156,8 @@ export default function MachinesPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/machines/${item.id}/edit?redirect=${encodeURIComponent(`/machines/${item.id}`)}`);
+              setMachineToEdit(item);
+              setEditDialogOpen(true);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -188,7 +195,7 @@ export default function MachinesPage() {
         title="Quản lý máy móc"
         description="Danh sách máy móc nông nghiệp"
         actions={
-          <Button onClick={() => router.push("/machines/new")}>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Tạo mới
           </Button>
@@ -232,6 +239,19 @@ export default function MachinesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <CreateMachineDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+      
+      {machineToEdit && (
+        <UpdateMachineDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            machine={machineToEdit}
+        />
+      )}
     </PageContainer>
   );
 }

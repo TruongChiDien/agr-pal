@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const workerId = searchParams.get('worker_id')
     const paymentStatus = searchParams.get('payment_status')
+    const includePayrollId = searchParams.get('include_payroll_id')
 
     if (!workerId) {
       return NextResponse.json(
@@ -17,11 +18,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const jobs = await prisma.job.findMany({
-      where: {
+    const whereClause: any = {
         worker_id: workerId,
-        ...(paymentStatus && { payment_status: paymentStatus as any }),
-      },
+    }
+
+    if (paymentStatus && includePayrollId) {
+        whereClause.OR = [
+            { payment_status: paymentStatus as any },
+            { payroll_id: includePayrollId }
+        ]
+    } else if (paymentStatus) {
+        whereClause.payment_status = paymentStatus as any
+    } else if (includePayrollId) {
+         whereClause.payroll_id = includePayrollId
+    }
+    
+    const jobs = await prisma.job.findMany({
+      where: whereClause,
       include: {
         booking: {
           include: {

@@ -208,6 +208,7 @@ export function DataTable<T>({
                       <TableCell
                         key={column.key}
                         className={cn(
+                          "px-6",
                           column.align === "center" && "text-center",
                           column.align === "right" && "text-right",
                           column.className

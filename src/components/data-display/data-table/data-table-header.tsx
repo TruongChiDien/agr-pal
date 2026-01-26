@@ -36,7 +36,12 @@ export function DataTableHeader({
           className
         )}
       >
-        {label}
+        <span className={cn(
+          align === "center" && "w-full text-center",
+          align === "right" && "w-full text-right"
+        )}>
+          {label}
+        </span>
       </div>
     );
   }
@@ -47,13 +52,16 @@ export function DataTableHeader({
       size="sm"
       onClick={onSort}
       className={cn(
-        "h-10 px-4 font-medium hover:bg-accent",
+        "h-10 px-4 font-medium hover:bg-accent w-full",
         alignmentClasses[align],
         className
       )}
     >
-      <span>{label}</span>
-      <div className="ml-2 h-4 w-4">
+      <span className={cn(
+        align === "center" && "flex-1 text-center",
+        align === "left" && "flex-1 text-left"
+      )}>{label}</span>
+      <div className="ml-2 h-4 w-4 flex-shrink-0">
         {sortDirection === "asc" && <ArrowUp className="h-4 w-4" />}
         {sortDirection === "desc" && <ArrowDown className="h-4 w-4" />}
         {sortDirection === null && <ArrowUpDown className="h-4 w-4 opacity-50" />}

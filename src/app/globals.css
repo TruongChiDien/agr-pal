@@ -181,73 +181,61 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-}
 
-/* Desktop-optimized interactions */
-button,
-a,
-[role="button"] {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-/* Smooth focus transitions */
-input:focus,
-textarea:focus,
-select:focus,
-button:focus {
-  transition: all 0.2s ease;
-}
-
-/* Enhanced focus rings for accessibility (WCAG AA) */
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
-button:focus-visible,
-a:focus-visible,
-[role="button"]:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid rgb(var(--ring));
-  outline-offset: 2px;
-  transition: outline-offset 0.2s ease;
-}
-
-/* Touch targets for responsive views */
-@media (max-width: 768px) {
   button,
   a,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-height: 44px; /* iOS recommended touch target */
-    min-width: 44px;
+  [role="button"] {
+    @apply cursor-pointer transition-all duration-200 ease-in-out;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus,
+  button:focus {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Focus ring chuẩn Accessibility */
+  :is(input, textarea, select, button, a, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
   }
 }
 
-/* Agricultural ERP Custom Utilities */
-.text-success {
-  color: rgb(var(--success));
-}
+@layer components {
 
-.text-warning {
-  color: rgb(var(--warning));
-}
+  /* Ép kiểu cho description */
+  [data-sonner-toast] [data-description] {
+    color: rgb(var(--muted-foreground));
+  }
 
-.bg-success {
-  background-color: rgb(var(--success));
-}
+  /* TOAST ERROR */
+  .toast-error {
+    background-color: rgb(var(--card)) !important;
+    border: 1px solid rgb(var(--destructive) / 0.3) !important;
+    /* Opacity 30% */
+    border-left: 4px solid rgb(var(--destructive)) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
 
-.bg-warning {
-  background-color: rgb(var(--warning));
-}
+  /* Chọn tất cả phần tử con bên trong toast error */
+  .toast-error :is([data-title], [data-description], [data-icon], svg) {
+    color: rgb(var(--destructive)) !important;
+  }
 
-.border-success {
-  border-color: rgb(var(--success));
-}
+  /* TOAST SUCCESS */
+  .toast-success {
+    background-color: rgb(var(--card)) !important;
+    border: 1px solid rgb(var(--success) / 0.3) !important;
+    border-left: 4px solid rgb(var(--success)) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
 
-.border-warning {
-  border-color: rgb(var(--warning));
+  .toast-success :is([data-title], [data-description], [data-icon], svg) {
+    color: rgb(var(--success)) !important;
+  }
 }

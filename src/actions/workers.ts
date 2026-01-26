@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
-import { createWorkerSchema, updateWorkerSchema, createWorkerWeightSchema, updateWorkerWeightSchema, createAdvancePaymentSchema } from '@/schemas/worker'
+import { createWorkerSchema, updateWorkerSchema, createWorkerWeightSchema, updateWorkerWeightSchema, createAdvancePaymentSchema, updateAdvancePaymentSchema } from '@/schemas/worker'
 import type { Result } from '@/types/result'
 import type { Worker, Worker_Weight, Advance_Payment } from '@prisma/client'
 
@@ -105,6 +105,11 @@ export async function getWorker(id: string) {
       },
       jobs: {
         include: {
+          job_type: {
+            include: {
+              service: true,
+            },
+          },
           booking: {
             include: {
               customer: true,
@@ -200,6 +205,41 @@ export async function createAdvancePayment(input: unknown): Promise<Result<Advan
       return { success: false, error: error.message }
     }
     return { success: false, error: 'Đã xảy ra lỗi khi tạo tạm ứng' }
+  }
+}
+
+export async function updateAdvancePayment(id: string, input: unknown): Promise<Result<Advance_Payment>> {
+  try {
+    await requireAuth()
+    const validated = updateAdvancePaymentSchema.parse(input)
+
+    // Check existing
+    const existing = await prisma.advance_Payment.findUnique({
+        where: { id },
+        select: { payroll_id: true }
+    })
+
+    if (!existing) {
+        return { success: false, error: 'Không tìm thấy tạm ứng' }
+    }
+
+    if (existing.payroll_id && validated.amount !== undefined) {
+         delete validated.amount;
+    }
+
+    const advance = await prisma.advance_Payment.update({
+      where: { id },
+      data: validated,
+    })
+
+    revalidatePath('/dashboard/workers')
+    revalidatePath('/dashboard/payroll')
+    return { success: true, data: advance }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Đã xảy ra lỗi khi cập nhật tạm ứng' }
   }
 }
 

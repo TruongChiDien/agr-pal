@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/status/status-badge";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { PayrollPaymentHistory } from "@/components/payroll/payroll-payment-history";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ExternalLink, Edit } from "lucide-react";
 import { PayrollStatus } from "@/types/enums";
 import {
   Dialog,
@@ -20,6 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { UpdatePayrollDialog } from "@/components/payroll/update-payroll-dialog";
+import { AddPayrollPaymentDialog } from "@/components/payroll/add-payroll-payment-dialog";
 import type { Job, Booking, Customer, Land, Service, Job_Type, Advance_Payment } from "@prisma/client";
 
 type JobWithRelations = Job & {
@@ -71,6 +79,8 @@ export default function PayrollDetailPage({
   const { data: payroll, isLoading } = usePayroll(id);
   const deletePayroll = useDeletePayroll();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addPaymentDialogOpen, setAddPaymentDialogOpen] = useState(false);
 
   const handleDeleteConfirm = async () => {
     await deletePayroll.mutateAsync(id, {
@@ -111,6 +121,7 @@ export default function PayrollDetailPage({
 
   const totalWages = Number(payroll.total_wages);
   const totalAdv = Number(payroll.total_adv);
+  const adjustment = Number((payroll as any).adjustment || 0);
   const netPayable = Number(payroll.net_payable);
   const totalPaid = Number(payroll.total_paid);
   const balance = netPayable - totalPaid;
@@ -126,7 +137,13 @@ export default function PayrollDetailPage({
       width: "180px",
       render: (item) => (
         <div>
-          <p className="text-sm font-medium">{item.booking.customer.name}</p>
+          <Button
+            variant="link"
+            className="p-0 h-auto font-medium text-sm text-primary hover:no-underline hover:text-primary/80"
+            onClick={() => router.push(`/customers/${item.booking.customer.id}`)}
+          >
+            {item.booking.customer.name}
+          </Button>
           <p className="text-xs text-muted-foreground">
             {item.booking.land?.name || "Chưa chọn"}
           </p>
@@ -242,10 +259,37 @@ export default function PayrollDetailPage({
         description={`Phiếu lương cho ${payroll.worker.name}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
+             <Button 
+                variant="outline" 
+                onClick={() => setEditDialogOpen(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Cập nhật
             </Button>
+
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => totalPaid === 0 && setDeleteDialogOpen(true)}
+                      disabled={totalPaid > 0}
+                      className={totalPaid > 0 ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {totalPaid > 0 && (
+                  <TooltipContent>
+                    <p>Phiếu lương đã có thanh toán nên không thể xoá</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            
             <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
@@ -263,7 +307,13 @@ export default function PayrollDetailPage({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Công nhân</p>
-                  <p className="text-lg font-medium">{payroll.worker.name}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium text-lg text-primary hover:no-underline hover:text-primary/80"
+                    onClick={() => router.push(`/workers/${payroll.worker.id}`)}
+                  >
+                    {payroll.worker.name}
+                  </Button>
                   {payroll.worker.phone && (
                     <p className="text-sm text-muted-foreground">{payroll.worker.phone}</p>
                   )}
@@ -290,6 +340,16 @@ export default function PayrollDetailPage({
                       <p className="text-sm text-muted-foreground">Tạm ứng</p>
                       <p className="text-lg font-semibold text-destructive">
                         - {formatCurrency(totalAdv)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Adjustment */}
+                  {adjustment !== 0 && (
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-muted-foreground">Điều chỉnh</p>
+                      <p className={`text-lg font-semibold ${adjustment > 0 ? "text-purple-600 dark:text-purple-400" : "text-destructive"}`}>
+                        {adjustment > 0 ? "+" : ""} {formatCurrency(adjustment)}
                       </p>
                     </div>
                   )}
@@ -329,7 +389,7 @@ export default function PayrollDetailPage({
                   />
                 </div>
                 {balance > 0 && (
-                  <Button onClick={() => router.push(`/payroll/${id}/add-payment?redirect=${encodeURIComponent(`/payroll/${id}`)}`)}>
+                  <Button onClick={() => setAddPaymentDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm thanh toán
                   </Button>
@@ -425,6 +485,20 @@ export default function PayrollDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <UpdatePayrollDialog 
+        open={editDialogOpen} 
+        onOpenChange={setEditDialogOpen}
+        // @ts-ignore
+        payroll={payroll}
+      />
+      
+      <AddPayrollPaymentDialog
+        open={addPaymentDialogOpen}
+        onOpenChange={setAddPaymentDialogOpen}
+        // @ts-ignore
+        payroll={payroll}
+      />
     </PageContainer>
   );
 }

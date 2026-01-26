@@ -19,14 +19,14 @@ interface BookingSelectorProps {
   customerId: string;
   selectedBookingIds: string[];
   onSelectionChange: (bookingIds: string[]) => void;
-  discountAmount?: number;
+  adjustment?: number;
 }
 
 export function BookingSelector({
   customerId,
   selectedBookingIds,
   onSelectionChange,
-  discountAmount = 0,
+  adjustment = 0,
 }: BookingSelectorProps) {
   const { data: bookings, isLoading } = useBookings();
 
@@ -142,14 +142,14 @@ export function BookingSelector({
                 </span>
               </div>
 
-              {discountAmount > 0 && (
+              {adjustment !== 0 && (
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      Giảm giá:
+                      Điều chỉnh:
                     </span>
-                    <span className="text-lg font-semibold text-destructive">
-                      - {formatCurrency(discountAmount)}
+                    <span className={`text-lg font-semibold ${adjustment > 0 ? "text-green-600" : "text-destructive"}`}>
+                      {adjustment > 0 ? "+" : ""} {formatCurrency(adjustment)}
                     </span>
                   </div>
                   <div className="border-t pt-2">
@@ -158,14 +158,14 @@ export function BookingSelector({
                         Thành tiền:
                       </span>
                       <span className="text-2xl font-bold text-primary">
-                        {formatCurrency(totalAmount - discountAmount)}
+                        {formatCurrency(totalAmount + adjustment)}
                       </span>
                     </div>
                   </div>
                 </>
               )}
 
-              {discountAmount === 0 && (
+              {adjustment === 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">
                     Thành tiền:

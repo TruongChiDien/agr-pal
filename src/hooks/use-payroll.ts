@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-import { listPayrolls, createPayroll, deletePayroll, getPayroll, addPayrollPayment } from '@/actions/payroll'
+import { listPayrolls, createPayroll, deletePayroll, getPayroll, addPayrollPayment, updatePayroll } from '@/actions/payroll'
 
 export function usePayrolls() {
   return useQuery({
@@ -59,6 +59,33 @@ export function useDeletePayroll() {
         toast({
           title: 'Thành công',
           description: 'Phiếu lương đã được xóa',
+        })
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: result.error,
+          variant: 'destructive',
+        })
+      }
+    },
+  })
+}
+
+export function useUpdatePayroll() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: updatePayroll,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['payrolls'] })
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['workers'] })
+        queryClient.invalidateQueries({ queryKey: ['advances'] })
+        toast({
+          title: 'Thành công',
+          description: 'Phiếu lương đã được cập nhật',
         })
       } else {
         toast({

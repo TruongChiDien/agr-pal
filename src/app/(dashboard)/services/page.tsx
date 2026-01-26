@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Service } from "@prisma/client";
+import { CreateServiceDialog } from "@/components/services/create-service-dialog";
+import { UpdateServiceDialog } from "@/components/services/update-service-dialog";
 
 export default function ServicesPage() {
   const router = useRouter();
@@ -24,6 +26,9 @@ export default function ServicesPage() {
   const deleteService = useDeleteService();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -133,7 +138,8 @@ export default function ServicesPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/services/${item.id}/edit?redirect=${encodeURIComponent(`/services/${item.id}`)}`);
+              setServiceToEdit(item);
+              setEditDialogOpen(true);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -171,7 +177,7 @@ export default function ServicesPage() {
         title="Quản lý dịch vụ"
         description="Danh sách các dịch vụ nông nghiệp"
         actions={
-          <Button onClick={() => router.push("/services/new")}>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Tạo mới
           </Button>
@@ -215,6 +221,19 @@ export default function ServicesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <CreateServiceDialog 
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen} 
+      />
+      
+      {serviceToEdit && (
+        <UpdateServiceDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            service={serviceToEdit}
+        />
+      )}
     </PageContainer>
   );
 }

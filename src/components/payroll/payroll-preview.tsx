@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
 import type { Job, Advance_Payment } from "@prisma/client";
@@ -9,72 +9,42 @@ interface PayrollPreviewProps {
   workerId: string;
   selectedJobIds: string[];
   selectedAdvanceIds: string[];
+  adjustment?: number;
+  // Source data typically passed from Selectors
+  sourceJobs?: Job[];
+  sourceAdvances?: Advance_Payment[];
 }
 
 export function PayrollPreview({
   workerId,
   selectedJobIds,
   selectedAdvanceIds,
+  adjustment = 0,
+  sourceJobs = [],
+  sourceAdvances = [],
 }: PayrollPreviewProps) {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [advances, setAdvances] = useState<Advance_Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Calculate totals based on source data and selection
+  const { totalWages, totalAdvances, netPayable } = useMemo(() => {
+     // Filter jobs: active if ID is in selectedJobIds
+     // Note: we rely on sourceJobs to contain all relevant jobs (Pending + Current).
+     // Selectors ensure this.
+     
+     const activeJobs = sourceJobs.filter(job => selectedJobIds.includes(job.id));
+     const totalWagesVal = activeJobs.reduce((sum, job) => sum + Number((job as any).final_pay || 0), 0);
+     
+     const activeAdvances = sourceAdvances.filter(adv => selectedAdvanceIds.includes(adv.id));
+     const totalAdvancesVal = activeAdvances.reduce((sum, adv) => sum + Number(adv.amount), 0);
+     
+     const netPayableVal = totalWagesVal - totalAdvancesVal + adjustment;
+     
+     return {
+         totalWages: totalWagesVal,
+         totalAdvances: totalAdvancesVal,
+         netPayable: netPayableVal
+     };
+  }, [sourceJobs, sourceAdvances, selectedJobIds, selectedAdvanceIds, adjustment]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (selectedJobIds.length === 0) return;
-
-      setIsLoading(true);
-      try {
-        // Fetch selected jobs
-        const jobsResponse = await fetch(
-          `/api/jobs?worker_id=${workerId}&payment_status=PENDING_PAYROLL`
-        );
-        const jobsData = await jobsResponse.json();
-        setJobs(jobsData.filter((job: Job) => selectedJobIds.includes(job.id)));
-
-        // Fetch selected advances if any
-        if (selectedAdvanceIds.length > 0) {
-          const advancesResponse = await fetch(
-            `/api/advances?worker_id=${workerId}&status=UNPROCESSED`
-          );
-          const advancesData = await advancesResponse.json();
-          setAdvances(
-            advancesData.filter((adv: Advance_Payment) =>
-              selectedAdvanceIds.includes(adv.id)
-            )
-          );
-        } else {
-          setAdvances([]);
-        }
-      } catch (error) {
-        console.error("Error fetching preview data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [workerId, selectedJobIds, selectedAdvanceIds]);
-
-  const totalWages = jobs.reduce((sum, job) => sum + Number(job.final_pay), 0);
-  const totalAdvances = advances.reduce(
-    (sum, adv) => sum + Number(adv.amount),
-    0
-  );
-  const netPayable = totalWages - totalAdvances;
-
-  if (isLoading) {
-    return (
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground text-center">
-            Đang tính toán...
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-primary/5 border-primary/20">
@@ -95,6 +65,16 @@ export function PayrollPreview({
               <span className="text-sm text-muted-foreground">Tạm ứng:</span>
               <span className="text-lg font-semibold text-destructive">
                 - {formatCurrency(totalAdvances)}
+              </span>
+            </div>
+          )}
+
+          {/* Adjustment */}
+          {adjustment !== 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Điều chỉnh:</span>
+              <span className={`text-lg font-semibold ${adjustment > 0 ? "text-purple-600 dark:text-purple-400" : "text-destructive"}`}>
+                {adjustment > 0 ? "+" : ""} {formatCurrency(adjustment)}
               </span>
             </div>
           )}

@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
 import { listBookings, createBooking, updateBooking, deleteBooking, getBooking, checkBookingIncompleteJobs, updateBookingWithJobs } from '@/actions/bookings'
 
-export function useBookings() {
+export function useBookings(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['bookings'],
     queryFn: listBookings,
+    staleTime: 60 * 1000,
+    enabled: options?.enabled,
   })
 }
 
@@ -59,6 +61,7 @@ export function useUpdateBooking() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['bookings'] })
         queryClient.invalidateQueries({ queryKey: ['bookings', id] })
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
         toast({
           title: 'Thành công',
           description: 'Booking đã được cập nhật',
@@ -83,6 +86,7 @@ export function useDeleteBooking() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['bookings'] })
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
         toast({
           title: 'Thành công',
           description: 'Booking đã được xóa',
@@ -118,6 +122,7 @@ export function useUpdateBookingWithJobs() {
         queryClient.invalidateQueries({ queryKey: ['bookings'] })
         queryClient.invalidateQueries({ queryKey: ['bookings', id] })
         queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
         toast({
           title: 'Thành công',
           description: 'Booking đã được cập nhật',

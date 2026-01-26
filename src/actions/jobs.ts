@@ -38,7 +38,10 @@ export async function createJob(input: unknown): Promise<Result<Job>> {
     const applied_base = validated.applied_base ?? Number(jobType.default_base_salary)
     const applied_weight = validated.applied_weight ?? (workerWeight ? Number(workerWeight.weight) : 1.0)
     const actual_qty = validated.actual_qty ?? 0
-    const final_pay = actual_qty * applied_base * applied_weight
+    const payment_adjustment = validated.payment_adjustment ?? 0
+    
+    // Formula: (qty * base * weight) + adjustment
+    const final_pay = (actual_qty * applied_base * applied_weight) + payment_adjustment
 
     const job = await prisma.job.create({
       data: {
@@ -51,6 +54,7 @@ export async function createJob(input: unknown): Promise<Result<Job>> {
         applied_base,
         applied_weight,
         final_pay,
+        payment_adjustment,
       },
     })
 
@@ -69,29 +73,38 @@ export async function updateJob(id: string, input: unknown): Promise<Result<Job>
     await requireAuth()
     const validated = updateJobSchema.parse(input)
 
-    // Recalculate final_pay if actual_qty changes
+    // Recalculate final_pay if factors change
     let final_pay: number | undefined
-    if (validated.actual_qty !== undefined) {
+
+    if (validated.actual_qty !== undefined || validated.payment_adjustment !== undefined) {
       const existing = await prisma.job.findUnique({
         where: { id },
-        select: { applied_base: true, applied_weight: true },
+        select: { 
+          applied_base: true, 
+          applied_weight: true,
+          actual_qty: true,
+          payment_adjustment: true
+        },
       })
 
       if (!existing) {
         return { success: false, error: 'Job không tồn tại' }
       }
 
-      final_pay = validated.actual_qty * Number(existing.applied_base) * Number(existing.applied_weight)
+      const qty = validated.actual_qty ?? Number(existing.actual_qty)
+      const adjustment = validated.payment_adjustment ?? Number(existing.payment_adjustment)
+      
+      final_pay = (qty * Number(existing.applied_base) * Number(existing.applied_weight)) + adjustment
     }
 
-    const job = await prisma.job.update({
+      const job = await prisma.job.update({
       where: { id },
       data: {
         ...validated,
         ...(final_pay !== undefined && { final_pay }),
       },
     })
-
+    
     revalidatePath('/dashboard/jobs')
     return { success: true, data: job }
   } catch (error) {
@@ -127,7 +140,6 @@ export async function listJobs() {
       booking: {
         include: {
           customer: true,
-          land: true,
           service: true,
         },
       },
@@ -136,9 +148,7 @@ export async function listJobs() {
           service: true,
         },
       },
-      machine: true,
-      worker: true, // Changed from job_workers to worker (merged)
-      payroll: true,
+      worker: true,
     },
     orderBy: { created_at: 'desc' },
   })

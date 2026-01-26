@@ -25,7 +25,8 @@ export async function createBooking(input: unknown): Promise<Result<Booking>> {
 
     const captured_price = validated.captured_price ?? Number(service.price)
     const quantity = validated.quantity ?? 0
-    const total_amount = quantity * captured_price
+    const adjustment = validated.adjustment ?? 0
+    const total_amount = (quantity * captured_price) + adjustment
 
     const booking = await prisma.booking.create({
       data: {
@@ -34,6 +35,7 @@ export async function createBooking(input: unknown): Promise<Result<Booking>> {
         service_id: validated.service_id,
         quantity: validated.quantity,
         captured_price,
+        adjustment,
         total_amount,
         notes: validated.notes,
       },
@@ -57,19 +59,20 @@ export async function updateBooking(id: string, input: unknown): Promise<Result<
     // Fetch current booking to recalculate total if quantity changes
     const currentBooking = await prisma.booking.findUnique({
       where: { id },
-      select: { captured_price: true, quantity: true },
+      select: { captured_price: true, quantity: true, adjustment: true },
     })
 
     if (!currentBooking) {
       return { success: false, error: 'Booking không tồn tại' }
     }
 
-    // Recalculate total_amount if quantity is being updated
+    // Recalculate total_amount if quantity or captured_price is being updated
     let total_amount: number | undefined
-    if (validated.quantity !== undefined) {
-      const quantity = validated.quantity
-      const captured_price = Number(currentBooking.captured_price)
-      total_amount = quantity * captured_price
+    if (validated.quantity !== undefined || validated.captured_price !== undefined || validated.adjustment !== undefined) {
+      const quantity = validated.quantity ?? Number(currentBooking.quantity ?? 0)
+      const captured_price = validated.captured_price ?? Number(currentBooking.captured_price)
+      const adjustment = validated.adjustment ?? Number((currentBooking as any).adjustment || 0)
+      total_amount = (quantity * captured_price) + adjustment
     }
 
     const booking = await prisma.booking.update({
@@ -133,19 +136,20 @@ export async function updateBookingWithJobs(
     // Fetch current booking to recalculate total if quantity changes
     const currentBooking = await prisma.booking.findUnique({
       where: { id },
-      select: { captured_price: true, quantity: true },
+      select: { captured_price: true, quantity: true, adjustment: true },
     })
 
     if (!currentBooking) {
       return { success: false, error: 'Booking không tồn tại' }
     }
 
-    // Recalculate total_amount if quantity is being updated
+    // Recalculate total_amount if quantity or captured_price is being updated
     let total_amount: number | undefined
-    if (validated.quantity !== undefined) {
-      const quantity = validated.quantity
-      const captured_price = Number(currentBooking.captured_price)
-      total_amount = quantity * captured_price
+    if (validated.quantity !== undefined || validated.captured_price !== undefined || validated.adjustment !== undefined) {
+      const quantity = validated.quantity ?? Number(currentBooking.quantity ?? 0)
+      const captured_price = validated.captured_price ?? Number(currentBooking.captured_price)
+      const adjustment = validated.adjustment ?? Number((currentBooking as any).adjustment || 0)
+      total_amount = (quantity * captured_price) + adjustment
     }
 
     // Use transaction if we need to update jobs as well
@@ -251,7 +255,11 @@ export async function getBooking(id: string) {
     include: {
       customer: true,
       land: true,
-      service: true,
+      service: {
+        include: {
+          job_types: true,
+        },
+      },
       jobs: {
         include: {
           job_type: {

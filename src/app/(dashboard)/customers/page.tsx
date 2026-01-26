@@ -7,7 +7,6 @@ import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
-import { Badge } from "@/components/ui/badge";
 import { formatDateShort } from "@/lib/format";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import {
@@ -18,24 +17,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Customer, Land, Bill } from "@/types";
+import { CreateCustomerDialog } from "@/components/customers/create-customer-dialog";
+import { UpdateCustomerDialog } from "@/components/customers/update-customer-dialog";
+import type { Customer } from "@/types";
 
-type LandWithNumbers = Omit<Land, 'gps_lat' | 'gps_lng'> & {
-  gps_lat: number | null;
-  gps_lng: number | null;
-};
 
-type BillWithNumbers = Omit<Bill, 'total_amount' | 'total_paid' | 'discount_amount' | 'subtotal'> & {
-  total_amount: number;
-  total_paid: number;
-  discount_amount: number;
-  subtotal: number;
-};
-
-type CustomerWithRelations = Customer & {
-  lands?: LandWithNumbers[];
-  bills?: BillWithNumbers[];
-};
+type CustomerWithRelations = Customer;
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -45,6 +32,11 @@ export default function CustomersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [customerToUpdate, setCustomerToUpdate] = useState<CustomerWithRelations | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -123,6 +115,7 @@ export default function CustomersPage() {
     {
       key: "name",
       label: "Tên khách hàng",
+      width: "250px",
       sortable: true,
       render: (item) => <span className="font-medium">{item.name}</span>,
     },
@@ -136,14 +129,12 @@ export default function CustomersPage() {
       ),
     },
     {
-      key: "lands",
-      label: "Số thửa ruộng",
-      align: "center",
-      width: "140px",
+      key: "address",
+      label: "Địa chỉ",
       render: (item) => (
-        <Badge variant="secondary">
-          {item.lands?.length || 0} thửa
-        </Badge>
+        <span className="text-muted-foreground truncate max-w-[200px] block" title={item.address || ""}>
+          {item.address || "—"}
+        </span>
       ),
     },
     {
@@ -158,7 +149,7 @@ export default function CustomersPage() {
     {
       key: "actions",
       label: "",
-      width: "100px",
+      width: "80px",
       align: "right",
       render: (item) => (
         <div className="flex items-center gap-1">
@@ -167,7 +158,8 @@ export default function CustomersPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/customers/${item.id}/edit?redirect=${encodeURIComponent(`/customers/${item.id}`)}`);
+              setCustomerToUpdate(item);
+              setUpdateDialogOpen(true);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -215,7 +207,7 @@ export default function CustomersPage() {
                 className="pl-8 w-[250px]"
               />
             </div>
-            <Button onClick={() => router.push("/customers/new")}>
+            <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Thêm khách hàng
             </Button>
@@ -261,6 +253,22 @@ export default function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateCustomerDialog 
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen} 
+      />
+
+      {customerToUpdate && (
+        <UpdateCustomerDialog
+          open={updateDialogOpen}
+          onOpenChange={(open) => {
+            setUpdateDialogOpen(open);
+            if (!open) setCustomerToUpdate(null);
+          }}
+          customer={customerToUpdate}
+        />
+      )}
     </PageContainer>
   );
 }

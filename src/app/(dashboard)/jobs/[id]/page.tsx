@@ -2,14 +2,15 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useJob, useDeleteJob } from "@/hooks/use-jobs";
+import { useJob, useDeleteJob, useUpdateJob } from "@/hooks/use-jobs";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/status/status-badge";
+import { StatusSelect } from "@/components/status/status-select";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Edit, Info, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Info, Trash2 } from "lucide-react";
 import { JobStatus, JobPaymentStatus } from "@/types/enums";
 import {
   Dialog,
@@ -19,26 +20,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { UpdateJobDialog } from "@/components/jobs/update-job-dialog";
 
-// Map status enum to badge variant and label
-function getJobStatusVariant(
-  status: string
-): "new" | "in-progress" | "completed" | "blocked" | "canceled" {
-  switch (status) {
-    case JobStatus.New:
-      return "new";
-    case JobStatus.InProgress:
-      return "in-progress";
-    case JobStatus.Completed:
-      return "completed";
-    case JobStatus.Blocked:
-      return "blocked";
-    case JobStatus.Canceled:
-      return "canceled";
-    default:
-      return "new";
-  }
-}
+// Status options for Select
+const JOB_STATUS_OPTIONS = [
+  { value: JobStatus.New, label: "Mới", variant: "new" as const },
+  { value: JobStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
+  { value: JobStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
+  { value: JobStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
+  { value: JobStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
+];
 
 function getPaymentStatusVariant(
   status: string
@@ -55,22 +52,6 @@ function getPaymentStatusVariant(
   }
 }
 
-function getJobStatusLabel(status: string): string {
-  switch (status) {
-    case JobStatus.New:
-      return "Mới";
-    case JobStatus.InProgress:
-      return "Đang xử lý";
-    case JobStatus.Completed:
-      return "Hoàn thành";
-    case JobStatus.Blocked:
-      return "Bị chặn";
-    case JobStatus.Canceled:
-      return "Đã hủy";
-    default:
-      return status;
-  }
-}
 
 function getPaymentStatusLabel(status: string): string {
   switch (status) {
@@ -93,8 +74,10 @@ export default function JobDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const { data: job, isLoading } = useJob(id);
+  const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleDeleteConfirm = async () => {
     await deleteJob.mutateAsync(id, {
@@ -120,7 +103,7 @@ export default function JobDetailPage({
   if (!job) {
     return (
       <PageContainer>
-        <ContentSection title="Không tìm thấy">
+        <ContentSection title="Không tìm thấy" description="Công việc không tồn tại">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <p className="text-muted-foreground">Không tìm thấy công việc</p>
             <Button onClick={() => router.back()}>
@@ -153,13 +136,31 @@ export default function JobDetailPage({
         description={`Mã công việc: ${job.id.slice(0, 8).toUpperCase()}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
-            </Button>
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      disabled={job.payment_status !== JobPaymentStatus.PendingPayroll}
+                      className={job.payment_status !== JobPaymentStatus.PendingPayroll ? "opacity-50 pointer-events-none" : ""}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {job.payment_status !== JobPaymentStatus.PendingPayroll && (
+                  <TooltipContent>
+                    <p>Công việc đã có phiếu lương hoặc đã hoàn thành, không thể xóa</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             <Button
               variant="outline"
-              onClick={() => router.push(`/jobs/${id}/edit`)}
+              onClick={() => setEditDialogOpen(true)}
             >
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
@@ -181,7 +182,13 @@ export default function JobDetailPage({
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Công nhân</p>
-                  <p className="font-medium">{job.worker.name}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
+                    onClick={() => router.push(`/workers/${job.worker.id}`)}
+                  >
+                    {job.worker.name}
+                  </Button>
                   {job.worker.phone && (
                     <p className="text-sm text-muted-foreground">
                       {job.worker.phone}
@@ -190,7 +197,13 @@ export default function JobDetailPage({
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Khách hàng</p>
-                  <p className="font-medium">{job.booking.customer.name}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
+                    onClick={() => router.push(`/customers/${job.booking.customer.id}`)}
+                  >
+                    {job.booking.customer.name}
+                  </Button>
                   {job.booking.customer.phone && (
                     <p className="text-sm text-muted-foreground">
                       {job.booking.customer.phone}
@@ -221,12 +234,10 @@ export default function JobDetailPage({
                   <p className="text-sm text-muted-foreground">Đơn hàng</p>
                   <Button
                     variant="link"
-                    size="sm"
-                    className="h-auto p-0 font-medium"
+                    className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
                     onClick={() => router.push(`/bookings/${job.booking.id}`)}
                   >
                     {job.booking.id.slice(0, 8).toUpperCase()}
-                    <ExternalLink className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
               </div>
@@ -235,9 +246,12 @@ export default function JobDetailPage({
                 <div>
                   <p className="text-sm text-muted-foreground">Trạng thái</p>
                   <div className="mt-1">
-                    <StatusBadge
-                      variant={getJobStatusVariant(job.status)}
-                      label={getJobStatusLabel(job.status)}
+                    <StatusSelect
+                      value={job.status}
+                      options={JOB_STATUS_OPTIONS}
+                      onValueChange={(value) => {
+                        updateJob.mutate({ id: job.id, data: { status: value } });
+                      }}
                     />
                   </div>
                 </div>
@@ -375,6 +389,14 @@ export default function JobDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {job && (
+        <UpdateJobDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          job={job}
+        />
+      )}
     </PageContainer>
   );
 }

@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/status/status-badge";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
 import { BillPaymentHistory } from "@/components/bills/bill-payment-history";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit } from "lucide-react";
 import { BillStatus } from "@/types/enums";
 import {
   Dialog,
@@ -20,6 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { UpdateBillDialog } from "@/components/bills/update-bill-dialog";
+import { AddBillPaymentDialog } from "@/components/bills/add-bill-payment-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Booking, Land, Service } from "@prisma/client";
 
 type BookingWithRelations = Booking & {
@@ -67,6 +75,8 @@ export default function BillDetailPage({
   const { data: bill, isLoading } = useBill(id);
   const deleteBill = useDeleteBill();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [updateBillDialogOpen, setUpdateBillDialogOpen] = useState(false);
+  const [addPaymentDialogOpen, setAddPaymentDialogOpen] = useState(false);
 
   const handleDeleteConfirm = async () => {
     await deleteBill.mutateAsync(id, {
@@ -106,7 +116,7 @@ export default function BillDetailPage({
   }
 
   const subtotal = Number(bill.subtotal);
-  const discountAmount = Number(bill.discount_amount);
+  const adjustment = Number((bill as any).adjustment ?? 0);
   const totalAmount = Number(bill.total_amount);
   const totalPaid = Number(bill.total_paid);
   const balance = totalAmount - totalPaid;
@@ -167,9 +177,37 @@ export default function BillDetailPage({
         description={`Hóa đơn cho ${bill.customer.name}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
+            {bill.status !== BillStatus.Open ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button 
+                         variant="destructive" 
+                         disabled
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Xóa
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Hóa đơn đã ghi nhận thanh toán nên không thể xóa</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button 
+                 variant="destructive" 
+                 onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Xóa
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setUpdateBillDialogOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Sửa
             </Button>
             <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -188,7 +226,13 @@ export default function BillDetailPage({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Khách hàng</p>
-                  <p className="text-lg font-medium">{bill.customer.name}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium text-lg text-primary hover:no-underline hover:text-primary/80"
+                    onClick={() => router.push(`/customers/${bill.customer.id}`)}
+                  >
+                    {bill.customer.name}
+                  </Button>
                   {bill.customer.phone && (
                     <p className="text-sm text-muted-foreground">{bill.customer.phone}</p>
                   )}
@@ -209,19 +253,15 @@ export default function BillDetailPage({
                     </p>
                   </div>
 
-                  {/* Discount (only show if > 0) */}
-                  {discountAmount > 0 && (
+                  {/* Adjustment (show if not 0) */}
+                  {adjustment !== 0 && (
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-muted-foreground">Giảm giá</p>
-                        {bill.discount_reason && (
-                          <p className="text-xs text-muted-foreground italic">
-                            ({bill.discount_reason})
-                          </p>
-                        )}
+                        <p className="text-sm text-muted-foreground">Điều chỉnh</p>
                       </div>
-                      <p className="text-lg font-semibold text-destructive">
-                        - {formatCurrency(discountAmount)}
+                      <p className={`text-lg font-semibold ${adjustment > 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                        {adjustment > 0 ? "+" : ""}
+                        {formatCurrency(adjustment)}
                       </p>
                     </div>
                   )}
@@ -261,7 +301,7 @@ export default function BillDetailPage({
                   />
                 </div>
                 {balance > 0 && (
-                  <Button onClick={() => router.push(`/bills/${id}/add-payment?redirect=${encodeURIComponent(`/bills/${id}`)}`)}>
+                  <Button onClick={() => setAddPaymentDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm thanh toán
                   </Button>
@@ -313,7 +353,7 @@ export default function BillDetailPage({
           <DialogHeader>
             <DialogTitle>Xác nhận xóa</DialogTitle>
             <DialogDescription>
-              Bạn có chắc muốn xóa hóa đơn cho khách hàng "{bill.customer.name}"? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa hóa đơn cho khách hàng {bill.customer.name}? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -330,6 +370,17 @@ export default function BillDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <UpdateBillDialog
+        open={updateBillDialogOpen}
+        onOpenChange={setUpdateBillDialogOpen}
+        bill={bill}
+      />
+      
+      <AddBillPaymentDialog
+        open={addPaymentDialogOpen}
+        onOpenChange={setAddPaymentDialogOpen}
+        bill={bill}
+      />
     </PageContainer>
   );
 }

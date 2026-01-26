@@ -126,6 +126,7 @@ model Booking {
   service_id     String
   quantity       Decimal?      @db.Decimal(10, 2)
   captured_price Decimal       @db.Decimal(12, 2)
+  adjustment     Decimal       @default(0) @db.Decimal(12, 2)
   total_amount   Decimal       @db.Decimal(12, 2)
   status         BookingStatus @default(NEW)
   payment_status PaymentStatus @default(PENDING_BILL)
@@ -159,6 +160,7 @@ model Job {
   actual_qty     Decimal          @default(0) @db.Decimal(10, 2)
   applied_base   Decimal          @db.Decimal(12, 2)
   applied_weight Decimal          @db.Decimal(5, 2)
+  payment_adjustment Decimal      @default(0) @db.Decimal(12, 2)
   final_pay      Decimal          @db.Decimal(12, 2)
   payroll_id     String?
   payment_status JobPaymentStatus @default(PENDING_PAYROLL)
@@ -184,8 +186,8 @@ model Bill {
   status          BillStatus    @default(OPEN)
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
-  discount_amount Decimal       @default(0) @db.Decimal(12, 2)
-  discount_reason String?
+  adjustment      Decimal       @default(0) @db.Decimal(12, 2)
+  notes           String?
   subtotal        Decimal       @default(0) @db.Decimal(12, 2)
   payments        BillPayment[]
   customer        Customer      @relation(fields: [customer_id], references: [id])
@@ -233,9 +235,11 @@ model Payroll_Sheet {
   worker_id        String
   total_wages      Decimal           @db.Decimal(12, 2)
   total_adv        Decimal           @default(0) @db.Decimal(12, 2)
+  adjustment       Decimal           @default(0) @db.Decimal(12, 2)
   net_payable      Decimal           @db.Decimal(12, 2)
   total_paid       Decimal           @default(0) @db.Decimal(12, 2)
   status           PayrollStatus     @default(OPEN)
+  notes            String?
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   advance_payments Advance_Payment[]

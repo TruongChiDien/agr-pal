@@ -47,7 +47,8 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
       total_adv = advances.reduce((sum, adv) => sum + Number(adv.amount), 0)
     }
 
-    const net_payable = total_wages - total_adv
+    const adjustment = validated.adjustment || 0
+    const net_payable = total_wages - total_adv + adjustment
 
     // Transaction: create payroll + update jobs + update advances
     const payroll = (await prisma.$transaction(async (tx: any) => {
@@ -56,8 +57,10 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
           worker_id: validated.worker_id,
           total_wages,
           total_adv,
+          adjustment,
           net_payable,
           total_paid: 0,
+          notes: validated.notes || null,
         },
       })
 
@@ -275,5 +278,111 @@ export async function addPayrollPayment(input: unknown): Promise<Result<Payroll_
       return { success: false, error: error.message }
     }
     return { success: false, error: 'Đã xảy ra lỗi khi thêm thanh toán' }
+  }
+}
+
+export async function updatePayroll(input: unknown): Promise<Result<Payroll_Sheet>> {
+  try {
+    await requireAuth()
+    
+    const { id, ...data } = input as any
+    if (!id) return { success: false, error: 'Thiếu Payoll ID' }
+    
+    // Validate payload
+    const validatedData = createPayrollSchema.parse(data)
+    
+    const existingPayroll = await prisma.payroll_Sheet.findUnique({ where: { id } })
+    if(!existingPayroll) return { success: false, error: 'Phiếu lương không xác định' }
+    
+    // Check if paid
+    if (Number(existingPayroll.total_paid) > 0) {
+        // Only update notes
+        await prisma.payroll_Sheet.update({
+            where: { id },
+            data: { notes: validatedData.notes || null }
+        })
+        revalidatePath('/dashboard/payroll')
+        revalidatePath(`/dashboard/payroll/${id}`)
+        return { success: true, data: existingPayroll }
+    }
+
+    // Not paid -> Full Update
+    await prisma.$transaction(async (tx: any) => {
+        // Disconnect all
+        await tx.job.updateMany({
+            where: { payroll_id: id },
+            data: { payroll_id: null, payment_status: JobPaymentStatus.PendingPayroll }
+        })
+        await tx.advance_Payment.updateMany({
+            where: { payroll_id: id },
+            data: { payroll_id: null, status: AdvanceStatus.Unprocessed }
+        })
+        
+        // Re-connect
+        const jobs = await tx.job.findMany({
+            where: {
+                id: { in: validatedData.job_ids },
+                worker_id: validatedData.worker_id,
+                payment_status: JobPaymentStatus.PendingPayroll
+            }
+        })
+        
+        if (jobs.length !== validatedData.job_ids.length) throw new Error("Một số công việc không hợp lệ hoặc đã được thanh toán")
+            
+        const total_wages = jobs.reduce((sum: number, job: any) => sum + Number(job.final_pay), 0)
+        
+        let total_adv = 0
+        if (validatedData.advance_payment_ids?.length) {
+             const advances = await tx.advance_Payment.findMany({
+                where: {
+                    id: { in: validatedData.advance_payment_ids },
+                    worker_id: validatedData.worker_id,
+                    status: AdvanceStatus.Unprocessed
+                }
+            })
+            if (advances.length !== validatedData.advance_payment_ids.length) throw new Error("Một số tạm ứng không hợp lệ")
+            total_adv = advances.reduce((sum: number, adv: any) => sum + Number(adv.amount), 0)
+        }
+        
+        const adjustment = validatedData.adjustment || 0
+        const net_payable = total_wages - total_adv + adjustment
+        
+        // Update Payroll
+        await tx.payroll_Sheet.update({
+            where: { id },
+            data: {
+                worker_id: validatedData.worker_id, // Ensure consistent?
+                total_wages,
+                total_adv,
+                adjustment,
+                net_payable,
+                notes: validatedData.notes || null
+            }
+        })
+        
+        // Connect Jobs
+        await tx.job.updateMany({
+            where: { id: { in: validatedData.job_ids } },
+            data: { payroll_id: id, payment_status: JobPaymentStatus.AddedPayroll }
+        })
+        
+        // Connect Advances
+        if (validatedData.advance_payment_ids?.length) {
+             await tx.advance_Payment.updateMany({
+                where: { id: { in: validatedData.advance_payment_ids } },
+                data: { payroll_id: id, status: AdvanceStatus.Processed }
+             })
+        }
+    })
+    
+    revalidatePath('/dashboard/payroll')
+    revalidatePath(`/dashboard/payroll/${id}`)
+    revalidatePath('/dashboard/jobs') // Needed if jobs changed
+    
+    const updated = await prisma.payroll_Sheet.findUnique({ where: { id } })
+    return { success: true, data: updated as Payroll_Sheet }
+
+  } catch (error) {
+     return { success: false, error: error instanceof Error ? error.message : "Update failed" }
   }
 }

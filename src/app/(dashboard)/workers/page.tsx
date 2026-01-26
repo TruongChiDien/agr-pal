@@ -7,7 +7,6 @@ import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { formatDateShort } from "@/lib/format";
 import { Plus, Trash2, Edit, Search } from "lucide-react";
 import {
@@ -18,12 +17,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Worker, Worker_Weight } from "@prisma/client";
+import { CreateWorkerDialog } from "@/components/workers/create-worker-dialog";
+import { UpdateWorkerDialog } from "@/components/workers/update-worker-dialog";
+import type { Worker } from "@prisma/client";
 
-type WorkerWithRelations = Worker & {
-  worker_weights?: Worker_Weight[];
-  jobs?: { id: string; status: string }[];
-};
+type WorkerWithRelations = Worker;
 
 export default function WorkersPage() {
   const router = useRouter();
@@ -32,6 +30,11 @@ export default function WorkersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workerToDelete, setWorkerToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [workerToUpdate, setWorkerToUpdate] = useState<Worker | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -110,6 +113,7 @@ export default function WorkersPage() {
     {
       key: "name",
       label: "Tên công nhân",
+      width: "250px",
       sortable: true,
       render: (item) => <span className="font-medium">{item.name}</span>,
     },
@@ -117,47 +121,31 @@ export default function WorkersPage() {
       key: "phone",
       label: "Số điện thoại",
       sortable: true,
-      width: "150px",
+      width: "180px",
       render: (item) => (
         <span className="text-muted-foreground">{item.phone || "—"}</span>
       ),
     },
     {
-      key: "worker_weights",
-      label: "Hệ số lương",
-      width: "140px",
+      key: "address",
+      label: "Địa chỉ",
       render: (item) => (
-        <Badge variant="secondary">
-          {item.worker_weights?.length || 0} loại công việc
-        </Badge>
+        <span className="text-muted-foreground truncate max-w-[200px] block" title={item.address || ""}>
+          {item.address || "—"}
+        </span>
       ),
-    },
-    {
-      key: "jobs",
-      label: "Số công việc",
-      width: "120px",
-      align: "right",
-      render: (item) => {
-        // Count only non-completed jobs
-        const notCompletedJobsCount = item.jobs?.filter(job => ["NEW", "IN_PROGRESS"].includes(job.status)).length || 0;
-        return (
-          <span className="text-muted-foreground">
-            {notCompletedJobsCount}
-          </span>
-        );
-      },
     },
     {
       key: "created_at",
       label: "Ngày tạo",
       sortable: true,
-      width: "120px",
+      width: "110px",
       render: (item) => formatDateShort(item.created_at),
     },
     {
       key: "actions",
       label: "",
-      width: "100px",
+      width: "80px",
       align: "right",
       render: (item) => (
         <div className="flex items-center gap-1">
@@ -166,7 +154,8 @@ export default function WorkersPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/workers/${item.id}/edit?redirect=${encodeURIComponent(`/workers/${item.id}`)}`);
+              setWorkerToUpdate(item);
+              setUpdateDialogOpen(true);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -217,7 +206,7 @@ export default function WorkersPage() {
                 className="pl-8 w-[250px]"
               />
             </div>
-            <Button onClick={() => router.push("/workers/new")}>
+            <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Tạo mới
             </Button>
@@ -262,6 +251,22 @@ export default function WorkersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateWorkerDialog 
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen} 
+      />
+
+      {workerToUpdate && (
+        <UpdateWorkerDialog
+          open={updateDialogOpen}
+          onOpenChange={(open) => {
+            setUpdateDialogOpen(open);
+            if (!open) setWorkerToUpdate(null);
+          }}
+          worker={workerToUpdate}
+        />
+      )}
     </PageContainer>
   );
 }

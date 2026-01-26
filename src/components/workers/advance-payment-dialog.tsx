@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateAdvancePayment } from "@/hooks/use-workers";
-import { createAdvancePaymentSchema } from "@/schemas/worker";
+import { useCreateAdvancePayment, useUpdateAdvancePayment } from "@/hooks/use-advances";
+import { createAdvancePaymentSchema, updateAdvancePaymentSchema } from "@/schemas/worker";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/forms/currency-input";
 import {
@@ -32,20 +32,32 @@ type AdvancePaymentDialogProps = {
   onClose: () => void;
   workerId: string;
   workerName: string;
+  initialData?: {
+    id: string;
+    amount: number | string; // Prisma Decimal to string/number
+    notes?: string | null;
+    payroll_id?: string | null;
+  };
 };
 
-type CreateAdvancePaymentInput = z.infer<typeof createAdvancePaymentSchema>;
+type FormInput = z.infer<typeof createAdvancePaymentSchema>;
 
 export function AdvancePaymentDialog({
   open,
   onClose,
   workerId,
   workerName,
+  initialData,
 }: AdvancePaymentDialogProps) {
   const createAdvance = useCreateAdvancePayment();
+  const updateAdvance = useUpdateAdvancePayment();
 
-  const form = useForm<CreateAdvancePaymentInput>({
-    resolver: zodResolver(createAdvancePaymentSchema),
+  const isEditing = !!initialData;
+  // If editing and payroll_id exists, disable amount editing
+  const isAmountDisabled = isEditing && !!initialData?.payroll_id;
+
+  const form = useForm<any>({
+    resolver: zodResolver(isEditing ? updateAdvancePaymentSchema : createAdvancePaymentSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
@@ -58,20 +70,32 @@ export function AdvancePaymentDialog({
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      form.reset({
-        worker_id: workerId,
-        amount: 0,
-        notes: "",
-      });
+      if (initialData) {
+        form.reset({
+            worker_id: workerId,
+            amount: Number(initialData.amount),
+            notes: initialData.notes || "",
+        });
+      } else {
+        form.reset({
+            worker_id: workerId,
+            amount: 0,
+            notes: "",
+        });
+      }
     }
-  }, [open, workerId, form]);
+  }, [open, workerId, initialData, form]);
 
-  const onSubmit = async (data: CreateAdvancePaymentInput) => {
-    await createAdvance.mutateAsync(data, {
-      onSuccess: () => {
-        onClose();
-      },
-    });
+  const onSubmit = async (data: FormInput) => {
+    if (isEditing && initialData) {
+        await updateAdvance.mutateAsync({ id: initialData.id, data }, {
+            onSuccess: onClose,
+        });
+    } else {
+        await createAdvance.mutateAsync(data, {
+            onSuccess: onClose,
+        });
+    }
   };
 
   const handleClose = () => {
@@ -83,9 +107,18 @@ export function AdvancePaymentDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tạo tạm ứng</DialogTitle>
+          <DialogTitle>
+            {isEditing 
+              ? (isAmountDisabled ? "Cập nhật ghi chú" : "Cập nhật tạm ứng")
+              : "Tạo tạm ứng"}
+          </DialogTitle>
           <DialogDescription>
-            Tạo khoản tạm ứng mới cho công nhân {workerName}
+            {isEditing 
+              ? (isAmountDisabled 
+                  ? `Cập nhật ghi chú cho khoản tạm ứng của ${workerName}`
+                  : `Cập nhật thông tin tạm ứng của công nhân ${workerName}`)
+              : `Tạo khoản tạm ứng mới cho công nhân ${workerName}`}
+            {isAmountDisabled && <p className="text-destructive mt-1 text-sm font-medium">Khoản tạm ứng đã có trong phiếu lương nên không thể thay đổi số tiền.</p>}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -102,6 +135,7 @@ export function AdvancePaymentDialog({
                       value={field.value}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
+                      disabled={isAmountDisabled}
                     />
                   </FormControl>
                   <FormDescription>
@@ -137,9 +171,9 @@ export function AdvancePaymentDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={createAdvance.isPending}
+                disabled={createAdvance.isPending || updateAdvance.isPending}
               >
-                {createAdvance.isPending ? "Đang tạo..." : "Tạo tạm ứng"}
+                {createAdvance.isPending || updateAdvance.isPending ? "Đang xử lý..." : (isEditing ? "Lưu thay đổi" : "Tạo tạm ứng")}
               </Button>
             </DialogFooter>
           </form>

@@ -25,3 +25,9 @@ export const createAdvancePaymentSchema = z.object({
   amount: z.number().positive('Số tiền phải lớn hơn 0'),
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 })
+
+export const updateAdvancePaymentSchema = z.object({
+  amount: z.number().positive('Số tiền phải lớn hơn 0').optional(),
+  notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
+})
+

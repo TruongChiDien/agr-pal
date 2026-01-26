@@ -14,6 +14,7 @@ export const createJobSchema = z.object({
   applied_base: z.number().min(0, 'Lương cơ bản phải lớn hơn hoặc bằng 0').optional(),
   applied_weight: z.number().min(0, 'Hệ số lương phải lớn hơn hoặc bằng 0').optional(),
   final_pay: z.number().min(0, 'Tổng lương phải lớn hơn hoặc bằng 0').optional(),
+  payment_adjustment: z.number().optional().default(0),
 })
 
 export const updateJobSchema = z.object({
@@ -27,4 +28,5 @@ export const updateJobSchema = z.object({
   applied_base: z.number().min(0, 'Lương cơ bản phải lớn hơn hoặc bằng 0').optional(),
   applied_weight: z.number().min(0, 'Hệ số lương phải lớn hơn hoặc bằng 0').optional(),
   final_pay: z.number().min(0, 'Tổng lương phải lớn hơn hoặc bằng 0').optional(),
+  payment_adjustment: z.number().optional(),
 })

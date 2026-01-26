@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import type { Job, Booking, Customer, Land, Service, Job_Type } from "@prisma/client";
@@ -10,6 +9,9 @@ interface JobWorkerSelectorProps {
   workerId: string;
   selectedJobIds: string[];
   onSelectionChange: (jobIds: string[]) => void;
+  payrollId?: string;
+  isPaid?: boolean;
+  onLoaded?: (jobs: Job[]) => void;
 }
 
 type JobWithRelations = Job & {
@@ -25,21 +27,38 @@ export function JobWorkerSelector({
   workerId,
   selectedJobIds,
   onSelectionChange,
+  payrollId,
+  isPaid,
+  onLoaded,
 }: JobWorkerSelectorProps) {
   const [jobs, setJobs] = useState<JobWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchJobs = async () => {
+  const fetchJobs = async () => {
       if (!workerId) return;
 
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `/api/jobs?worker_id=${workerId}&payment_status=PENDING_PAYROLL`
-        );
+        let url = `/api/jobs?worker_id=${workerId}`;
+        
+        if (isPaid && payrollId) {
+             // Strict mode: Only fetch jobs in this payroll
+             url += `&include_payroll_id=${payrollId}`;
+             // No payment_status param implies we rely on payroll_id
+        } else {
+             // Unpaid mode: Pending + (Optional) Current Payroll
+             url += `&payment_status=PENDING_PAYROLL`;
+             if (payrollId) {
+                 url += `&include_payroll_id=${payrollId}`;
+             }
+        }
+        
+        const response = await fetch(url);
         const data = await response.json();
-        setJobs(data || []);
+        const loadedJobs = data || [];
+        setJobs(loadedJobs);
+        if (onLoaded) onLoaded(loadedJobs);
       } catch (error) {
         console.error("Error fetching jobs:", error);
         setJobs([]);
@@ -49,7 +68,7 @@ export function JobWorkerSelector({
     };
 
     fetchJobs();
-  }, [workerId]);
+  }, [workerId, payrollId, isPaid]);
 
   const handleToggle = (jobId: string) => {
     if (selectedJobIds.includes(jobId)) {
@@ -73,24 +92,17 @@ export function JobWorkerSelector({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Công việc</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Đang tải...
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col h-full justify-center items-center p-4">
+        <p className="text-sm text-muted-foreground">Đang tải...</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="flex flex-col h-full">
+      <div className="flex-none p-4 pb-2 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle>Công việc ({jobs.length})</CardTitle>
+          <h3 className="font-semibold leading-none tracking-tight">Công việc ({jobs.length})</h3>
           {jobs.length > 0 && (
             <button
               type="button"
@@ -103,8 +115,8 @@ export function JobWorkerSelector({
             </button>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
         {jobs.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">
@@ -157,23 +169,10 @@ export function JobWorkerSelector({
             ))}
 
             {/* Total Preview */}
-            {selectedJobIds.length > 0 && (
-              <Card className="bg-muted/50 border-primary/20">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      Tổng lương ({selectedJobIds.length} công việc):
-                    </span>
-                    <span className="text-xl font-bold text-primary">
-                      {formatCurrency(totalPay)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

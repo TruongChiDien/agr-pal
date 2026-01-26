@@ -8,10 +8,12 @@ import {
   getJob,
 } from '@/actions/jobs'
 
-export function useJobs() {
+export function useJobs(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['jobs'],
     queryFn: listJobs,
+    staleTime: 60 * 1000,
+    enabled: options?.enabled,
   })
 }
 

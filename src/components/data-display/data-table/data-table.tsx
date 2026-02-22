@@ -55,6 +55,7 @@ export interface DataTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   emptyDescription?: string;
+  emptyAction?: React.ReactNode;
 
   // Styling
   className?: string;
@@ -81,6 +82,7 @@ export function DataTable<T>({
   isLoading = false,
   emptyMessage,
   emptyDescription,
+  emptyAction,
   className,
   containerClassName,
 }: DataTableProps<T>) {
@@ -123,7 +125,7 @@ export function DataTable<T>({
   if (data.length === 0) {
     return (
       <div className={cn("rounded-md border", containerClassName)}>
-        <DataTableEmpty message={emptyMessage} description={emptyDescription} />
+        <DataTableEmpty message={emptyMessage} description={emptyDescription} action={emptyAction} />
       </div>
     );
   }

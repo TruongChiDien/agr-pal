@@ -5,6 +5,7 @@ export interface DataTableEmptyProps {
   message?: string;
   description?: string;
   icon?: React.ReactNode;
+  action?: React.ReactNode;
   className?: string;
 }
 
@@ -12,6 +13,7 @@ export function DataTableEmpty({
   message = "No data found",
   description = "Try adjusting your filters or search criteria",
   icon,
+  action,
   className,
 }: DataTableEmptyProps) {
   return (
@@ -25,7 +27,8 @@ export function DataTableEmpty({
         {icon || <FileQuestion className="h-12 w-12" />}
       </div>
       <h3 className="text-lg font-semibold mb-1">{message}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
+      <p className="text-sm text-muted-foreground max-w-sm mb-4">{description}</p>
+      {action && <div>{action}</div>}
     </div>
   );
 }

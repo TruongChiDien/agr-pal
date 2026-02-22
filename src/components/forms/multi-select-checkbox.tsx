@@ -26,7 +26,7 @@ export function MultiSelectCheckbox<T>({
   renderItem,
   getItemId,
   isItemDisabled = () => false,
-  disabledMessage = "This item cannot be selected",
+  disabledMessage = "Mục này không thể chọn",
   className,
   showSelectAll = true,
   showSelectedCount = true,
@@ -118,14 +118,14 @@ export function MultiSelectCheckbox<T>({
                     id="select-all"
                     checked={allSelected}
                     onCheckedChange={handleSelectAll}
-                    aria-label="Select all items"
+                    aria-label="Chọn tất cả"
                     className={cn(someSelected && "data-[state=checked]:bg-primary/50")}
                   />
                   <label
                     htmlFor="select-all"
                     className="text-sm font-medium cursor-pointer select-none"
                   >
-                    {allSelected ? "Deselect All" : "Select All"}
+                    {allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
                   </label>
                 </div>
                 {selectedCount > 0 && (
@@ -135,7 +135,7 @@ export function MultiSelectCheckbox<T>({
                     onClick={handleSelectNone}
                     className="h-8 text-xs"
                   >
-                    Clear
+                    Xóa
                   </Button>
                 )}
               </>
@@ -144,7 +144,7 @@ export function MultiSelectCheckbox<T>({
 
           {showSelectedCount && (
             <Badge variant="secondary" className="font-normal">
-              {selectedCount} / {totalCount} selected
+              Đã chọn {selectedCount} / {totalCount}
             </Badge>
           )}
         </div>
@@ -191,7 +191,7 @@ export function MultiSelectCheckbox<T>({
 
       {items.length === 0 && (
         <div className="text-center py-8 text-sm text-muted-foreground">
-          No items available
+          Không có dữ liệu
         </div>
       )}
     </div>

@@ -16,7 +16,7 @@ export function Breadcrumbs() {
 
     // Always add home
     breadcrumbs.push({
-      label: "Dashboard",
+      label: "Bảng điều khiển",
       href: "/dashboard",
       isHome: true,
     });

@@ -7,12 +7,12 @@ export default function DashboardPage() {
   return (
     <PageContainer>
       <ContentSection
-        title="Dashboard"
-        description="Welcome to Agri-ERP - Your agricultural service management system"
+        title="Bảng điều khiển"
+        description="Chào mừng đến với Agri-ERP - Hệ thống quản lý dịch vụ nông nghiệp của bạn"
         actions={
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Quick Action
+            Thao tác nhanh
           </Button>
         }
       >
@@ -20,13 +20,13 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Revenue
+                Tổng doanh thu
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">45,231,000 đ</div>
               <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                +20.1% so với tháng trước
               </p>
             </CardContent>
           </Card>
@@ -34,13 +34,13 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Active Bookings
+                Đơn hàng đang hoạt động
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">+12</div>
               <p className="text-xs text-muted-foreground">
-                +4 from last week
+                +4 so với tuần trước
               </p>
             </CardContent>
           </Card>
@@ -48,13 +48,13 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Pending Bills
+                Hóa đơn chờ xử lý
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">8</div>
               <p className="text-xs text-muted-foreground">
-                Total: 12,500,000 đ
+                Tổng cộng: 12,500,000 đ
               </p>
             </CardContent>
           </Card>
@@ -62,13 +62,13 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Active Machines
+                Máy móc đang hoạt động
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">15</div>
               <p className="text-xs text-muted-foreground">
-                3 in maintenance
+                3 máy đang bảo trì
               </p>
             </CardContent>
           </Card>
@@ -76,13 +76,13 @@ export default function DashboardPage() {
       </ContentSection>
 
       <ContentSection
-        title="Recent Activity"
-        description="Latest updates from your operations"
+        title="Hoạt động gần đây"
+        description="Cập nhật mới nhất từ các hoạt động của bạn"
       >
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-muted-foreground">
-              Recent activity will appear here...
+              Hoạt động gần đây sẽ hiển thị ở đây...
             </p>
           </CardContent>
         </Card>

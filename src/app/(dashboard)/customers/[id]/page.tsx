@@ -221,51 +221,21 @@ export default function CustomerDetailPage({
                 </div>
               </div>
 
-              {customer.lands && customer.lands.length > 0 ? (
-                <LandList customerId={id} />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có thửa ruộng nào
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <LandList customerId={id} />
             </div>
           </TabsContent>
 
           {/* Tab 3: Bookings */}
           <TabsContent value="bookings" className="mt-6">
             <div className="space-y-4">
-              {customer.bookings && customer.bookings.length > 0 ? (
-                <BookingList customerId={id} />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có đơn hàng nào
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <BookingList customerId={id} />
             </div>
           </TabsContent>
 
           {/* Tab 4: Bills */}
           <TabsContent value="bills" className="mt-6">
             <div className="space-y-4">
-              {customer.bills && customer.bills.length > 0 ? (
-                <BillList customerId={id} />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có hóa đơn nào
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <BillList customerId={id} />
             </div>
           </TabsContent>
         </Tabs>

@@ -18,6 +18,8 @@ import {
 import { formatDateShort } from "@/lib/format";
 import { Edit, ArrowLeft, Trash2 } from "lucide-react";
 import { MachineStatus } from "@/types/enums";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MaintenanceHistory } from "@/components/machines/maintenance-history";
 
 const statusConfig = {
   [MachineStatus.Available]: { bg: "bg-green-100", text: "text-green-700", label: "Sẵn sàng" },
@@ -105,44 +107,55 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
           </div>
         }
       >
-        <Card>
-          <CardContent className="grid gap-6 md:grid-cols-2 p-6">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Tên máy</p>
-              <p className="font-medium text-lg">{machine.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Trạng thái</p>
-              <Badge className={`${config.bg} ${config.text} border-0`}>
-                {config.label}
-              </Badge>
-            </div>
-            {machine.model && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Model</p>
-                <p className="font-medium text-lg">{machine.model}</p>
-              </div>
-            )}
-            {machine.type && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Loại</p>
-                <p className="font-medium text-lg">{machine.type}</p>
-              </div>
-            )}
-            {machine.purchase_date && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Ngày mua</p>
-                <p className="font-medium text-lg">{formatDateShort(machine.purchase_date)}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Ngày tạo</p>
-              <p className="font-medium text-lg">{formatDateShort(machine.created_at)}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Future: Job history, maintenance logs */}
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="info">Thông tin chung</TabsTrigger>
+            <TabsTrigger value="maintenance">Lịch sử bảo trì</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="info">
+            <Card>
+              <CardContent className="grid gap-6 md:grid-cols-2 p-6">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Tên máy</p>
+                  <p className="font-medium text-lg">{machine.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Trạng thái</p>
+                  <Badge className={`${config.bg} ${config.text} border-0`}>
+                    {config.label}
+                  </Badge>
+                </div>
+                {machine.model && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Model</p>
+                    <p className="font-medium text-lg">{machine.model}</p>
+                  </div>
+                )}
+                {machine.type && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Loại</p>
+                    <p className="font-medium text-lg">{machine.type}</p>
+                  </div>
+                )}
+                {machine.purchase_date && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Ngày mua</p>
+                    <p className="font-medium text-lg">{formatDateShort(machine.purchase_date)}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Ngày tạo</p>
+                  <p className="font-medium text-lg">{formatDateShort(machine.created_at)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="maintenance">
+            <MaintenanceHistory machineId={id} />
+          </TabsContent>
+        </Tabs>
       </ContentSection>
 
       {/* Delete Confirmation Dialog */}

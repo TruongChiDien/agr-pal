@@ -2728,140 +2728,6 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
 }
 </file>
 
-<file path="src/components/customers/create-customer-dialog.tsx">
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateCustomer } from "@/hooks/use-customers";
-import { createCustomerSchema } from "@/schemas/customer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { z } from "zod";
-
-type CreateCustomerDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
-
-export function CreateCustomerDialog({ open, onOpenChange }: CreateCustomerDialogProps) {
-  const router = useRouter();
-  const createCustomer = useCreateCustomer();
-
-  const form = useForm<CreateCustomerInput>({
-    resolver: zodResolver(createCustomerSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      address: "",
-    },
-  });
-
-  const onSubmit = async (data: CreateCustomerInput) => {
-    const result = await createCustomer.mutateAsync(data);
-    if (result.success && result.data?.id) {
-      form.reset();
-      onOpenChange(false);
-      router.push(`/customers/${result.data.id}`);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Thêm khách hàng mới</DialogTitle>
-          <DialogDescription>
-            Nhập thông tin khách hàng mới vào bên dưới.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên khách hàng *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nguyễn Văn A" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại</FormLabel>
-                  <FormControl>
-                    <Input placeholder="09xxxxxxx" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Địa chỉ</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Địa chỉ..." 
-                      className="resize-none" 
-                      rows={3}
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" disabled={createCustomer.isPending}>
-                {createCustomer.isPending ? "Đang tạo..." : "Tạo khách hàng"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-</file>
-
 <file path="src/components/customers/customer-tabs.tsx">
 /**
  * Customer Tabs Component
@@ -8845,140 +8711,6 @@ function TooltipContent({
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 </file>
 
-<file path="src/components/workers/create-worker-dialog.tsx">
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateWorker } from "@/hooks/use-workers";
-import { createWorkerSchema } from "@/schemas/worker";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { z } from "zod";
-
-type CreateWorkerDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-type CreateWorkerInput = z.infer<typeof createWorkerSchema>;
-
-export function CreateWorkerDialog({ open, onOpenChange }: CreateWorkerDialogProps) {
-  const router = useRouter();
-  const createWorker = useCreateWorker();
-
-  const form = useForm<CreateWorkerInput>({
-    resolver: zodResolver(createWorkerSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      address: "",
-    },
-  });
-
-  const onSubmit = async (data: CreateWorkerInput) => {
-    const result = await createWorker.mutateAsync(data);
-    if (result.success && result.data?.id) {
-      form.reset();
-      onOpenChange(false);
-      router.push(`/workers/${result.data.id}`);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Thêm công nhân mới</DialogTitle>
-          <DialogDescription>
-            Nhập thông tin công nhân mới vào bên dưới.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên công nhân *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nguyễn Văn B" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại</FormLabel>
-                  <FormControl>
-                    <Input placeholder="09xxxxxxx" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Địa chỉ</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Địa chỉ..." 
-                      className="resize-none" 
-                      rows={3}
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" disabled={createWorker.isPending}>
-                {createWorker.isPending ? "Đang tạo..." : "Tạo công nhân"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-</file>
-
 <file path="src/components/workers/update-worker-dialog.tsx">
 "use client";
 
@@ -11772,13 +11504,13 @@ type CreateBillDialogProps = {
   customerId: string;
 };
 
-type CreateBillInput = z.infer<typeof createBillSchema>;
+type CreateBillInput = z.input<typeof createBillSchema>;
 
 export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillDialogProps) {
   const createBill = useCreateBill();
 
   const form = useForm<CreateBillInput>({
-    resolver: zodResolver(createBillSchema),
+    resolver: zodResolver(createBillSchema) as any,
     defaultValues: {
       customer_id: customerId,
       booking_ids: [],
@@ -11835,10 +11567,6 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
                       <FormLabel>Số tiền điều chỉnh (+/-)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                           {/* Assuming CurrencyInput can handle negative if min is negative */}
-                           {/* But CreateBillDialog used Input type=number before. I should use correct component. */}
-                           {/* Previous code used Input type=number. I should allow negative. */}
-                           {/* Using Input type=number allows minus sign. */}
                            <Input
                               type="number"
                               placeholder="0"
@@ -12772,6 +12500,140 @@ export function UpdateBookingDialog({ open, onOpenChange, booking }: UpdateBooki
                 disabled={updateBooking.isPending}
               >
                 {updateBooking.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+</file>
+
+<file path="src/components/customers/create-customer-dialog.tsx">
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCreateCustomer } from "@/hooks/use-customers";
+import { createCustomerSchema } from "@/schemas/customer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+
+type CreateCustomerDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+
+export function CreateCustomerDialog({ open, onOpenChange }: CreateCustomerDialogProps) {
+  const router = useRouter();
+  const createCustomer = useCreateCustomer();
+
+  const form = useForm<CreateCustomerInput>({
+    resolver: zodResolver(createCustomerSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      address: "",
+    },
+  });
+
+  const onSubmit = async (data: CreateCustomerInput) => {
+    const result = await createCustomer.mutateAsync(data);
+    if (result.success && result.data?.id) {
+      form.reset();
+      onOpenChange(false);
+      router.push(`/customers/${result.data.id}`);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Thêm khách hàng mới</DialogTitle>
+          <DialogDescription>
+            Nhập thông tin khách hàng mới vào bên dưới.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên khách hàng *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nguyễn Văn A" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại</FormLabel>
+                  <FormControl>
+                    <Input placeholder="09xxxxxxx" {...field} value={field.value || ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Địa chỉ</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Địa chỉ..." 
+                      className="resize-none" 
+                      rows={3}
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={createCustomer.isPending}>
+                {createCustomer.isPending ? "Đang tạo..." : "Tạo khách hàng"}
               </Button>
             </DialogFooter>
           </form>
@@ -16304,6 +16166,140 @@ export function AdvancePaymentDialog({
                 disabled={createAdvance.isPending || updateAdvance.isPending}
               >
                 {createAdvance.isPending || updateAdvance.isPending ? "Đang xử lý..." : (isEditing ? "Lưu thay đổi" : "Tạo tạm ứng")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+</file>
+
+<file path="src/components/workers/create-worker-dialog.tsx">
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCreateWorker } from "@/hooks/use-workers";
+import { createWorkerSchema } from "@/schemas/worker";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+
+type CreateWorkerDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+type CreateWorkerInput = z.infer<typeof createWorkerSchema>;
+
+export function CreateWorkerDialog({ open, onOpenChange }: CreateWorkerDialogProps) {
+  const router = useRouter();
+  const createWorker = useCreateWorker();
+
+  const form = useForm<CreateWorkerInput>({
+    resolver: zodResolver(createWorkerSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      address: "",
+    },
+  });
+
+  const onSubmit = async (data: CreateWorkerInput) => {
+    const result = await createWorker.mutateAsync(data);
+    if (result.success && result.data?.id) {
+      form.reset();
+      onOpenChange(false);
+      router.push(`/workers/${result.data.id}`);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Thêm công nhân mới</DialogTitle>
+          <DialogDescription>
+            Nhập thông tin công nhân mới vào bên dưới.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên công nhân *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nguyễn Văn B" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại</FormLabel>
+                  <FormControl>
+                    <Input placeholder="09xxxxxxx" {...field} value={field.value || ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Địa chỉ</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Địa chỉ..." 
+                      className="resize-none" 
+                      rows={3}
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={createWorker.isPending}>
+                {createWorker.isPending ? "Đang tạo..." : "Tạo công nhân"}
               </Button>
             </DialogFooter>
           </form>
@@ -24359,7 +24355,7 @@ import { z } from 'zod'
 export const createBillSchema = z.object({
   customer_id: z.string().min(1, 'ID khách hàng không được để trống'),
   booking_ids: z.array(z.string().min(1, 'ID booking không hợp lệ')).min(1, 'Phải chọn ít nhất 1 booking'),
-  adjustment: z.number(),
+  adjustment: z.number().optional(),
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 }).transform((data) => ({
   ...data,

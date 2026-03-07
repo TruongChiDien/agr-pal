@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Agri-ERP | Agricultural Service Management System",
-  description: "Comprehensive agricultural service management system for bookings, jobs, billing, and payroll",
+  title: "Agri-ERP | Hệ thống Quản lý Dịch vụ Nông nghiệp",
+  description: "Hệ thống quản lý dịch vụ nông nghiệp toàn diện cho đơn hàng, công việc, hóa đơn và lương bổng",
 };
 
 export default function RootLayout({

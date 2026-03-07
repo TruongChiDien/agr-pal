@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreatePayroll } from "@/hooks/use-payroll";
@@ -47,6 +48,7 @@ interface CreatePayrollDialogProps {
 }
 
 export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayrollDialogProps) {
+  const router = useRouter();
   const createPayroll = useCreatePayroll();
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { toast } = useToast();
@@ -64,7 +66,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
       worker_id: workerId || "",
       job_ids: [],
       advance_payment_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -78,7 +80,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
         worker_id: workerId || "",
         job_ids: [],
         advance_payment_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       setSelectedJobIds([]);
@@ -141,10 +143,9 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
 
     const result = await createPayroll.mutateAsync(payload);
 
-    if (result.success) {
+    if (result.success && result.data?.id) {
       onOpenChange(false);
-      // Optional: Navigate to Detail page? Or just stay on list. 
-      // If we are in List page, toast is enough.
+      router.push(`/payrolls/${result.data.id}`);
     }
   };
 
@@ -200,7 +201,12 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
                                 type="number" 
                                 placeholder="0"
                                 {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
+                                value={field.value || ""}
+                                disabled={false}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? undefined : Number(val));
+                                }}
                             />
                         </FormControl>
                         <FormMessage />

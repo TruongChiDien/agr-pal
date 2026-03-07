@@ -42,25 +42,25 @@ export function Header({ className, user }: HeaderProps) {
       {/* Actions */}
       <div className="flex items-center gap-2">
         {/* Search */}
-        <Button variant="ghost" size="icon" title="Search">
+        <Button variant="ghost" size="icon" title="Tìm kiếm">
           <Search className="h-5 w-5" />
         </Button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" title="Notifications">
+        <Button variant="ghost" size="icon" title="Thông báo">
           <Bell className="h-5 w-5" />
         </Button>
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" title="User menu">
+            <Button variant="ghost" size="icon" title="Menu người dùng">
               <User className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
-              {user?.name || 'My Account'}
+              {user?.name || 'Tài khoản của tôi'}
               {user?.email && (
                 <div className="text-xs font-normal text-muted-foreground">
                   {user.email}
@@ -70,11 +70,11 @@ export function Header({ className, user }: HeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Hồ sơ</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>Cài đặt</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={handleLogout}>

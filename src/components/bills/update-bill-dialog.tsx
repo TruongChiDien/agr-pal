@@ -59,7 +59,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
     resolver: zodResolver(updateBillSchema),
     defaultValues: {
       booking_ids: bill.bookings.map(b => b.id),
-      adjustment: Number((bill as any).adjustment ?? 0),
+      adjustment: Number((bill as any).adjustment ?? 0) || undefined,
       notes: (bill as any).notes || "",
     },
   });
@@ -69,7 +69,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
     if (open && bill) {
       form.reset({
         booking_ids: bill.bookings.map(b => b.id),
-        adjustment: Number((bill as any).adjustment ?? 0),
+        adjustment: Number((bill as any).adjustment ?? 0) || undefined,
         notes: (bill as any).notes || "",
       });
     }

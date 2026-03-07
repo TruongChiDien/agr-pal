@@ -29,11 +29,11 @@ export interface NavGroup {
 export const navigationConfig: NavGroup[] = [
   {
     id: "main",
-    label: "Main",
+    label: "Chính",
     items: [
       {
         id: "dashboard",
-        label: "Dashboard",
+        label: "Bảng điều khiển",
         href: "/dashboard",
         icon: LayoutDashboard,
         enabled: true,
@@ -42,18 +42,18 @@ export const navigationConfig: NavGroup[] = [
   },
   {
     id: "operations",
-    label: "Operations",
+    label: "Hoạt động",
     items: [
       {
         id: "bookings",
-        label: "Bookings",
+        label: "Đơn hàng",
         href: "/bookings",
         icon: CalendarDays,
         enabled: true,
       },
       {
         id: "jobs",
-        label: "Jobs",
+        label: "Công việc",
         href: "/jobs",
         icon: Briefcase,
         enabled: true,
@@ -62,18 +62,18 @@ export const navigationConfig: NavGroup[] = [
   },
   {
     id: "people",
-    label: "People & Land",
+    label: "Nhân sự & Đất đai",
     items: [
       {
         id: "customers",
-        label: "Customers",
+        label: "Khách hàng",
         href: "/customers",
         icon: Users,
         enabled: true,
       },
       {
         id: "workers",
-        label: "Workers",
+        label: "Công nhân",
         href: "/workers",
         icon: Users,
         enabled: true,
@@ -82,18 +82,18 @@ export const navigationConfig: NavGroup[] = [
   },
   {
     id: "financial",
-    label: "Financial",
+    label: "Tài chính",
     items: [
       {
         id: "billing",
-        label: "Billing",
+        label: "Hóa đơn",
         href: "/bills",
         icon: Receipt,
         enabled: true,
       },
       {
         id: "payroll",
-        label: "Payroll",
+        label: "Lương bổng",
         href: "/payroll",
         icon: Wallet,
         enabled: true,
@@ -102,18 +102,18 @@ export const navigationConfig: NavGroup[] = [
   },
   {
     id: "assets",
-    label: "Assets & Services",
+    label: "Tài sản & Dịch vụ",
     items: [
       {
         id: "machines",
-        label: "Machines",
+        label: "Máy móc",
         href: "/machines",
         icon: Tractor,
         enabled: true,
       },
       {
         id: "services",
-        label: "Services",
+        label: "Dịch vụ",
         href: "/services",
         icon: Wrench,
         enabled: true,

@@ -179,7 +179,7 @@ export function UpdateJobDialog({ open, onOpenChange, job }: UpdateJobDialogProp
                   </FormLabel>
                   <FormControl>
                     <QuantityInput
-                      value={field.value || 0}
+                      value={field.value}
                       onChange={field.onChange}
                       unit={job.job_type.service.unit}
                       min={0}
@@ -292,7 +292,7 @@ export function UpdateJobDialog({ open, onOpenChange, job }: UpdateJobDialogProp
                             <FormControl>
                               <div className="relative">
                                 <CurrencyInput
-                                  value={field.value || 0}
+                                  value={field.value}
                                   onChange={field.onChange}
                                   min={-1000000000} // Allow negative
                                 />

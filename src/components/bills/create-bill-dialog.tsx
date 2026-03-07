@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateBill } from "@/hooks/use-bills";
 import { createBillSchema } from "@/schemas/bill";
@@ -33,32 +34,33 @@ type CreateBillDialogProps = {
   customerId: string;
 };
 
-type CreateBillInput = z.infer<typeof createBillSchema>;
+type CreateBillInput = z.input<typeof createBillSchema>;
 
 export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillDialogProps) {
+  const router = useRouter();
   const createBill = useCreateBill();
 
   const form = useForm<CreateBillInput>({
-    resolver: zodResolver(createBillSchema),
+    resolver: zodResolver(createBillSchema) as any,
     defaultValues: {
       customer_id: customerId,
       booking_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
 
   const onSubmit = async (data: CreateBillInput) => {
-    // If backend expects adjustment
     const result = await createBill.mutateAsync(data);
-    if (result.success) {
+    if (result.success && result.data?.id) {
       form.reset({
         customer_id: customerId,
         booking_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       onOpenChange(false);
+      router.push(`/bills/${result.data.id}`);
     }
   };
 
@@ -96,10 +98,6 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
                       <FormLabel>Số tiền điều chỉnh (+/-)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                           {/* Assuming CurrencyInput can handle negative if min is negative */}
-                           {/* But CreateBillDialog used Input type=number before. I should use correct component. */}
-                           {/* Previous code used Input type=number. I should allow negative. */}
-                           {/* Using Input type=number allows minus sign. */}
                            <Input
                               type="number"
                               placeholder="0"

@@ -86,7 +86,8 @@ model Machine {
   status        MachineStatus @default(AVAILABLE)
   created_at    DateTime      @default(now())
   updated_at    DateTime      @updatedAt
-  jobs          Job[]
+  jobs             Job[]
+  maintenance_logs MaintenanceLog[]
 
   @@map("machines")
 }
@@ -265,6 +266,35 @@ model Payroll_Payment {
   @@index([payroll_id])
   @@index([payment_date])
   @@map("payroll_payments")
+}
+
+model MaintenanceCategory {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  created_at DateTime         @default(now())
+  logs       MaintenanceLog[]
+
+  @@map("maintenance_categories")
+}
+
+model MaintenanceLog {
+  id               String              @id @default(cuid())
+  machine_id       String
+  category_id      String
+  brand            String?
+  price            Decimal             @db.Decimal(12, 2)
+  quantity         Int                 @default(1)
+  maintenance_date DateTime
+  notes            String?
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
+  category         MaintenanceCategory @relation(fields: [category_id], references: [id])
+  machine          Machine             @relation(fields: [machine_id], references: [id], onDelete: Cascade)
+
+  @@index([machine_id])
+  @@index([category_id])
+  @@index([maintenance_date])
+  @@map("maintenance_logs")
 }
 
 enum MachineStatus {

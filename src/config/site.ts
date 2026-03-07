@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "Agri-ERP",
-  description: "Agricultural Service Management System",
-  tagline: "Comprehensive management for bookings, jobs, billing, and payroll",
+  description: "Hệ thống Quản lý Dịch vụ Nông nghiệp",
+  tagline: "Quản lý toàn diện đơn hàng, công việc, hóa đơn và lương bổng",
   version: "1.0.0",
   author: "Agri-ERP Team",
 

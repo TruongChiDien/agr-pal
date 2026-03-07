@@ -58,14 +58,14 @@ export function Sidebar({ className }: SidebarProps) {
             size="sm"
             className={cn("w-full", collapsed && "px-2")}
             onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
           >
             {collapsed ? (
               <PanelLeftOpen className="h-5 w-5" />
             ) : (
               <>
                 <PanelLeftClose className="mr-2 h-5 w-5" />
-                <span>Collapse</span>
+                <span>Thu gọn</span>
               </>
             )}
           </Button>

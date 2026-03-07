@@ -13,6 +13,10 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Use DIRECT_URL (Session Pooler, port 5432) for migrations:
+    // - Avoids IPv6 issue on Vercel (direct connection db.*.supabase.co uses IPv6)
+    // - Supports advisory locks (unlike Transaction Pooler port 6543)
+    url: process.env["DIRECT_URL"],
   },
 });
+

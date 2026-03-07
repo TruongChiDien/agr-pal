@@ -20,6 +20,7 @@ import { Edit, ArrowLeft, Trash2 } from "lucide-react";
 import { MachineStatus } from "@/types/enums";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MaintenanceHistory } from "@/components/machines/maintenance-history";
+import { UpdateMachineDialog } from "@/components/machines/update-machine-dialog";
 
 const statusConfig = {
   [MachineStatus.Available]: { bg: "bg-green-100", text: "text-green-700", label: "Sẵn sàng" },
@@ -33,6 +34,7 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
   const { data: machine, isLoading } = useMachine(id);
   const deleteMachine = useDeleteMachine();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
   const handleDeleteConfirm = async () => {
     await deleteMachine.mutateAsync(id, {
@@ -96,7 +98,7 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
               <Trash2 className="h-4 w-4 mr-2" />
               Xóa
             </Button>
-            <Button variant="outline" onClick={() => router.push(`/machines/${id}/edit`)}>
+            <Button variant="outline" onClick={() => setUpdateDialogOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
             </Button>
@@ -157,6 +159,12 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
           </TabsContent>
         </Tabs>
       </ContentSection>
+
+      <UpdateMachineDialog
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        machine={machine}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -108,7 +108,7 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
         }
       >
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="mb-4">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="info">Thông tin chung</TabsTrigger>
             <TabsTrigger value="maintenance">Lịch sử bảo trì</TabsTrigger>
           </TabsList>

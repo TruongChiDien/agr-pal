@@ -433,12 +433,18 @@ export default function BookingDetailPage({
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <StatusSelect
-                            value={job.status}
-                            options={JOB_STATUS_OPTIONS}
-                            onValueChange={(value) => {
-                            }}
-                          />
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <StatusSelect
+                              value={job.status}
+                              options={JOB_STATUS_OPTIONS}
+                              onValueChange={(value) => {
+                                updateJob.mutateAsync({
+                                  id: job.id,
+                                  data: { status: value },
+                                });
+                              }}
+                            />
+                          </div>
                           {booking.status !== BookingStatus.Completed && (
                             <>
                               <Button

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateWorker } from "@/hooks/use-workers";
@@ -33,6 +34,7 @@ type CreateWorkerDialogProps = {
 type CreateWorkerInput = z.infer<typeof createWorkerSchema>;
 
 export function CreateWorkerDialog({ open, onOpenChange }: CreateWorkerDialogProps) {
+  const router = useRouter();
   const createWorker = useCreateWorker();
 
   const form = useForm<CreateWorkerInput>({
@@ -46,9 +48,10 @@ export function CreateWorkerDialog({ open, onOpenChange }: CreateWorkerDialogPro
 
   const onSubmit = async (data: CreateWorkerInput) => {
     const result = await createWorker.mutateAsync(data);
-    if (result.success) {
+    if (result.success && result.data?.id) {
       form.reset();
       onOpenChange(false);
+      router.push(`/workers/${result.data.id}`);
     }
   };
 

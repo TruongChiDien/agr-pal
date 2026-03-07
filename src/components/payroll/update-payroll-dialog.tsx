@@ -67,7 +67,7 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
       worker_id: activePayroll.worker_id,
       job_ids: [],
       advance_payment_ids: [],
-      adjustment: Number((activePayroll as any).adjustment) || 0,
+      adjustment: Number((activePayroll as any).adjustment) || undefined,
       notes: (activePayroll as any).notes || "",
     },
   });
@@ -84,7 +84,7 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
         worker_id: activePayroll.worker_id,
         job_ids: jobIds,
         advance_payment_ids: advanceIds,
-        adjustment: Number(anyPayroll.adjustment) || 0,
+        adjustment: Number(anyPayroll.adjustment) || undefined,
         notes: anyPayroll.notes || "",
       });
 
@@ -198,8 +198,12 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
                                 type="number" 
                                 placeholder="0"
                                 {...field}
+                                value={field.value || ""}
                                 disabled={isPaid}
-                                onChange={e => field.onChange(Number(e.target.value))}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? undefined : Number(val));
+                                }}
                             />
                         </FormControl>
                         <FormMessage />

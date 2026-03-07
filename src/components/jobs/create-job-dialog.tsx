@@ -78,8 +78,8 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
       machine_id: undefined,
       notes: "",
 
-      actual_qty: 0,
-      payment_adjustment: 0,
+      actual_qty: undefined,
+      payment_adjustment: undefined,
     },
   });
 
@@ -92,8 +92,8 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
         worker_id: "",
         machine_id: undefined,
         notes: "",
-        actual_qty: 0,
-        payment_adjustment: 0,
+        actual_qty: undefined,
+        payment_adjustment: undefined,
       });
     }
   }, [open, booking.id, form]);
@@ -140,7 +140,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
   useEffect(() => {
     if (selectedJobTypeId) {
       form.setValue("worker_id", "");
-      form.setValue("actual_qty", 0);
+      form.setValue("actual_qty", undefined);
     }
   }, [selectedJobTypeId, form]);
 
@@ -266,7 +266,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                     </FormLabel>
                     <FormControl>
                       <QuantityInput
-                        value={field.value || 0}
+                        value={field.value}
                         onChange={field.onChange}
                         unit={selectedWorkerWeight?.job_type.service.unit}
                         min={0}
@@ -344,11 +344,11 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                           <span className="text-muted-foreground">Hệ số:</span>
                           <span>× {wagePreview.weight.toFixed(2)}</span>
                         </div>
-                        {paymentAdjustment !== 0 && (
+                        {(paymentAdjustment ?? 0) !== 0 && (
                           <div className="flex justify-between font-medium">
                             <span className="text-muted-foreground">Điều chỉnh:</span>
-                            <span className={paymentAdjustment > 0 ? "text-green-600" : "text-red-600"}>
-                              {paymentAdjustment > 0 ? "+" : "-"} {formatCurrency(Math.abs(paymentAdjustment))}
+                            <span className={(paymentAdjustment ?? 0) > 0 ? "text-green-600" : "text-red-600"}>
+                              {(paymentAdjustment ?? 0) > 0 ? "+" : "-"} {formatCurrency(Math.abs(paymentAdjustment ?? 0))}
                             </span>
                           </div>
                         )}
@@ -381,7 +381,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                           <FormControl>
                             <div className="relative">
                               <CurrencyInput
-                                value={field.value || 0}
+                                value={field.value}
                                 onChange={field.onChange}
                                 min={-1000000000} // Allow negative
                               />

@@ -7,24 +7,32 @@ import { formatCurrency, parseCurrency } from "@/lib/format";
 
 export interface CurrencyInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined | null;
+  onChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   incrementStep?: number; // For arrow key increment/decrement
 }
 
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-  ({ className, value, onChange, min = 0, max, incrementStep = 1000, disabled, ...props }, ref) => {
-    const [displayValue, setDisplayValue] = React.useState<string>(() =>
-      formatCurrency(value, false)
-    );
+  ({ className, value, onChange, min = 0, max, incrementStep = 1000, disabled, placeholder, ...props }, ref) => {
+    const numericValue = value ?? 0;
+
+    // Internal display state: empty when value is 0/undefined/null
+    const [displayValue, setDisplayValue] = React.useState<string>(() => {
+      if (value === undefined || value === null || value === 0) return "";
+      return formatCurrency(value, false);
+    });
     const [isFocused, setIsFocused] = React.useState(false);
 
-    // Update display value when value prop changes (controlled component)
+    // Update display value when value prop changes (e.g. form reset)
     React.useEffect(() => {
       if (!isFocused) {
-        setDisplayValue(formatCurrency(value, false));
+        if (value === undefined || value === null || value === 0) {
+          setDisplayValue("");
+        } else {
+          setDisplayValue(formatCurrency(value, false));
+        }
       }
     }, [value, isFocused]);
 
@@ -32,7 +40,11 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
       const inputValue = e.target.value;
       setDisplayValue(inputValue);
 
-      // Parse and validate the input
+      if (inputValue === "") {
+        onChange(undefined);
+        return;
+      }
+
       const parsed = parseCurrency(inputValue);
 
       // Apply min/max constraints
@@ -55,21 +67,26 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
 
     const handleBlur = () => {
       setIsFocused(false);
-      // Re-format to ensure consistent display
-      setDisplayValue(formatCurrency(value, false));
+      // Re-format on blur, or clear if zero
+      if (displayValue === "" || parseCurrency(displayValue) === 0) {
+        onChange(undefined);
+        setDisplayValue("");
+      } else {
+        setDisplayValue(formatCurrency(numericValue, false));
+      }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       // Arrow keys for increment/decrement
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        const newValue = value + incrementStep;
+        const newValue = numericValue + incrementStep;
         if (max === undefined || newValue <= max) {
           onChange(newValue);
         }
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        const newValue = value - incrementStep;
+        const newValue = numericValue - incrementStep;
         if (newValue >= min) {
           onChange(newValue);
         }
@@ -88,6 +105,7 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           disabled={disabled}
+          placeholder={placeholder ?? "0"}
           className={cn("pr-8", className)}
           {...props}
         />

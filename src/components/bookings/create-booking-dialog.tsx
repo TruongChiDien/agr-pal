@@ -72,8 +72,8 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
       service_id: "",
       customer_id: customer.id, // Pre-filled
       land_id: "",
-      quantity: 0,
-      adjustment: 0,
+      quantity: undefined,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -85,8 +85,8 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
         service_id: "",
         customer_id: customer.id,
         land_id: "",
-        quantity: 0,
-        adjustment: 0,
+        quantity: undefined,
+        adjustment: undefined,
         notes: "",
       });
     }
@@ -229,7 +229,7 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
                   <FormLabel>Số lượng (tùy chọn)</FormLabel>
                   <FormControl>
                     <QuantityInput
-                      value={field.value || 0}
+                      value={field.value}
                       onChange={field.onChange}
                       unit={selectedService?.unit}
                       min={0}
@@ -290,7 +290,7 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
                       <FormControl>
                         <div className="relative">
                           <CurrencyInput
-                            value={field.value || 0}
+                            value={field.value}
                             onChange={field.onChange}
                             min={-1000000000} // Allow negative
                           />

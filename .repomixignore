@@ -20,3 +20,7 @@ node_modules/*
 .idea/*
 .husky/*
 .venv/*
+
+CLAUDE.md
+README.md
+prisma/migrations/*

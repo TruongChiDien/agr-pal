@@ -8,8 +8,8 @@ import { Minus, Plus } from "lucide-react";
 
 export interface QuantityInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "type"> {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined | null;
+  onChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   step?: number;
@@ -29,51 +29,95 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
       unit,
       showButtons = true,
       disabled,
+      placeholder,
       ...props
     },
     ref
   ) => {
+    // Internal display state: empty string when value is 0/undefined/null (placeholder mode)
+    const [inputStr, setInputStr] = React.useState<string>(() => {
+      if (value === undefined || value === null || value === 0) return "";
+      return String(value);
+    });
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    // Sync display when external value changes (e.g. form reset)
+    React.useEffect(() => {
+      if (!isFocused) {
+        if (value === undefined || value === null || value === 0) {
+          setInputStr("");
+        } else {
+          setInputStr(String(value));
+        }
+      }
+    }, [value, isFocused]);
+
+    const numericValue = value ?? 0;
+
     const handleIncrement = () => {
-      const newValue = value + step;
+      const newValue = numericValue + step;
       if (max === undefined || newValue <= max) {
         onChange(newValue);
+        setInputStr(String(newValue));
       }
     };
 
     const handleDecrement = () => {
-      const newValue = value - step;
-      if (newValue >= min) {
+      const newValue = numericValue - step;
+      if (newValue > min) {
         onChange(newValue);
+        setInputStr(String(newValue));
+      } else if (newValue === min && min > 0) {
+        onChange(newValue);
+        setInputStr(String(newValue));
+      } else if (newValue < min || newValue === 0) {
+        // Allow clearing back to empty
+        onChange(undefined);
+        setInputStr("");
       }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const inputValue = e.target.value;
+      const raw = e.target.value;
+      setInputStr(raw);
 
-      // Allow empty input for better UX
-      if (inputValue === "") {
-        onChange(min);
+      if (raw === "") {
+        onChange(undefined);
         return;
       }
 
-      const parsed = parseFloat(inputValue);
-
+      const parsed = parseFloat(raw);
       if (!isNaN(parsed)) {
-        // Apply min/max constraints
         let constrained = parsed;
-        if (constrained < min) {
-          constrained = min;
-        }
-        if (max !== undefined && constrained > max) {
-          constrained = max;
-        }
-
+        if (constrained < min) constrained = min;
+        if (max !== undefined && constrained > max) constrained = max;
         onChange(constrained);
       }
     };
 
+    const handleFocus = () => {
+      setIsFocused(true);
+    };
+
+    const handleBlur = () => {
+      setIsFocused(false);
+      // Normalize display on blur
+      if (inputStr !== "" && !isNaN(parseFloat(inputStr))) {
+        const parsed = parseFloat(inputStr);
+        if (parsed === 0) {
+          // Treat 0 as empty (clear back to placeholder)
+          onChange(undefined);
+          setInputStr("");
+        } else {
+          setInputStr(String(parsed));
+        }
+      } else if (inputStr === "" || isNaN(parseFloat(inputStr))) {
+        onChange(undefined);
+        setInputStr("");
+      }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Arrow keys for increment/decrement
       if (e.key === "ArrowUp") {
         e.preventDefault();
         handleIncrement();
@@ -83,8 +127,8 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
       }
     };
 
-    const canDecrement = value > min;
-    const canIncrement = max === undefined || value < max;
+    const canDecrement = numericValue > min;
+    const canIncrement = max === undefined || numericValue < max;
 
     return (
       <div className={cn("flex items-center gap-2", className)}>
@@ -107,13 +151,16 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
             ref={ref}
             type="number"
             inputMode="decimal"
-            value={value}
+            value={inputStr}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             disabled={disabled}
             min={min}
             max={max}
             step={step}
+            placeholder={placeholder ?? "0"}
             className={cn("text-center", unit && "pr-16")}
             {...props}
           />

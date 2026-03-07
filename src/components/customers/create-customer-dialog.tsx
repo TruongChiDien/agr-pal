@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateCustomer } from "@/hooks/use-customers";
@@ -33,6 +34,7 @@ type CreateCustomerDialogProps = {
 type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 
 export function CreateCustomerDialog({ open, onOpenChange }: CreateCustomerDialogProps) {
+  const router = useRouter();
   const createCustomer = useCreateCustomer();
 
   const form = useForm<CreateCustomerInput>({
@@ -46,9 +48,10 @@ export function CreateCustomerDialog({ open, onOpenChange }: CreateCustomerDialo
 
   const onSubmit = async (data: CreateCustomerInput) => {
     const result = await createCustomer.mutateAsync(data);
-    if (result.success) {
+    if (result.success && result.data?.id) {
       form.reset();
       onOpenChange(false);
+      router.push(`/customers/${result.data.id}`);
     }
   };
 

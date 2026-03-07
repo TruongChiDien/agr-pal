@@ -68,8 +68,8 @@ export function CreateMaintenanceDialog({
       machine_id: machineId,
       category_name: '',
       brand: '',
-      price: 0,
-      quantity: 1,
+      price: undefined,
+      quantity: undefined,
       maintenance_date: new Date(),
       notes: '',
     },
@@ -251,7 +251,11 @@ export function CreateMaintenanceDialog({
                         placeholder="0"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -271,7 +275,11 @@ export function CreateMaintenanceDialog({
                         placeholder="1"
                         min="1"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

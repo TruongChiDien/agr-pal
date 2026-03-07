@@ -43,7 +43,7 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
     defaultValues: {
       customer_id: customerId,
       booking_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -55,7 +55,7 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
       form.reset({
         customer_id: customerId,
         booking_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       onOpenChange(false);

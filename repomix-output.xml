@@ -236,35 +236,6 @@ tsconfig.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path=".repomixignore">
-docs/*
-plans/*
-assets/*
-dist/*
-coverage/*
-build/*
-ios/*
-android/*
-tests/*
-__tests__/*
-__pycache__/*
-node_modules/*
-
-.opencode/*
-.claude/*
-.serena/*
-.pnpm-store/*
-.github/*
-.dart_tool/*
-.idea/*
-.husky/*
-.venv/*
-
-CLAUDE.md
-README.md
-prisma/migrations/*
-</file>
-
 <file path="components.json">
 {
   "$schema": "https://ui.shadcn.com/schema.json",
@@ -2188,7 +2159,7 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
     defaultValues: {
       customer_id: customerId,
       booking_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -2200,7 +2171,7 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
       form.reset({
         customer_id: customerId,
         booking_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       onOpenChange(false);
@@ -2365,7 +2336,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
     resolver: zodResolver(updateBillSchema),
     defaultValues: {
       booking_ids: bill.bookings.map(b => b.id),
-      adjustment: Number((bill as any).adjustment ?? 0),
+      adjustment: Number((bill as any).adjustment ?? 0) || undefined,
       notes: (bill as any).notes || "",
     },
   });
@@ -2375,7 +2346,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
     if (open && bill) {
       form.reset({
         booking_ids: bill.bookings.map(b => b.id),
-        adjustment: Number((bill as any).adjustment ?? 0),
+        adjustment: Number((bill as any).adjustment ?? 0) || undefined,
         notes: (bill as any).notes || "",
       });
     }
@@ -3263,8 +3234,8 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
       service_id: "",
       customer_id: customer.id, // Pre-filled
       land_id: "",
-      quantity: 0,
-      adjustment: 0,
+      quantity: undefined,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -3276,8 +3247,8 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
         service_id: "",
         customer_id: customer.id,
         land_id: "",
-        quantity: 0,
-        adjustment: 0,
+        quantity: undefined,
+        adjustment: undefined,
         notes: "",
       });
     }
@@ -3420,7 +3391,7 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
                   <FormLabel>Số lượng (tùy chọn)</FormLabel>
                   <FormControl>
                     <QuantityInput
-                      value={field.value || 0}
+                      value={field.value}
                       onChange={field.onChange}
                       unit={selectedService?.unit}
                       min={0}
@@ -3481,7 +3452,7 @@ export function CreateBookingDialog({ open, onOpenChange, customer, onSuccess }:
                       <FormControl>
                         <div className="relative">
                           <CurrencyInput
-                            value={field.value || 0}
+                            value={field.value}
                             onChange={field.onChange}
                             min={-1000000000} // Allow negative
                           />
@@ -3686,7 +3657,7 @@ export function UpdateBookingDialog({ open, onOpenChange, booking }: UpdateBooki
                   </FormLabel>
                   <FormControl>
                     <QuantityInput
-                      value={field.value || 0}
+                      value={field.value}
                       onChange={field.onChange}
                       unit={booking.service.unit}
                       min={0}
@@ -3747,7 +3718,7 @@ export function UpdateBookingDialog({ open, onOpenChange, booking }: UpdateBooki
                     <FormControl>
                       <div className="relative">
                         <CurrencyInput
-                          value={field.value || 0}
+                          value={field.value}
                           onChange={field.onChange}
                           min={-1000000000} // Allow negative
                           disabled={!!booking.bill_id}
@@ -4470,24 +4441,32 @@ import { formatCurrency, parseCurrency } from "@/lib/format";
 
 export interface CurrencyInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined | null;
+  onChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   incrementStep?: number; // For arrow key increment/decrement
 }
 
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-  ({ className, value, onChange, min = 0, max, incrementStep = 1000, disabled, ...props }, ref) => {
-    const [displayValue, setDisplayValue] = React.useState<string>(() =>
-      formatCurrency(value, false)
-    );
+  ({ className, value, onChange, min = 0, max, incrementStep = 1000, disabled, placeholder, ...props }, ref) => {
+    const numericValue = value ?? 0;
+
+    // Internal display state: empty when value is 0/undefined/null
+    const [displayValue, setDisplayValue] = React.useState<string>(() => {
+      if (value === undefined || value === null || value === 0) return "";
+      return formatCurrency(value, false);
+    });
     const [isFocused, setIsFocused] = React.useState(false);
 
-    // Update display value when value prop changes (controlled component)
+    // Update display value when value prop changes (e.g. form reset)
     React.useEffect(() => {
       if (!isFocused) {
-        setDisplayValue(formatCurrency(value, false));
+        if (value === undefined || value === null || value === 0) {
+          setDisplayValue("");
+        } else {
+          setDisplayValue(formatCurrency(value, false));
+        }
       }
     }, [value, isFocused]);
 
@@ -4495,7 +4474,11 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
       const inputValue = e.target.value;
       setDisplayValue(inputValue);
 
-      // Parse and validate the input
+      if (inputValue === "") {
+        onChange(undefined);
+        return;
+      }
+
       const parsed = parseCurrency(inputValue);
 
       // Apply min/max constraints
@@ -4518,21 +4501,26 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
 
     const handleBlur = () => {
       setIsFocused(false);
-      // Re-format to ensure consistent display
-      setDisplayValue(formatCurrency(value, false));
+      // Re-format on blur, or clear if zero
+      if (displayValue === "" || parseCurrency(displayValue) === 0) {
+        onChange(undefined);
+        setDisplayValue("");
+      } else {
+        setDisplayValue(formatCurrency(numericValue, false));
+      }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       // Arrow keys for increment/decrement
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        const newValue = value + incrementStep;
+        const newValue = numericValue + incrementStep;
         if (max === undefined || newValue <= max) {
           onChange(newValue);
         }
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        const newValue = value - incrementStep;
+        const newValue = numericValue - incrementStep;
         if (newValue >= min) {
           onChange(newValue);
         }
@@ -4551,6 +4539,7 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           disabled={disabled}
+          placeholder={placeholder ?? "0"}
           className={cn("pr-8", className)}
           {...props}
         />
@@ -4710,8 +4699,8 @@ import { Minus, Plus } from "lucide-react";
 
 export interface QuantityInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "type"> {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined | null;
+  onChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   step?: number;
@@ -4731,51 +4720,95 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
       unit,
       showButtons = true,
       disabled,
+      placeholder,
       ...props
     },
     ref
   ) => {
+    // Internal display state: empty string when value is 0/undefined/null (placeholder mode)
+    const [inputStr, setInputStr] = React.useState<string>(() => {
+      if (value === undefined || value === null || value === 0) return "";
+      return String(value);
+    });
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    // Sync display when external value changes (e.g. form reset)
+    React.useEffect(() => {
+      if (!isFocused) {
+        if (value === undefined || value === null || value === 0) {
+          setInputStr("");
+        } else {
+          setInputStr(String(value));
+        }
+      }
+    }, [value, isFocused]);
+
+    const numericValue = value ?? 0;
+
     const handleIncrement = () => {
-      const newValue = value + step;
+      const newValue = numericValue + step;
       if (max === undefined || newValue <= max) {
         onChange(newValue);
+        setInputStr(String(newValue));
       }
     };
 
     const handleDecrement = () => {
-      const newValue = value - step;
-      if (newValue >= min) {
+      const newValue = numericValue - step;
+      if (newValue > min) {
         onChange(newValue);
+        setInputStr(String(newValue));
+      } else if (newValue === min && min > 0) {
+        onChange(newValue);
+        setInputStr(String(newValue));
+      } else if (newValue < min || newValue === 0) {
+        // Allow clearing back to empty
+        onChange(undefined);
+        setInputStr("");
       }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const inputValue = e.target.value;
+      const raw = e.target.value;
+      setInputStr(raw);
 
-      // Allow empty input for better UX
-      if (inputValue === "") {
-        onChange(min);
+      if (raw === "") {
+        onChange(undefined);
         return;
       }
 
-      const parsed = parseFloat(inputValue);
-
+      const parsed = parseFloat(raw);
       if (!isNaN(parsed)) {
-        // Apply min/max constraints
         let constrained = parsed;
-        if (constrained < min) {
-          constrained = min;
-        }
-        if (max !== undefined && constrained > max) {
-          constrained = max;
-        }
-
+        if (constrained < min) constrained = min;
+        if (max !== undefined && constrained > max) constrained = max;
         onChange(constrained);
       }
     };
 
+    const handleFocus = () => {
+      setIsFocused(true);
+    };
+
+    const handleBlur = () => {
+      setIsFocused(false);
+      // Normalize display on blur
+      if (inputStr !== "" && !isNaN(parseFloat(inputStr))) {
+        const parsed = parseFloat(inputStr);
+        if (parsed === 0) {
+          // Treat 0 as empty (clear back to placeholder)
+          onChange(undefined);
+          setInputStr("");
+        } else {
+          setInputStr(String(parsed));
+        }
+      } else if (inputStr === "" || isNaN(parseFloat(inputStr))) {
+        onChange(undefined);
+        setInputStr("");
+      }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Arrow keys for increment/decrement
       if (e.key === "ArrowUp") {
         e.preventDefault();
         handleIncrement();
@@ -4785,8 +4818,8 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
       }
     };
 
-    const canDecrement = value > min;
-    const canIncrement = max === undefined || value < max;
+    const canDecrement = numericValue > min;
+    const canIncrement = max === undefined || numericValue < max;
 
     return (
       <div className={cn("flex items-center gap-2", className)}>
@@ -4809,13 +4842,16 @@ export const QuantityInput = React.forwardRef<HTMLInputElement, QuantityInputPro
             ref={ref}
             type="number"
             inputMode="decimal"
-            value={value}
+            value={inputStr}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             disabled={disabled}
             min={min}
             max={max}
             step={step}
+            placeholder={placeholder ?? "0"}
             className={cn("text-center", unit && "pr-16")}
             {...props}
           />
@@ -4928,8 +4964,8 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
       machine_id: undefined,
       notes: "",
 
-      actual_qty: 0,
-      payment_adjustment: 0,
+      actual_qty: undefined,
+      payment_adjustment: undefined,
     },
   });
 
@@ -4942,8 +4978,8 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
         worker_id: "",
         machine_id: undefined,
         notes: "",
-        actual_qty: 0,
-        payment_adjustment: 0,
+        actual_qty: undefined,
+        payment_adjustment: undefined,
       });
     }
   }, [open, booking.id, form]);
@@ -4990,7 +5026,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
   useEffect(() => {
     if (selectedJobTypeId) {
       form.setValue("worker_id", "");
-      form.setValue("actual_qty", 0);
+      form.setValue("actual_qty", undefined);
     }
   }, [selectedJobTypeId, form]);
 
@@ -5116,7 +5152,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                     </FormLabel>
                     <FormControl>
                       <QuantityInput
-                        value={field.value || 0}
+                        value={field.value}
                         onChange={field.onChange}
                         unit={selectedWorkerWeight?.job_type.service.unit}
                         min={0}
@@ -5194,11 +5230,11 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                           <span className="text-muted-foreground">Hệ số:</span>
                           <span>× {wagePreview.weight.toFixed(2)}</span>
                         </div>
-                        {paymentAdjustment !== 0 && (
+                        {(paymentAdjustment ?? 0) !== 0 && (
                           <div className="flex justify-between font-medium">
                             <span className="text-muted-foreground">Điều chỉnh:</span>
-                            <span className={paymentAdjustment > 0 ? "text-green-600" : "text-red-600"}>
-                              {paymentAdjustment > 0 ? "+" : "-"} {formatCurrency(Math.abs(paymentAdjustment))}
+                            <span className={(paymentAdjustment ?? 0) > 0 ? "text-green-600" : "text-red-600"}>
+                              {(paymentAdjustment ?? 0) > 0 ? "+" : "-"} {formatCurrency(Math.abs(paymentAdjustment ?? 0))}
                             </span>
                           </div>
                         )}
@@ -5231,7 +5267,7 @@ export function CreateJobDialog({ open, onOpenChange, booking }: CreateJobDialog
                           <FormControl>
                             <div className="relative">
                               <CurrencyInput
-                                value={field.value || 0}
+                                value={field.value}
                                 onChange={field.onChange}
                                 min={-1000000000} // Allow negative
                               />
@@ -6052,7 +6088,7 @@ export function UpdateJobDialog({ open, onOpenChange, job }: UpdateJobDialogProp
                   </FormLabel>
                   <FormControl>
                     <QuantityInput
-                      value={field.value || 0}
+                      value={field.value}
                       onChange={field.onChange}
                       unit={job.job_type.service.unit}
                       min={0}
@@ -6165,7 +6201,7 @@ export function UpdateJobDialog({ open, onOpenChange, job }: UpdateJobDialogProp
                             <FormControl>
                               <div className="relative">
                                 <CurrencyInput
-                                  value={field.value || 0}
+                                  value={field.value}
                                   onChange={field.onChange}
                                   min={-1000000000} // Allow negative
                                 />
@@ -6554,8 +6590,8 @@ export function CreateMaintenanceDialog({
       machine_id: machineId,
       category_name: '',
       brand: '',
-      price: 0,
-      quantity: 1,
+      price: undefined,
+      quantity: undefined,
       maintenance_date: new Date(),
       notes: '',
     },
@@ -6737,7 +6773,11 @@ export function CreateMaintenanceDialog({
                         placeholder="0"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -6757,7 +6797,11 @@ export function CreateMaintenanceDialog({
                         placeholder="1"
                         min="1"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -7552,7 +7596,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
       worker_id: workerId || "",
       job_ids: [],
       advance_payment_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -7566,7 +7610,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
         worker_id: workerId || "",
         job_ids: [],
         advance_payment_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       setSelectedJobIds([]);
@@ -7688,7 +7732,12 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
                                 type="number" 
                                 placeholder="0"
                                 {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
+                                value={field.value || ""}
+                                disabled={false}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? undefined : Number(val));
+                                }}
                             />
                         </FormControl>
                         <FormMessage />
@@ -8378,7 +8427,7 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
       worker_id: activePayroll.worker_id,
       job_ids: [],
       advance_payment_ids: [],
-      adjustment: Number((activePayroll as any).adjustment) || 0,
+      adjustment: Number((activePayroll as any).adjustment) || undefined,
       notes: (activePayroll as any).notes || "",
     },
   });
@@ -8395,7 +8444,7 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
         worker_id: activePayroll.worker_id,
         job_ids: jobIds,
         advance_payment_ids: advanceIds,
-        adjustment: Number(anyPayroll.adjustment) || 0,
+        adjustment: Number(anyPayroll.adjustment) || undefined,
         notes: anyPayroll.notes || "",
       });
 
@@ -8509,8 +8558,12 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
                                 type="number" 
                                 placeholder="0"
                                 {...field}
+                                value={field.value || ""}
                                 disabled={isPaid}
-                                onChange={e => field.onChange(Number(e.target.value))}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? undefined : Number(val));
+                                }}
                             />
                         </FormControl>
                         <FormMessage />
@@ -12990,8 +13043,8 @@ export const createMaintenanceLogSchema = z.object({
   machine_id: z.string().min(1, 'Máy không hợp lệ'),
   category_name: z.string().min(1, 'Vui lòng chọn hoặc nhập loại phụ tùng'),
   brand: z.string().optional(),
-  price: z.number().min(0, 'Giá tiền không được âm'),
-  quantity: z.number().min(1, 'Số lượng ít nhất là 1'),
+  price: z.number().min(0, 'Giá tiền không được âm').optional(),
+  quantity: z.number().min(1, 'Số lượng ít nhất là 1').optional(),
   maintenance_date: z.date({
     required_error: 'Ngày bảo trì không được để trống',
   }),
@@ -13160,6 +13213,35 @@ async function testConnection() {
 }
 
 testConnection()
+</file>
+
+<file path=".repomixignore">
+docs/*
+plans/*
+assets/*
+dist/*
+coverage/*
+build/*
+ios/*
+android/*
+tests/*
+__tests__/*
+__pycache__/*
+node_modules/*
+
+.opencode/*
+.claude/*
+.serena/*
+.pnpm-store/*
+.github/*
+.dart_tool/*
+.idea/*
+.husky/*
+.venv/*
+
+CLAUDE.md
+README.md
+prisma/migrations/*
 </file>
 
 <file path="postcss.config.mjs">
@@ -24322,11 +24404,11 @@ export const createJobSchema = z.object({
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 
   // Worker assignment fields (snapshot values - optional, will be calculated if not provided)
-  actual_qty: z.number().min(0, 'Số lượng phải lớn hơn hoặc bằng 0').default(0),
+  actual_qty: z.number().min(0, 'Số lượng phải lớn hơn hoặc bằng 0').optional(),
   applied_base: z.number().min(0, 'Lương cơ bản phải lớn hơn hoặc bằng 0').optional(),
   applied_weight: z.number().min(0, 'Hệ số lương phải lớn hơn hoặc bằng 0').optional(),
   final_pay: z.number().min(0, 'Tổng lương phải lớn hơn hoặc bằng 0').optional(),
-  payment_adjustment: z.number().optional().default(0),
+  payment_adjustment: z.number().optional(),
 })
 
 export const updateJobSchema = z.object({

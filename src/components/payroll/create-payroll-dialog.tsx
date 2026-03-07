@@ -64,7 +64,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
       worker_id: workerId || "",
       job_ids: [],
       advance_payment_ids: [],
-      adjustment: 0,
+      adjustment: undefined,
       notes: "",
     },
   });
@@ -78,7 +78,7 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
         worker_id: workerId || "",
         job_ids: [],
         advance_payment_ids: [],
-        adjustment: 0,
+        adjustment: undefined,
         notes: "",
       });
       setSelectedJobIds([]);
@@ -200,7 +200,12 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
                                 type="number" 
                                 placeholder="0"
                                 {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
+                                value={field.value || ""}
+                                disabled={false}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    field.onChange(val === "" ? undefined : Number(val));
+                                }}
                             />
                         </FormControl>
                         <FormMessage />

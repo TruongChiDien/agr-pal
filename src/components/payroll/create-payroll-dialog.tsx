@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreatePayroll } from "@/hooks/use-payroll";
@@ -47,6 +48,7 @@ interface CreatePayrollDialogProps {
 }
 
 export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayrollDialogProps) {
+  const router = useRouter();
   const createPayroll = useCreatePayroll();
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { toast } = useToast();
@@ -141,10 +143,9 @@ export function CreatePayrollDialog({ open, onOpenChange, workerId }: CreatePayr
 
     const result = await createPayroll.mutateAsync(payload);
 
-    if (result.success) {
+    if (result.success && result.data?.id) {
       onOpenChange(false);
-      // Optional: Navigate to Detail page? Or just stay on list. 
-      // If we are in List page, toast is enough.
+      router.push(`/payrolls/${result.data.id}`);
     }
   };
 

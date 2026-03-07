@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateBill } from "@/hooks/use-bills";
 import { createBillSchema } from "@/schemas/bill";
@@ -36,6 +37,7 @@ type CreateBillDialogProps = {
 type CreateBillInput = z.input<typeof createBillSchema>;
 
 export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillDialogProps) {
+  const router = useRouter();
   const createBill = useCreateBill();
 
   const form = useForm<CreateBillInput>({
@@ -49,9 +51,8 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
   });
 
   const onSubmit = async (data: CreateBillInput) => {
-    // If backend expects adjustment
     const result = await createBill.mutateAsync(data);
-    if (result.success) {
+    if (result.success && result.data?.id) {
       form.reset({
         customer_id: customerId,
         booking_ids: [],
@@ -59,6 +60,7 @@ export function CreateBillDialog({ open, onOpenChange, customerId }: CreateBillD
         notes: "",
       });
       onOpenChange(false);
+      router.push(`/bills/${result.data.id}`);
     }
   };
 

@@ -42,25 +42,12 @@ The content is organized as follows:
 <directory_structure>
 .gitignore
 .repomixignore
-CLAUDE.md
 components.json
 eslint.config.mjs
 next.config.ts
 package.json
 postcss.config.mjs
 prisma.config.ts
-prisma/migrations/20260115005308_init/migration.sql
-prisma/migrations/20260115125127_add_user_model/migration.sql
-prisma/migrations/20260117090308_make_booking_quantity_and_land_nullable/migration.sql
-prisma/migrations/20260117222348_merge_job_and_job_worker/migration.sql
-prisma/migrations/20260118024849_add_payroll_payment_model/migration.sql
-prisma/migrations/20260124075849_add_job_payment_adjustment/migration.sql
-prisma/migrations/20260124092226_add_adjustment_to_booking/migration.sql
-prisma/migrations/20260125024144_bill_rename_discount_reason_to_notes/migration.sql
-prisma/migrations/20260125102915_payroll_sheets_add_adjustment_notes/migration.sql
-prisma/migrations/20260126151235_bill_rename_discount_amount_to_adjustment/migration.sql
-prisma/migrations/20260307080621_add_maintenance_tables/migration.sql
-prisma/migrations/migration_lock.toml
 prisma/schema.prisma
 prisma/seed.ts
 public/file.svg
@@ -68,7 +55,6 @@ public/globe.svg
 public/next.svg
 public/vercel.svg
 public/window.svg
-README.md
 src/actions/advances.ts
 src/actions/bills.ts
 src/actions/bookings.ts
@@ -273,48 +259,10 @@ node_modules/*
 .idea/*
 .husky/*
 .venv/*
-</file>
 
-<file path="CLAUDE.md">
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Role & Responsibilities
-
-Your role is to analyze user requirements, delegate tasks to appropriate sub-agents, and ensure cohesive delivery of features that meet specifications and architectural standards.
-
-## Workflows
-
-- Primary workflow: `./.claude/workflows/primary-workflow.md`
-- Development rules: `./.claude/workflows/development-rules.md`
-- Orchestration protocols: `./.claude/workflows/orchestration-protocol.md`
-- Documentation management: `./.claude/workflows/documentation-management.md`
-- And other workflows: `./.claude/workflows/*`
-
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** You must follow strictly the development rules in `./.claude/workflows/development-rules.md` file.
-**IMPORTANT:** Before you plan or proceed any implementation, always read the `./README.md` file first to get context.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-**IMPORTANT**: Date format is configured in `.ck.json` and injected by session hooks via `$CK_PLAN_DATE_FORMAT` env var. Use this format for plan/report naming.
-
-## Documentation Management
-
-We keep all important docs in `./docs` folder and keep updating them, structure like below:
-
-```
-./docs
-├── project-overview-pdr.md
-├── code-standards.md
-├── codebase-summary.md
-├── design-guidelines.md
-├── deployment-guide.md
-├── system-architecture.md
-└── project-roadmap.md
-```
-
-**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+CLAUDE.md
+README.md
+prisma/migrations/*
 </file>
 
 <file path="components.json">
@@ -393,565 +341,6 @@ export default defineConfig({
     url: process.env["DATABASE_URL"],
   },
 });
-</file>
-
-<file path="prisma/migrations/20260115005308_init/migration.sql">
--- CreateEnum
-CREATE TYPE "MachineStatus" AS ENUM ('AVAILABLE', 'IN_USE', 'MAINTENANCE');
-
--- CreateEnum
-CREATE TYPE "BookingStatus" AS ENUM ('NEW', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELED');
-
--- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING_BILL', 'ADDED_BILL', 'FULLY_PAID');
-
--- CreateEnum
-CREATE TYPE "JobStatus" AS ENUM ('NEW', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELED');
-
--- CreateEnum
-CREATE TYPE "JobPaymentStatus" AS ENUM ('PENDING_PAYROLL', 'ADDED_PAYROLL', 'FULLY_PAID');
-
--- CreateEnum
-CREATE TYPE "BillStatus" AS ENUM ('OPEN', 'PARTIAL_PAID', 'COMPLETED');
-
--- CreateEnum
-CREATE TYPE "AdvanceStatus" AS ENUM ('UNPROCESSED', 'PROCESSED');
-
--- CreateEnum
-CREATE TYPE "PayrollStatus" AS ENUM ('OPEN', 'PARTIAL_PAID', 'COMPLETED');
-
--- CreateTable
-CREATE TABLE "services" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "unit" TEXT NOT NULL,
-    "description" TEXT,
-    "price" DECIMAL(12,2) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "services_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "job_types" (
-    "id" TEXT NOT NULL,
-    "service_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "default_base_salary" DECIMAL(12,2) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "job_types_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "workers" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "phone" TEXT,
-    "address" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "workers_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "worker_weights" (
-    "id" TEXT NOT NULL,
-    "worker_id" TEXT NOT NULL,
-    "job_type_id" TEXT NOT NULL,
-    "weight" DECIMAL(5,2) NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "worker_weights_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "machines" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "model" TEXT,
-    "type" TEXT,
-    "purchase_date" TIMESTAMP(3),
-    "status" "MachineStatus" NOT NULL DEFAULT 'AVAILABLE',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "machines_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "customers" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "phone" TEXT,
-    "address" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "customers_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "lands" (
-    "id" TEXT NOT NULL,
-    "customer_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "gps_lat" DECIMAL(10,7),
-    "gps_lng" DECIMAL(10,7),
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "lands_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "bookings" (
-    "id" TEXT NOT NULL,
-    "customer_id" TEXT NOT NULL,
-    "land_id" TEXT NOT NULL,
-    "service_id" TEXT NOT NULL,
-    "quantity" DECIMAL(10,2) NOT NULL,
-    "captured_price" DECIMAL(12,2) NOT NULL,
-    "total_amount" DECIMAL(12,2) NOT NULL,
-    "status" "BookingStatus" NOT NULL DEFAULT 'NEW',
-    "payment_status" "PaymentStatus" NOT NULL DEFAULT 'PENDING_BILL',
-    "bill_id" TEXT,
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "bookings_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "jobs" (
-    "id" TEXT NOT NULL,
-    "booking_id" TEXT NOT NULL,
-    "job_type_id" TEXT NOT NULL,
-    "machine_id" TEXT,
-    "status" "JobStatus" NOT NULL DEFAULT 'NEW',
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "jobs_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "job_workers" (
-    "id" TEXT NOT NULL,
-    "job_id" TEXT NOT NULL,
-    "worker_id" TEXT NOT NULL,
-    "actual_qty" DECIMAL(10,2) NOT NULL,
-    "applied_base" DECIMAL(12,2) NOT NULL,
-    "applied_weight" DECIMAL(5,2) NOT NULL,
-    "final_pay" DECIMAL(12,2) NOT NULL,
-    "payment_status" "JobPaymentStatus" NOT NULL DEFAULT 'PENDING_PAYROLL',
-    "payroll_id" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "job_workers_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "bills" (
-    "id" TEXT NOT NULL,
-    "customer_id" TEXT NOT NULL,
-    "total_amount" DECIMAL(12,2) NOT NULL,
-    "total_paid" DECIMAL(12,2) NOT NULL DEFAULT 0,
-    "status" "BillStatus" NOT NULL DEFAULT 'OPEN',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "bills_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "advance_payments" (
-    "id" TEXT NOT NULL,
-    "worker_id" TEXT NOT NULL,
-    "amount" DECIMAL(12,2) NOT NULL,
-    "status" "AdvanceStatus" NOT NULL DEFAULT 'UNPROCESSED',
-    "payroll_id" TEXT,
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "advance_payments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "payroll_sheets" (
-    "id" TEXT NOT NULL,
-    "worker_id" TEXT NOT NULL,
-    "total_wages" DECIMAL(12,2) NOT NULL,
-    "total_adv" DECIMAL(12,2) NOT NULL DEFAULT 0,
-    "net_payable" DECIMAL(12,2) NOT NULL,
-    "total_paid" DECIMAL(12,2) NOT NULL DEFAULT 0,
-    "status" "PayrollStatus" NOT NULL DEFAULT 'OPEN',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "payroll_sheets_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE INDEX "job_types_service_id_idx" ON "job_types"("service_id");
-
--- CreateIndex
-CREATE INDEX "worker_weights_worker_id_idx" ON "worker_weights"("worker_id");
-
--- CreateIndex
-CREATE INDEX "worker_weights_job_type_id_idx" ON "worker_weights"("job_type_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "worker_weights_worker_id_job_type_id_key" ON "worker_weights"("worker_id", "job_type_id");
-
--- CreateIndex
-CREATE INDEX "lands_customer_id_idx" ON "lands"("customer_id");
-
--- CreateIndex
-CREATE INDEX "bookings_customer_id_idx" ON "bookings"("customer_id");
-
--- CreateIndex
-CREATE INDEX "bookings_status_idx" ON "bookings"("status");
-
--- CreateIndex
-CREATE INDEX "bookings_payment_status_idx" ON "bookings"("payment_status");
-
--- CreateIndex
-CREATE INDEX "bookings_bill_id_idx" ON "bookings"("bill_id");
-
--- CreateIndex
-CREATE INDEX "jobs_booking_id_idx" ON "jobs"("booking_id");
-
--- CreateIndex
-CREATE INDEX "jobs_status_idx" ON "jobs"("status");
-
--- CreateIndex
-CREATE INDEX "job_workers_job_id_idx" ON "job_workers"("job_id");
-
--- CreateIndex
-CREATE INDEX "job_workers_worker_id_idx" ON "job_workers"("worker_id");
-
--- CreateIndex
-CREATE INDEX "job_workers_payment_status_idx" ON "job_workers"("payment_status");
-
--- CreateIndex
-CREATE INDEX "job_workers_payroll_id_idx" ON "job_workers"("payroll_id");
-
--- CreateIndex
-CREATE INDEX "bills_customer_id_idx" ON "bills"("customer_id");
-
--- CreateIndex
-CREATE INDEX "bills_status_idx" ON "bills"("status");
-
--- CreateIndex
-CREATE INDEX "advance_payments_worker_id_idx" ON "advance_payments"("worker_id");
-
--- CreateIndex
-CREATE INDEX "advance_payments_status_idx" ON "advance_payments"("status");
-
--- CreateIndex
-CREATE INDEX "advance_payments_payroll_id_idx" ON "advance_payments"("payroll_id");
-
--- CreateIndex
-CREATE INDEX "payroll_sheets_worker_id_idx" ON "payroll_sheets"("worker_id");
-
--- CreateIndex
-CREATE INDEX "payroll_sheets_status_idx" ON "payroll_sheets"("status");
-
--- AddForeignKey
-ALTER TABLE "job_types" ADD CONSTRAINT "job_types_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "services"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "worker_weights" ADD CONSTRAINT "worker_weights_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "worker_weights" ADD CONSTRAINT "worker_weights_job_type_id_fkey" FOREIGN KEY ("job_type_id") REFERENCES "job_types"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "lands" ADD CONSTRAINT "lands_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_land_id_fkey" FOREIGN KEY ("land_id") REFERENCES "lands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "services"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_bill_id_fkey" FOREIGN KEY ("bill_id") REFERENCES "bills"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "jobs" ADD CONSTRAINT "jobs_booking_id_fkey" FOREIGN KEY ("booking_id") REFERENCES "bookings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "jobs" ADD CONSTRAINT "jobs_job_type_id_fkey" FOREIGN KEY ("job_type_id") REFERENCES "job_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "jobs" ADD CONSTRAINT "jobs_machine_id_fkey" FOREIGN KEY ("machine_id") REFERENCES "machines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "jobs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "job_workers" ADD CONSTRAINT "job_workers_payroll_id_fkey" FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "bills" ADD CONSTRAINT "bills_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "advance_payments" ADD CONSTRAINT "advance_payments_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "advance_payments" ADD CONSTRAINT "advance_payments_payroll_id_fkey" FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "payroll_sheets" ADD CONSTRAINT "payroll_sheets_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-</file>
-
-<file path="prisma/migrations/20260115125127_add_user_model/migration.sql">
--- CreateTable
-CREATE TABLE "users" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'ADMIN',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
-</file>
-
-<file path="prisma/migrations/20260117090308_make_booking_quantity_and_land_nullable/migration.sql">
--- DropForeignKey
-ALTER TABLE "bookings" DROP CONSTRAINT "bookings_land_id_fkey";
-
--- AlterTable
-ALTER TABLE "bookings" ALTER COLUMN "land_id" DROP NOT NULL,
-ALTER COLUMN "quantity" DROP NOT NULL;
-
--- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_land_id_fkey" FOREIGN KEY ("land_id") REFERENCES "lands"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-</file>
-
-<file path="prisma/migrations/20260117222348_merge_job_and_job_worker/migration.sql">
--- Migration: Merge Job and Job_Worker tables
--- This migration combines job_workers into jobs table (1:1 relationship)
-
--- Step 1: Add new columns to jobs table (nullable first)
-ALTER TABLE "jobs" ADD COLUMN "worker_id" TEXT;
-ALTER TABLE "jobs" ADD COLUMN "actual_qty" DECIMAL(10,2);
-ALTER TABLE "jobs" ADD COLUMN "applied_base" DECIMAL(12,2);
-ALTER TABLE "jobs" ADD COLUMN "applied_weight" DECIMAL(5,2);
-ALTER TABLE "jobs" ADD COLUMN "final_pay" DECIMAL(12,2);
-ALTER TABLE "jobs" ADD COLUMN "payment_status" TEXT;
-ALTER TABLE "jobs" ADD COLUMN "payroll_id" TEXT;
-
--- Step 2: Migrate data from job_workers to jobs
-UPDATE "jobs"
-SET
-  "worker_id" = jw."worker_id",
-  "actual_qty" = jw."actual_qty",
-  "applied_base" = jw."applied_base",
-  "applied_weight" = jw."applied_weight",
-  "final_pay" = jw."final_pay",
-  "payment_status" = jw."payment_status",
-  "payroll_id" = jw."payroll_id"
-FROM "job_workers" jw
-WHERE "jobs"."id" = jw."job_id";
-
--- Step 3: Delete jobs that don't have workers (orphaned jobs)
-DELETE FROM "jobs"
-WHERE "id" NOT IN (SELECT "job_id" FROM "job_workers");
-
--- Step 4: Make worker_id and snapshot fields required
-ALTER TABLE "jobs" ALTER COLUMN "worker_id" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "actual_qty" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "actual_qty" SET DEFAULT 0;
-ALTER TABLE "jobs" ALTER COLUMN "applied_base" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "applied_weight" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "final_pay" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "payment_status" SET NOT NULL;
-ALTER TABLE "jobs" ALTER COLUMN "payment_status" SET DEFAULT 'PENDING_PAYROLL';
-
--- Step 5: Add foreign key constraints
-ALTER TABLE "jobs" ADD CONSTRAINT "jobs_worker_id_fkey"
-  FOREIGN KEY ("worker_id") REFERENCES "workers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
-ALTER TABLE "jobs" ADD CONSTRAINT "jobs_payroll_id_fkey"
-  FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- Step 6: Create indexes for new foreign keys
-CREATE INDEX "jobs_worker_id_idx" ON "jobs"("worker_id");
-CREATE INDEX "jobs_payment_status_idx" ON "jobs"("payment_status");
-CREATE INDEX "jobs_payroll_id_idx" ON "jobs"("payroll_id");
-
--- Step 7: Drop the job_workers table
-DROP TABLE "job_workers";
-</file>
-
-<file path="prisma/migrations/20260118024849_add_payroll_payment_model/migration.sql">
-/*
-  Warnings:
-
-  - The `payment_status` column on the `jobs` table would be dropped and recreated. This will lead to data loss if there is data in the column.
-
-*/
--- CreateEnum
-CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'BANK_TRANSFER');
-
--- AlterTable
-ALTER TABLE "bills" ADD COLUMN     "discount_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
-ADD COLUMN     "discount_reason" TEXT,
-ADD COLUMN     "subtotal" DECIMAL(12,2) NOT NULL DEFAULT 0;
-
--- AlterTable
-ALTER TABLE "jobs" DROP COLUMN "payment_status",
-ADD COLUMN     "payment_status" "JobPaymentStatus" NOT NULL DEFAULT 'PENDING_PAYROLL';
-
--- CreateTable
-CREATE TABLE "bill_payments" (
-    "id" TEXT NOT NULL,
-    "bill_id" TEXT NOT NULL,
-    "amount" DECIMAL(12,2) NOT NULL,
-    "payment_date" TIMESTAMP(3) NOT NULL,
-    "method" "PaymentMethod" NOT NULL,
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "bill_payments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "payroll_payments" (
-    "id" TEXT NOT NULL,
-    "payroll_id" TEXT NOT NULL,
-    "amount" DECIMAL(12,2) NOT NULL,
-    "payment_date" TIMESTAMP(3) NOT NULL,
-    "method" "PaymentMethod" NOT NULL,
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "payroll_payments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE INDEX "bill_payments_bill_id_idx" ON "bill_payments"("bill_id");
-
--- CreateIndex
-CREATE INDEX "bill_payments_payment_date_idx" ON "bill_payments"("payment_date");
-
--- CreateIndex
-CREATE INDEX "payroll_payments_payroll_id_idx" ON "payroll_payments"("payroll_id");
-
--- CreateIndex
-CREATE INDEX "payroll_payments_payment_date_idx" ON "payroll_payments"("payment_date");
-
--- CreateIndex
-CREATE INDEX "jobs_payment_status_idx" ON "jobs"("payment_status");
-
--- AddForeignKey
-ALTER TABLE "bill_payments" ADD CONSTRAINT "bill_payments_bill_id_fkey" FOREIGN KEY ("bill_id") REFERENCES "bills"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "payroll_payments" ADD CONSTRAINT "payroll_payments_payroll_id_fkey" FOREIGN KEY ("payroll_id") REFERENCES "payroll_sheets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-</file>
-
-<file path="prisma/migrations/20260124075849_add_job_payment_adjustment/migration.sql">
--- AlterTable
-ALTER TABLE "jobs" ADD COLUMN     "payment_adjustment" DECIMAL(12,2) NOT NULL DEFAULT 0;
-</file>
-
-<file path="prisma/migrations/20260124092226_add_adjustment_to_booking/migration.sql">
--- AlterTable
-ALTER TABLE "bookings" ADD COLUMN     "adjustment" DECIMAL(12,2) NOT NULL DEFAULT 0;
-</file>
-
-<file path="prisma/migrations/20260125024144_bill_rename_discount_reason_to_notes/migration.sql">
-/*
-  Warnings:
-
-  - You are about to drop the column `discount_reason` on the `bills` table. All the data in the column will be lost.
-
-*/
--- AlterTable
-ALTER TABLE "bills" DROP COLUMN "discount_reason",
-ADD COLUMN     "notes" TEXT;
-</file>
-
-<file path="prisma/migrations/20260125102915_payroll_sheets_add_adjustment_notes/migration.sql">
--- AlterTable
-ALTER TABLE "payroll_sheets" ADD COLUMN     "adjustment" DECIMAL(12,2) NOT NULL DEFAULT 0,
-ADD COLUMN     "notes" TEXT;
-</file>
-
-<file path="prisma/migrations/20260126151235_bill_rename_discount_amount_to_adjustment/migration.sql">
--- AlterTable
-ALTER TABLE "bills" RENAME COLUMN "discount_amount" TO "adjustment";
-</file>
-
-<file path="prisma/migrations/20260307080621_add_maintenance_tables/migration.sql">
--- CreateTable
-CREATE TABLE "maintenance_categories" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "maintenance_categories_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "maintenance_logs" (
-    "id" TEXT NOT NULL,
-    "machine_id" TEXT NOT NULL,
-    "category_id" TEXT NOT NULL,
-    "brand" TEXT,
-    "price" DECIMAL(12,2) NOT NULL,
-    "quantity" INTEGER NOT NULL DEFAULT 1,
-    "maintenance_date" TIMESTAMP(3) NOT NULL,
-    "notes" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "maintenance_logs_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "maintenance_categories_name_key" ON "maintenance_categories"("name");
-
--- CreateIndex
-CREATE INDEX "maintenance_logs_machine_id_idx" ON "maintenance_logs"("machine_id");
-
--- CreateIndex
-CREATE INDEX "maintenance_logs_category_id_idx" ON "maintenance_logs"("category_id");
-
--- CreateIndex
-CREATE INDEX "maintenance_logs_maintenance_date_idx" ON "maintenance_logs"("maintenance_date");
-
--- AddForeignKey
-ALTER TABLE "maintenance_logs" ADD CONSTRAINT "maintenance_logs_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "maintenance_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "maintenance_logs" ADD CONSTRAINT "maintenance_logs_machine_id_fkey" FOREIGN KEY ("machine_id") REFERENCES "machines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-</file>
-
-<file path="prisma/migrations/migration_lock.toml">
-# Please do not edit this file manually
-# It should be added in your version-control system (e.g., Git)
-provider = "postgresql"
 </file>
 
 <file path="public/file.svg">
@@ -14193,447 +13582,6 @@ main()
   })
 </file>
 
-<file path="README.md">
-# agr-pal
-
-**Agricultural Service Management System (Agri-ERP)**
-
-Vietnamese-localized ERP for managing agricultural service operations: bookings, jobs, billing, payroll, machines, and services.
-
-![Status: Foundation Complete](https://img.shields.io/badge/status-foundation%20complete-green)
-![Next.js](https://img.shields.io/badge/Next.js-16-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
----
-
-## Quick Links
-
-- 📚 **[Project Overview & PDR](./docs/project-overview-pdr.md)** - Business requirements, features, roadmap
-- 🏗️ **[System Architecture](./docs/system-architecture.md)** - Technical design, database schema, deployment
-- 📦 **[Codebase Summary](./docs/codebase-summary.md)** - Directory structure, components, utilities
-- 📝 **[Code Standards](./docs/code-standards.md)** - Conventions, patterns, best practices
-- 🎨 **[Brand Guidelines](./docs/high-level-project-documents/Brand%20Guidelines.md)** - Colors, typography, UI/UX
-- 📋 **[Product Requirements (PRD)](./docs/high-level-project-documents/PRODUCT%20REQUIREMENTS%20DOCUMENT%20(PRD)%20-%20VERSION%201.0.md)** - Detailed functional specs
-
----
-
-## What is agr-pal?
-
-agr-pal replaces manual ledgers for agricultural service businesses. Track bookings, execute jobs, generate bills, calculate payroll, and monitor machine ROI—all in one system.
-
-**Key Features:**
-- 🌾 **Bookings:** Service requests from customers (land, quantity, pricing)
-- 🔧 **Jobs:** Worker/machine assignments with wage snapshots
-- 💰 **Billing:** Aggregate bookings, track partial payments, customer debt
-- 💵 **Payroll:** Calculate wages (base × weight × quantity), deduct advances
-- 🚜 **Machines:** Inventory, maintenance logs, ROI reports
-- 📊 **Dashboard:** Financial summary, pending tasks, business health
-
-**Target User:** Single admin (business owner) managing 5-20 workers, 50-100 customers.
-
-**Locale:** Vietnamese (VND currency, DD/MM/YYYY dates, vi-VN formatting).
-
----
-
-## Tech Stack
-
-**Frontend:**
-- [Next.js 16](https://nextjs.org) (App Router, React 19, Server Components)
-- [TypeScript 5](https://www.typescriptlang.org) (strict mode)
-- [Tailwind CSS 4](https://tailwindcss.com) (utility-first styling)
-- [shadcn/ui](https://ui.shadcn.com) (Radix UI + Tailwind components)
-- [React Hook Form](https://react-hook-form.com) + [Zod](https://zod.dev) (forms & validation)
-- [Lucide React](https://lucide.dev) (icons)
-
-**Backend (Planned):**
-- [PostgreSQL](https://www.postgresql.org) (relational database)
-- [Prisma](https://www.prisma.io) (type-safe ORM)
-- [Clerk](https://clerk.dev) or [NextAuth](https://next-auth.js.org) (authentication)
-
-**Deployment (Planned):**
-- [Vercel](https://vercel.com) (recommended for MVP)
-- Docker + VPS (cost-effective for production)
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+ (LTS recommended)
-- npm, yarn, pnpm, or bun
-- Git
-
-### Installation
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/agr-pal.git
-cd agr-pal
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to view the app.
-
-### Available Scripts
-
-```bash
-npm run dev      # Start dev server (hot reload)
-npm run build    # Build production bundle
-npm run start    # Start production server
-npm run lint     # Run ESLint
-```
-
----
-
-## Project Structure
-
-```
-agr-pal/
-├── docs/                          # 📚 Documentation
-│   ├── codebase-summary.md        # Code overview
-│   ├── code-standards.md          # Conventions
-│   ├── project-overview-pdr.md    # Business requirements
-│   ├── system-architecture.md     # Technical design
-│   └── high-level-project-documents/
-│       ├── PRODUCT REQUIREMENTS DOCUMENT (PRD) - VERSION 1.0.md
-│       └── Brand Guidelines.md
-├── src/
-│   ├── app/                       # Next.js App Router
-│   │   ├── (dashboard)/           # Main app pages
-│   │   │   ├── page.tsx           # Dashboard home
-│   │   │   ├── data-table/        # DataTable demo
-│   │   │   ├── forms/             # Forms demo
-│   │   │   └── status-badges/     # Status badges demo
-│   │   ├── layout.tsx             # Root layout
-│   │   ├── page.tsx               # Root redirect
-│   │   └── globals.css            # Global styles
-│   ├── components/                # React components
-│   │   ├── data-display/          # Tables, cards
-│   │   ├── forms/                 # Currency, date, quantity inputs
-│   │   ├── layout/                # AppShell, header, sidebar
-│   │   ├── status/                # Status badges (13 variants)
-│   │   └── ui/                    # shadcn/ui primitives
-│   ├── config/                    # App configuration
-│   │   ├── navigation.ts          # Nav structure (9 routes)
-│   │   └── site.ts                # Site settings (VND, vi-VN)
-│   ├── lib/                       # Utilities
-│   │   ├── format.ts              # Currency, date formatting
-│   │   └── utils.ts               # cn() class merger
-│   └── types/                     # TypeScript types
-│       ├── enums.ts               # Status enums (9 types)
-│       └── index.ts               # Re-exports
-├── public/                        # Static assets
-├── .claude/                       # Claude Code workflows
-├── plans/reports/                 # Scout reports
-└── [config files]                 # Next.js, TS, ESLint, Tailwind
-```
-
-### Key Directories
-
-**`src/app/`** - Next.js App Router pages (4 demo pages implemented)
-**`src/components/`** - Reusable components (46 files: layout, forms, tables, badges)
-**`src/lib/`** - Utilities (VND formatting, date formatting, Tailwind class merger)
-**`src/types/`** - Type definitions (9 status enums for type safety)
-
----
-
-## Features (Current vs Planned)
-
-### ✅ Implemented (Foundation Phase)
-
-**Layout System:**
-- AppShell with collapsible sidebar (256px → 64px)
-- Sticky header with breadcrumbs, search, notifications, user menu
-- Responsive design (desktop-first)
-- Dark mode support
-
-**Components:**
-- **DataTable:** Sortable, paginated, card view, empty states
-- **Forms:** Currency input (VND), quantity input (+/- buttons), date picker (vi-VN)
-- **Status Badges:** 13 variants (NEW, IN_PROGRESS, COMPLETED, etc.) with WCAG AA colors
-- **UI Primitives:** 18 shadcn/ui components (button, card, dialog, etc.)
-
-**Utilities:**
-- Currency formatting: `formatCurrency(1000000)` → "1.000.000 đ"
-- Date formatting: `formatDateShort(date)` → "15/01/2026"
-- Type-safe status enums (prevents typos, enables autocomplete)
-
-**Demo Pages:**
-- `/dashboard` - Stats cards, recent activity
-- `/data-table` - DataTable with 8 sample bookings
-- `/forms` - Form components showcase
-- `/status-badges` - Status badge variants
-
-### ⏳ Planned (Feature Development)
-
-**8 CRUD Modules:**
-- **Services & Pricing:** Manage catalog, price history
-- **Customers & Land:** Profiles, GPS land parcels
-- **Bookings:** Create service requests, track status
-- **Jobs:** Assign workers/machines, freeze wages
-- **Billing:** Aggregate bookings, partial payments, debt tracking
-- **Payroll:** Calculate wages, deduct advances
-- **Machines:** Inventory, maintenance, ROI reports
-- **Dashboard:** Financial summary, alerts, reports
-
-**Backend:**
-- PostgreSQL database (13 tables per PRD)
-- Prisma ORM (type-safe queries, migrations)
-- Authentication (Clerk or NextAuth)
-- Next.js API routes or Server Actions
-
-**Advanced Features:**
-- Form validation (Zod schemas)
-- State management (Zustand, TanStack Query)
-- Testing (Vitest, Playwright)
-- Deployment (Vercel or Docker)
-
----
-
-## Development Workflow
-
-### Code Standards
-
-**File Naming:** kebab-case (e.g., `currency-input.tsx`)
-**File Size:** <200 lines (refactor if exceeded)
-**Imports:** Use `@/` aliases (`@/components`, `@/lib`, `@/types`)
-**Components:** Functional, arrow functions, TypeScript strict mode
-**Styling:** Tailwind CSS with `cn()` class merger
-
-**Principles:**
-- **YAGNI:** Build only what's needed now
-- **KISS:** Prefer simple solutions over clever code
-- **DRY:** Extract reusable patterns (but don't over-abstract)
-
-See [docs/code-standards.md](./docs/code-standards.md) for full guide.
-
-### Git Workflow
-
-**Commit Format:** `type(scope): message`
-
-Examples:
-```
-feat(bookings): add booking creation form
-fix(currency): handle empty input in parseCurrency
-refactor(layout): extract sidebar nav to separate component
-```
-
-**Branch Naming:** `type/description`
-
-Examples: `feat/booking-crud`, `fix/currency-formatting`
-
-### Testing (Planned)
-
-**Unit Tests:**
-```bash
-npm run test              # Run all tests
-npm run test:watch        # Watch mode
-npm run test:coverage     # Coverage report
-```
-
-**E2E Tests:**
-```bash
-npm run test:e2e          # Playwright tests
-```
-
----
-
-## Database Schema (Planned)
-
-**13 Tables** across 3 groups:
-
-### Masters (5 tables)
-- `Service` - Service catalog (name, unit, current price)
-- `Job_Type` - Job types per service (base salary)
-- `Worker` - Worker profiles
-- `Worker_Weight` - Salary multipliers (worker × job_type)
-- `Machine` - Machine inventory (status, purchase date)
-
-### Operations (5 tables)
-- `Customer` - Customer profiles
-- `Land` - Land parcels (GPS, customer FK)
-- `Booking` - Service bookings (captured price snapshot)
-- `Job` - Job execution (booking, machine FKs)
-- `Job_Worker` - Worker assignments (wage snapshots)
-
-### Financials (3 tables)
-- `Bill` - Customer invoices (aggregates bookings)
-- `Advance_Payment` - Worker advances
-- `Payroll_Sheet` - Worker payroll (aggregates jobs + advances)
-
-**Key Pattern: Snapshot on Creation**
-- Booking captures service price at time of creation
-- Job_Worker captures base salary & weight at time of job creation
-- Prevents historical data drift when prices/wages change
-
-See [docs/system-architecture.md](./docs/system-architecture.md) §Database for full schema.
-
----
-
-## Business Logic Highlights
-
-### Wage Calculation (Job Workers)
-
-```
-Final Wage = Actual Quantity × Base Salary × Worker Weight
-
-Example:
-- Worker "Trần Văn B" does 8 hours of "Driver" job
-- Base salary: 100,000 VND/hour (from Job_Type)
-- Worker weight: 1.2 (from Worker_Weight)
-- Final wage: 8 × 100,000 × 1.2 = 960,000 VND
-
-Stored in Job_Worker:
-- actual_qty: 8
-- applied_base: 100,000  (snapshot)
-- applied_weight: 1.2    (snapshot)
-- final_pay: 960,000     (snapshot)
-```
-
-**Why snapshots?** If base salary changes to 110k next month, old jobs still show 100k (historical accuracy).
-
-### Bill Aggregation (Customer Debt)
-
-```
-Bill Total = Σ (Booking.total_amount) for all bookings in bill
-Customer Debt = Σ (Bill.total_amount - Bill.total_paid) for all OPEN/PARTIAL bills
-
-Example:
-- Bill #1: 3 bookings (1M, 2M, 1.5M) → Total 4.5M
-- Customer pays 2M → Bill status PARTIAL_PAID, debt 2.5M
-- Customer pays 2.5M → Bill status COMPLETED, debt 0
-```
-
-**Business Rule:** Booking can belong to only one bill. Cannot delete bill with PARTIAL_PAID status.
-
----
-
-## Contributing
-
-### Contribution Workflow
-
-1. Read [docs/code-standards.md](./docs/code-standards.md)
-2. Create feature branch: `git checkout -b feat/your-feature`
-3. Make changes following standards
-4. Run linter: `npm run lint`
-5. Commit with conventional format: `feat(scope): message`
-6. Push and create pull request
-
-### Pull Request Checklist
-
-- [ ] TypeScript strict mode passes (no `any`)
-- [ ] File size <200 lines (or justified)
-- [ ] Imports use `@/` aliases
-- [ ] Tailwind classes grouped logically
-- [ ] WCAG AA contrast ratios (status badges)
-- [ ] Vietnamese locale used (dates, currency)
-- [ ] No hardcoded strings (use enums/constants)
-
----
-
-## Roadmap
-
-### Phase 1: Foundation ✅ (Complete - 2026-01-15)
-- ✅ Next.js project setup
-- ✅ Component library (layout, forms, tables, badges)
-- ✅ Type-safe enums
-- ✅ Vietnamese localization
-- ✅ Demo pages
-
-### Phase 2: Backend & Auth ⏳ (2 weeks)
-- ⏳ PostgreSQL + Prisma schema
-- ⏳ Authentication (Clerk/NextAuth)
-- ⏳ API routes or Server Actions
-- ⏳ Database migrations + seeding
-
-### Phase 3: CRUD Modules ⏳ (4 weeks)
-- ⏳ Services & Pricing
-- ⏳ Customers & Land
-- ⏳ Bookings
-- ⏳ Jobs with wage snapshots
-- ⏳ Billing with partial payments
-- ⏳ Payroll with advances
-- ⏳ Machines & maintenance
-
-### Phase 4: Reports & Polish ⏳ (2 weeks)
-- ⏳ Dashboard with financial summary
-- ⏳ Debt/payroll reports
-- ⏳ Form validation (Zod)
-- ⏳ Error handling, loading states
-
-### Phase 5: Testing & Deployment ⏳ (1 week)
-- ⏳ Unit + integration tests
-- ⏳ E2E tests (critical flows)
-- ⏳ Production deployment
-- ⏳ User acceptance testing
-
----
-
-## Environment Variables (Planned)
-
-Create `.env.local`:
-
-```bash
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/agrpal"
-
-# Authentication (Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_..."
-CLERK_SECRET_KEY="sk_..."
-
-# OR Authentication (NextAuth)
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key"
-
-# App
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
-
----
-
-## FAQ
-
-**Q: Is this production-ready?**
-A: Foundation (UI) is complete. Backend (database, API, auth) is planned but not implemented.
-
-**Q: Can I use this for my business?**
-A: Not yet. Current version is demo-only (no data persistence). Wait for Phase 2-3 (backend + CRUD).
-
-**Q: Why Vietnamese locale only?**
-A: Target market is Vietnamese agricultural services. Internationalization (i18n) can be added later.
-
-**Q: Can I add more users (workers, customers)?**
-A: Current design is single admin. Multi-user support (RBAC) can be added in future phases.
-
-**Q: How do I customize colors/branding?**
-A: Edit `src/app/globals.css` (CSS variables) and see [Brand Guidelines](./docs/high-level-project-documents/Brand%20Guidelines.md).
-
----
-
-## License
-
-MIT License - See [LICENSE](./LICENSE) for details.
-
----
-
-## Support
-
-- 📖 **Documentation:** [docs/](./docs/)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/yourusername/agr-pal/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/yourusername/agr-pal/discussions)
-
----
-
-**Built with ❤️ for Vietnamese agricultural service businesses.**
-</file>
-
 <file path="src/actions/job-types.ts">
 'use server'
 
@@ -18568,622 +17516,6 @@ export default function BillsPage() {
       >
         <BillList />
       </ContentSection>
-    </PageContainer>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/bookings/[id]/page.tsx">
-"use client";
-
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useBooking, useDeleteBooking, useUpdateBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
-import { useDeleteJob, useUpdateJob } from "@/hooks/use-jobs";
-import { PageContainer, ContentSection } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { StatusBadge } from "@/components/status/status-badge";
-import { StatusSelect } from "@/components/status/status-select";
-import { formatCurrency, formatDateShort } from "@/lib/format";
-
-import { ArrowLeft, Edit, Info, Plus, Trash2 } from "lucide-react";
-import { BookingStatus, PaymentStatus, JobStatus } from "@/types/enums";
-import { handleBookingStatusUpdate } from "@/lib/booking-status-utils";
-import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
-import { UpdateJobDialog } from "@/components/jobs/update-job-dialog";
-import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-
-// Status options for Booking Select
-const BOOKING_STATUS_OPTIONS = [
-  { value: BookingStatus.New, label: "Mới", variant: "new" as const },
-  { value: BookingStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
-  { value: BookingStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
-  { value: BookingStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
-  { value: BookingStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
-];
-
-// Status options for Select
-const JOB_STATUS_OPTIONS = [
-  { value: JobStatus.New, label: "Mới", variant: "new" as const },
-  { value: JobStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
-  { value: JobStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
-  { value: JobStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
-  { value: JobStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
-];
-
-function getPaymentStatusVariant(
-  status: string
-): "pending" | "partial" | "paid" {
-  switch (status) {
-    case PaymentStatus.PendingBill:
-      return "pending";
-    case PaymentStatus.AddedBill:
-      return "partial";
-    case PaymentStatus.FullyPaid:
-      return "paid";
-    default:
-      return "pending";
-  }
-}
-
-function getPaymentStatusLabel(status: string): string {
-  switch (status) {
-    case PaymentStatus.PendingBill:
-      return "Chưa tạo HĐ";
-    case PaymentStatus.AddedBill:
-      return "Đã tạo HĐ";
-    case PaymentStatus.FullyPaid:
-      return "Đã thanh toán";
-    default:
-      return status;
-  }
-}
-
-export default function BookingDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const router = useRouter();
-  const { id } = use(params);
-  const { data: booking, isLoading } = useBooking(id);
-  const updateBooking = useUpdateBooking();
-  const updateBookingWithJobs = useUpdateBookingWithJobs();
-  const updateJob = useUpdateJob();
-  const deleteJob = useDeleteJob();
-  const deleteBooking = useDeleteBooking();
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
-  const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false);
-
-  // State for completion confirmation
-  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
-  const [incompleteJobCount, setIncompleteJobCount] = useState(0);
-  const [targetStatus, setTargetStatus] = useState<string | null>(null);
-  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<any>(null);
-  const [editBookingDialogOpen, setEditBookingDialogOpen] = useState(false);
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (!booking) return;
-
-    await handleBookingStatusUpdate({
-      bookingId: booking.id,
-      currentStatus: booking.status,
-      newStatus,
-      onNeedConfirmation: (count) => {
-        setIncompleteJobCount(count);
-        setTargetStatus(newStatus);
-        setCompletionDialogOpen(true);
-      },
-      onProceedWithoutJobs: async () => {
-        await updateBooking.mutateAsync({
-          id: booking.id,
-          data: { status: newStatus },
-        });
-      },
-    });
-  };
-
-  const handleConfirmCompletion = async (completeJobs: boolean) => {
-    if (!booking || !targetStatus) return;
-
-    await updateBookingWithJobs.mutateAsync({
-      id: booking.id,
-      data: { status: targetStatus },
-      completeJobs,
-    });
-    setCompletionDialogOpen(false);
-    setTargetStatus(null);
-  };
-
-  const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setJobToDelete(jobId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (jobToDelete) {
-      await deleteJob.mutateAsync(jobToDelete);
-      setDeleteDialogOpen(false);
-      setJobToDelete(null);
-    }
-  };
-
-  const handleDeleteBookingConfirm = async () => {
-    await deleteBooking.mutateAsync(id, {
-      onSuccess: () => {
-        setDeleteBookingDialogOpen(false);
-        router.push("/bookings");
-      },
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <ContentSection title="Chi tiết đơn hàng" description="Đang tải...">
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Đang tải...</p>
-          </div>
-        </ContentSection>
-      </PageContainer>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <PageContainer>
-        <ContentSection title="Không tìm thấy">
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <p className="text-muted-foreground">Không tìm thấy đơn hàng</p>
-            <Button onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại
-            </Button>
-          </div>
-        </ContentSection>
-      </PageContainer>
-    );
-  }
-
-  const currentPrice = Number(booking.service.price);
-  const capturedPrice = Number(booking.captured_price);
-  const totalAmount = Number(booking.total_amount);
-  const quantity = booking.quantity ? Number(booking.quantity) : null;
-  const priceChanged = currentPrice !== capturedPrice;
-
-  return (
-    <PageContainer>
-      <ContentSection
-        title="Chi tiết đơn hàng"
-        description={`Mã đơn: ${booking.id.slice(0, 8).toUpperCase()}`}
-        actions={
-          <div className="flex gap-2">
-            <TooltipProvider>
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0}>
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => setDeleteBookingDialogOpen(true)}
-                      disabled={!!booking.bill}
-                      className={!!booking.bill ? "opacity-50 pointer-events-none" : ""}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Xóa
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!!booking.bill && (
-                  <TooltipContent>
-                    <p>Đơn hàng đã có hóa đơn, không thể xóa</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            
-            <Button
-              variant="outline"
-              onClick={() => setEditBookingDialogOpen(true)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Chỉnh sửa
-            </Button>
-            <Button variant="outline" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid gap-6">
-          {/* Booking Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin đơn hàng</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Column 1: Customer & Location */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Khách hàng</p>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
-                      onClick={() => router.push(`/customers/${booking.customer.id}`)}
-                    >
-                      {booking.customer.name}
-                    </Button>
-                    {booking.customer.phone && (
-                      <p className="text-sm text-muted-foreground">
-                        {booking.customer.phone}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ngày tạo</p>
-                    <p className="font-medium">
-                      {formatDateShort(booking.created_at)}
-                    </p>
-                  </div>
-                </div>
-
-                  {/* Column 2: Service & pricing */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dịch vụ</p>
-                    <p className="font-medium">{booking.service.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Thửa ruộng</p>
-                    <p className="font-medium">
-                      {booking.land?.name || <span className="text-muted-foreground">—</span>}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Column 3: Status & Dates */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Trạng thái</p>
-                    <div className="mt-1">
-                      <StatusSelect
-                        value={booking.status}
-                        options={BOOKING_STATUS_OPTIONS}
-                        onValueChange={handleStatusChange}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Thanh toán</p>
-                    <div className="mt-1">
-                      <StatusBadge
-                        variant={getPaymentStatusVariant(booking.payment_status)}
-                        label={getPaymentStatusLabel(booking.payment_status)}
-                      />
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {booking.notes && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">Ghi chú</p>
-                  <p className="text-sm">{booking.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Payment Details Card - NEW */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-blue-900">Chi tiết giá trị đơn hàng</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Số lượng:</span>
-                  <span className="font-medium">{Number(booking.quantity ?? 0)} {booking.service.unit}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Đơn giá:</span>
-                  <span className="font-medium">{formatCurrency(Number(booking.captured_price))}</span>
-                </div>
-                
-                {/* Adjustment */}
-                {Number((booking as any).adjustment || 0) !== 0 && (
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className="text-muted-foreground">Điều chỉnh:</span>
-                    <span className={Number((booking as any).adjustment) > 0 ? "text-green-600" : "text-red-600"}>
-                      {Number((booking as any).adjustment) > 0 ? "+" : "-"} {formatCurrency(Math.abs(Number((booking as any).adjustment)))}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
-                  <span className="font-semibold text-blue-900">Tổng giá trị:</span>
-                  <span className="text-xl font-bold text-primary">
-                    {formatCurrency(totalAmount)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Captured Price Explanation Card */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-blue-900">
-                    Giá được ghi nhận: {formatCurrency(capturedPrice)}
-                  </p>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Ngày tạo: {formatDateShort(booking.created_at)}
-                  </p>
-                  {priceChanged && (
-                    <Alert className="mt-3 bg-amber-50 border-amber-200">
-                      <AlertDescription className="text-xs text-amber-800">
-                        Giá hiện tại của dịch vụ đã thay đổi thành{" "}
-                        <strong>{formatCurrency(currentPrice)}</strong>, nhưng
-                        đơn hàng này vẫn giữ nguyên giá{" "}
-                        <strong>{formatCurrency(capturedPrice)}</strong> theo
-                        thời điểm tạo đơn.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {!priceChanged && (
-                    <p className="text-xs text-blue-600 mt-2">
-                      Giá hiện tại của dịch vụ vẫn là{" "}
-                      {formatCurrency(currentPrice)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Jobs List Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Các công việc ({booking.jobs?.length || 0})</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => setCreateJobDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Tạo công việc
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {!booking.jobs || booking.jobs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Chưa có công việc nào cho đơn hàng này</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => setCreateJobDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tạo công việc đầu tiên
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {booking.jobs.map((job) => (
-                    <div
-                      key={job.id}
-                      className="p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/jobs/${job.id}`)}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <p className="font-medium">{job.job_type.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {job.worker.name}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusSelect
-                            value={job.status}
-                            options={JOB_STATUS_OPTIONS}
-                            onValueChange={(value) => {
-                            }}
-                          />
-                          {booking.status !== BookingStatus.Completed && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingJob(job);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleDeleteClick(job.id, e)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Số lượng: <span className="font-medium text-foreground">{Number(job.actual_qty)} {job.job_type.service.unit}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Bill Card (if billed) */}
-          {booking.bill && (
-            <Card className="border-green-200 bg-green-50/50">
-              <CardHeader>
-                <CardTitle className="text-green-900">Hóa đơn</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-green-700">Mã hóa đơn:</span>
-                    <span className="font-medium text-green-900">
-                      {booking.bill.id.slice(0, 8).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-green-700">Tổng giá trị:</span>
-                    <span className="font-medium text-green-900">
-                      {formatCurrency(Number(booking.bill.total_amount))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-green-700">Đã thanh toán:</span>
-                    <span className="font-medium text-green-900">
-                      {formatCurrency(Number(booking.bill.total_paid))}
-                    </span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-4"
-                    onClick={() => router.push(`/bills/${booking.bill?.id}`)}
-                  >
-                    Xem chi tiết hóa đơn
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </ContentSection>
-
-      {/* Delete Job Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa công việc</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa công việc này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Booking Confirmation Dialog */}
-      <Dialog open={deleteBookingDialogOpen} onOpenChange={setDeleteBookingDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteBookingDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteBookingConfirm}
-              disabled={deleteBooking.isPending}
-            >
-              {deleteBooking.isPending ? "Đang xóa..." : "Xóa"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Complete Jobs Confirmation Dialog */}
-      <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận hoàn thành</DialogTitle>
-            <DialogDescription>
-              Đơn hàng này còn {incompleteJobCount} công việc chưa hoàn thành.
-              Bạn có muốn tự động chuyển tất cả công việc sang trạng thái hoàn thành không?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col sm:justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleConfirmCompletion(false)}
-            >
-              Không, chỉ cập nhật đơn hàng
-            </Button>
-            <Button onClick={() => handleConfirmCompletion(true)}>
-              Có, hoàn thành tất cả
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-
-      {/* Create Job Dialog */}
-      <CreateJobDialog
-        open={createJobDialogOpen}
-        onOpenChange={setCreateJobDialogOpen}
-        booking={booking}
-      />
-      
-      {editingJob && (
-        <UpdateJobDialog
-          open={!!editingJob}
-          onOpenChange={(open) => !open && setEditingJob(null)}
-          job={{
-            ...editingJob,
-            booking: booking,
-            job_type: {
-              ...editingJob.job_type,
-              service: booking.service,
-            },
-          }}
-        />
-      )}
-
-      <UpdateBookingDialog
-        open={editBookingDialogOpen}
-        onOpenChange={setEditBookingDialogOpen}
-        booking={booking}
-      />
     </PageContainer>
   );
 }
@@ -24429,6 +22761,628 @@ export async function deleteAdvancePayment(id: string): Promise<Result<void>> {
     }
     return { success: false, error: 'Đã xảy ra lỗi khi xóa tạm ứng' }
   }
+}
+</file>
+
+<file path="src/app/(dashboard)/bookings/[id]/page.tsx">
+"use client";
+
+import { use, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useBooking, useDeleteBooking, useUpdateBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
+import { useDeleteJob, useUpdateJob } from "@/hooks/use-jobs";
+import { PageContainer, ContentSection } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { StatusBadge } from "@/components/status/status-badge";
+import { StatusSelect } from "@/components/status/status-select";
+import { formatCurrency, formatDateShort } from "@/lib/format";
+
+import { ArrowLeft, Edit, Info, Plus, Trash2 } from "lucide-react";
+import { BookingStatus, PaymentStatus, JobStatus } from "@/types/enums";
+import { handleBookingStatusUpdate } from "@/lib/booking-status-utils";
+import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
+import { UpdateJobDialog } from "@/components/jobs/update-job-dialog";
+import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+
+// Status options for Booking Select
+const BOOKING_STATUS_OPTIONS = [
+  { value: BookingStatus.New, label: "Mới", variant: "new" as const },
+  { value: BookingStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
+  { value: BookingStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
+  { value: BookingStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
+  { value: BookingStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
+];
+
+// Status options for Select
+const JOB_STATUS_OPTIONS = [
+  { value: JobStatus.New, label: "Mới", variant: "new" as const },
+  { value: JobStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
+  { value: JobStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
+  { value: JobStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
+  { value: JobStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
+];
+
+function getPaymentStatusVariant(
+  status: string
+): "pending" | "partial" | "paid" {
+  switch (status) {
+    case PaymentStatus.PendingBill:
+      return "pending";
+    case PaymentStatus.AddedBill:
+      return "partial";
+    case PaymentStatus.FullyPaid:
+      return "paid";
+    default:
+      return "pending";
+  }
+}
+
+function getPaymentStatusLabel(status: string): string {
+  switch (status) {
+    case PaymentStatus.PendingBill:
+      return "Chưa tạo HĐ";
+    case PaymentStatus.AddedBill:
+      return "Đã tạo HĐ";
+    case PaymentStatus.FullyPaid:
+      return "Đã thanh toán";
+    default:
+      return status;
+  }
+}
+
+export default function BookingDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const router = useRouter();
+  const { id } = use(params);
+  const { data: booking, isLoading } = useBooking(id);
+  const updateBooking = useUpdateBooking();
+  const updateBookingWithJobs = useUpdateBookingWithJobs();
+  const updateJob = useUpdateJob();
+  const deleteJob = useDeleteJob();
+  const deleteBooking = useDeleteBooking();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false);
+
+  // State for completion confirmation
+  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
+  const [incompleteJobCount, setIncompleteJobCount] = useState(0);
+  const [targetStatus, setTargetStatus] = useState<string | null>(null);
+  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
+  const [editBookingDialogOpen, setEditBookingDialogOpen] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!booking) return;
+
+    await handleBookingStatusUpdate({
+      bookingId: booking.id,
+      currentStatus: booking.status,
+      newStatus,
+      onNeedConfirmation: (count) => {
+        setIncompleteJobCount(count);
+        setTargetStatus(newStatus);
+        setCompletionDialogOpen(true);
+      },
+      onProceedWithoutJobs: async () => {
+        await updateBooking.mutateAsync({
+          id: booking.id,
+          data: { status: newStatus },
+        });
+      },
+    });
+  };
+
+  const handleConfirmCompletion = async (completeJobs: boolean) => {
+    if (!booking || !targetStatus) return;
+
+    await updateBookingWithJobs.mutateAsync({
+      id: booking.id,
+      data: { status: targetStatus },
+      completeJobs,
+    });
+    setCompletionDialogOpen(false);
+    setTargetStatus(null);
+  };
+
+  const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setJobToDelete(jobId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (jobToDelete) {
+      await deleteJob.mutateAsync(jobToDelete);
+      setDeleteDialogOpen(false);
+      setJobToDelete(null);
+    }
+  };
+
+  const handleDeleteBookingConfirm = async () => {
+    await deleteBooking.mutateAsync(id, {
+      onSuccess: () => {
+        setDeleteBookingDialogOpen(false);
+        router.push("/bookings");
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <ContentSection title="Chi tiết đơn hàng" description="Đang tải...">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Đang tải...</p>
+          </div>
+        </ContentSection>
+      </PageContainer>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <PageContainer>
+        <ContentSection title="Không tìm thấy">
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <p className="text-muted-foreground">Không tìm thấy đơn hàng</p>
+            <Button onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
+        </ContentSection>
+      </PageContainer>
+    );
+  }
+
+  const currentPrice = Number(booking.service.price);
+  const capturedPrice = Number(booking.captured_price);
+  const totalAmount = Number(booking.total_amount);
+  const quantity = booking.quantity ? Number(booking.quantity) : null;
+  const priceChanged = currentPrice !== capturedPrice;
+
+  return (
+    <PageContainer>
+      <ContentSection
+        title="Chi tiết đơn hàng"
+        description={`Mã đơn: ${booking.id.slice(0, 8).toUpperCase()}`}
+        actions={
+          <div className="flex gap-2">
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => setDeleteBookingDialogOpen(true)}
+                      disabled={!!booking.bill}
+                      className={!!booking.bill ? "opacity-50 pointer-events-none" : ""}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!!booking.bill && (
+                  <TooltipContent>
+                    <p>Đơn hàng đã có hóa đơn, không thể xóa</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            
+            <Button
+              variant="outline"
+              onClick={() => setEditBookingDialogOpen(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Chỉnh sửa
+            </Button>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
+        }
+      >
+        <div className="grid gap-6">
+          {/* Booking Info Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin đơn hàng</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Column 1: Customer & Location */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Khách hàng</p>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium text-base text-primary hover:no-underline hover:text-primary/80"
+                      onClick={() => router.push(`/customers/${booking.customer.id}`)}
+                    >
+                      {booking.customer.name}
+                    </Button>
+                    {booking.customer.phone && (
+                      <p className="text-sm text-muted-foreground">
+                        {booking.customer.phone}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ngày tạo</p>
+                    <p className="font-medium">
+                      {formatDateShort(booking.created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                  {/* Column 2: Service & pricing */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dịch vụ</p>
+                    <p className="font-medium">{booking.service.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Thửa ruộng</p>
+                    <p className="font-medium">
+                      {booking.land?.name || <span className="text-muted-foreground">—</span>}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Column 3: Status & Dates */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Trạng thái</p>
+                    <div className="mt-1">
+                      <StatusSelect
+                        value={booking.status}
+                        options={BOOKING_STATUS_OPTIONS}
+                        onValueChange={handleStatusChange}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Thanh toán</p>
+                    <div className="mt-1">
+                      <StatusBadge
+                        variant={getPaymentStatusVariant(booking.payment_status)}
+                        label={getPaymentStatusLabel(booking.payment_status)}
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {booking.notes && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">Ghi chú</p>
+                  <p className="text-sm">{booking.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Payment Details Card - NEW */}
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-blue-900">Chi tiết giá trị đơn hàng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Số lượng:</span>
+                  <span className="font-medium">{Number(booking.quantity ?? 0)} {booking.service.unit}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Đơn giá:</span>
+                  <span className="font-medium">{formatCurrency(Number(booking.captured_price))}</span>
+                </div>
+                
+                {/* Adjustment */}
+                {Number((booking as any).adjustment || 0) !== 0 && (
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-muted-foreground">Điều chỉnh:</span>
+                    <span className={Number((booking as any).adjustment) > 0 ? "text-green-600" : "text-red-600"}>
+                      {Number((booking as any).adjustment) > 0 ? "+" : "-"} {formatCurrency(Math.abs(Number((booking as any).adjustment)))}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
+                  <span className="font-semibold text-blue-900">Tổng giá trị:</span>
+                  <span className="text-xl font-bold text-primary">
+                    {formatCurrency(totalAmount)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Captured Price Explanation Card */}
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-blue-900">
+                    Giá được ghi nhận: {formatCurrency(capturedPrice)}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Ngày tạo: {formatDateShort(booking.created_at)}
+                  </p>
+                  {priceChanged && (
+                    <Alert className="mt-3 bg-amber-50 border-amber-200">
+                      <AlertDescription className="text-xs text-amber-800">
+                        Giá hiện tại của dịch vụ đã thay đổi thành{" "}
+                        <strong>{formatCurrency(currentPrice)}</strong>, nhưng
+                        đơn hàng này vẫn giữ nguyên giá{" "}
+                        <strong>{formatCurrency(capturedPrice)}</strong> theo
+                        thời điểm tạo đơn.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {!priceChanged && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      Giá hiện tại của dịch vụ vẫn là{" "}
+                      {formatCurrency(currentPrice)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Jobs List Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Các công việc ({booking.jobs?.length || 0})</CardTitle>
+              <Button
+                size="sm"
+                onClick={() => setCreateJobDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Tạo công việc
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!booking.jobs || booking.jobs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Chưa có công việc nào cho đơn hàng này</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => setCreateJobDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo công việc đầu tiên
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {booking.jobs.map((job) => (
+                    <div
+                      key={job.id}
+                      className="p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/jobs/${job.id}`)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <p className="font-medium">{job.job_type.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {job.worker.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <StatusSelect
+                              value={job.status}
+                              options={JOB_STATUS_OPTIONS}
+                              onValueChange={(value) => {
+                                updateJob.mutateAsync({
+                                  id: job.id,
+                                  data: { status: value },
+                                });
+                              }}
+                            />
+                          </div>
+                          {booking.status !== BookingStatus.Completed && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingJob(job);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteClick(job.id, e)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Số lượng: <span className="font-medium text-foreground">{Number(job.actual_qty)} {job.job_type.service.unit}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bill Card (if billed) */}
+          {booking.bill && (
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="text-green-900">Hóa đơn</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-green-700">Mã hóa đơn:</span>
+                    <span className="font-medium text-green-900">
+                      {booking.bill.id.slice(0, 8).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-green-700">Tổng giá trị:</span>
+                    <span className="font-medium text-green-900">
+                      {formatCurrency(Number(booking.bill.total_amount))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-green-700">Đã thanh toán:</span>
+                    <span className="font-medium text-green-900">
+                      {formatCurrency(Number(booking.bill.total_paid))}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4"
+                    onClick={() => router.push(`/bills/${booking.bill?.id}`)}
+                  >
+                    Xem chi tiết hóa đơn
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </ContentSection>
+
+      {/* Delete Job Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa công việc</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa công việc này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Booking Confirmation Dialog */}
+      <Dialog open={deleteBookingDialogOpen} onOpenChange={setDeleteBookingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteBookingDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteBookingConfirm}
+              disabled={deleteBooking.isPending}
+            >
+              {deleteBooking.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Complete Jobs Confirmation Dialog */}
+      <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận hoàn thành</DialogTitle>
+            <DialogDescription>
+              Đơn hàng này còn {incompleteJobCount} công việc chưa hoàn thành.
+              Bạn có muốn tự động chuyển tất cả công việc sang trạng thái hoàn thành không?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleConfirmCompletion(false)}
+            >
+              Không, chỉ cập nhật đơn hàng
+            </Button>
+            <Button onClick={() => handleConfirmCompletion(true)}>
+              Có, hoàn thành tất cả
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Create Job Dialog */}
+      <CreateJobDialog
+        open={createJobDialogOpen}
+        onOpenChange={setCreateJobDialogOpen}
+        booking={booking}
+      />
+      
+      {editingJob && (
+        <UpdateJobDialog
+          open={!!editingJob}
+          onOpenChange={(open) => !open && setEditingJob(null)}
+          job={{
+            ...editingJob,
+            booking: booking,
+            job_type: {
+              ...editingJob.job_type,
+              service: booking.service,
+            },
+          }}
+        />
+      )}
+
+      <UpdateBookingDialog
+        open={editBookingDialogOpen}
+        onOpenChange={setEditBookingDialogOpen}
+        booking={booking}
+      />
+    </PageContainer>
+  );
 }
 </file>
 

@@ -1,23 +1,18 @@
-"use client";
+"use client"
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useBooking, useDeleteBooking, useUpdateBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
-import { useDeleteJob, useUpdateJob } from "@/hooks/use-jobs";
-import { PageContainer, ContentSection } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { StatusBadge } from "@/components/status/status-badge";
-import { StatusSelect } from "@/components/status/status-select";
-import { formatCurrency, formatDateShort } from "@/lib/format";
+import { use, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useBooking, useDeleteBooking, useUpdateBooking } from "@/hooks/use-bookings"
+import { PageContainer, ContentSection } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatusBadge } from "@/components/status/status-badge"
+import { StatusSelect } from "@/components/status/status-select"
+import { formatCurrency, formatDateShort } from "@/lib/format"
 
-import { ArrowLeft, Edit, Info, Plus, Trash2 } from "lucide-react";
-import { BookingStatus, PaymentStatus, JobStatus } from "@/types/enums";
-import { handleBookingStatusUpdate } from "@/lib/booking-status-utils";
-import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
-import { UpdateJobDialog } from "@/components/jobs/update-job-dialog";
-import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog";
+import { ArrowLeft, Edit, Plus, Trash2, CalendarDays, Tractor } from "lucide-react"
+import { BookingStatus, PaymentStatus } from "@/types/enums"
+import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog"
 import {
   Dialog,
   DialogContent,
@@ -25,142 +20,70 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip"
 
-
-// Status options for Booking Select
 const BOOKING_STATUS_OPTIONS = [
   { value: BookingStatus.New, label: "Mới", variant: "new" as const },
   { value: BookingStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
   { value: BookingStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
   { value: BookingStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
   { value: BookingStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
-];
+]
 
-// Status options for Select
-const JOB_STATUS_OPTIONS = [
-  { value: JobStatus.New, label: "Mới", variant: "new" as const },
-  { value: JobStatus.InProgress, label: "Đang xử lý", variant: "in-progress" as const },
-  { value: JobStatus.Completed, label: "Hoàn thành", variant: "completed" as const },
-  { value: JobStatus.Blocked, label: "Bị chặn", variant: "blocked" as const },
-  { value: JobStatus.Canceled, label: "Đã hủy", variant: "canceled" as const },
-];
-
-function getPaymentStatusVariant(
-  status: string
-): "pending" | "partial" | "paid" {
+function getPaymentStatusVariant(status: string): "pending" | "partial" | "paid" {
   switch (status) {
-    case PaymentStatus.PendingBill:
-      return "pending";
-    case PaymentStatus.AddedBill:
-      return "partial";
-    case PaymentStatus.FullyPaid:
-      return "paid";
-    default:
-      return "pending";
+    case PaymentStatus.PendingBill: return "pending"
+    case PaymentStatus.AddedBill: return "partial"
+    case PaymentStatus.FullyPaid: return "paid"
+    default: return "pending"
   }
 }
 
 function getPaymentStatusLabel(status: string): string {
   switch (status) {
-    case PaymentStatus.PendingBill:
-      return "Chưa tạo HĐ";
-    case PaymentStatus.AddedBill:
-      return "Đã tạo HĐ";
-    case PaymentStatus.FullyPaid:
-      return "Đã thanh toán";
-    default:
-      return status;
+    case PaymentStatus.PendingBill: return "Chưa tạo HĐ"
+    case PaymentStatus.AddedBill: return "Đã tạo HĐ"
+    case PaymentStatus.FullyPaid: return "Đã thanh toán"
+    default: return status
   }
 }
 
 export default function BookingDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }) {
-  const router = useRouter();
-  const { id } = use(params);
-  const { data: booking, isLoading } = useBooking(id);
-  const updateBooking = useUpdateBooking();
-  const updateBookingWithJobs = useUpdateBookingWithJobs();
-  const updateJob = useUpdateJob();
-  const deleteJob = useDeleteJob();
-  const deleteBooking = useDeleteBooking();
+  const router = useRouter()
+  const { id } = use(params)
+  const { data: booking, isLoading } = useBooking(id)
+  const updateBooking = useUpdateBooking()
+  const deleteBooking = useDeleteBooking()
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
-  const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false);
-
-  // State for completion confirmation
-  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
-  const [incompleteJobCount, setIncompleteJobCount] = useState(0);
-  const [targetStatus, setTargetStatus] = useState<string | null>(null);
-  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<any>(null);
-  const [editBookingDialogOpen, setEditBookingDialogOpen] = useState(false);
+  const [deleteBookingDialogOpen, setDeleteBookingDialogOpen] = useState(false)
+  const [editBookingDialogOpen, setEditBookingDialogOpen] = useState(false)
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!booking) return;
-
-    await handleBookingStatusUpdate({
-      bookingId: booking.id,
-      currentStatus: booking.status,
-      newStatus,
-      onNeedConfirmation: (count) => {
-        setIncompleteJobCount(count);
-        setTargetStatus(newStatus);
-        setCompletionDialogOpen(true);
-      },
-      onProceedWithoutJobs: async () => {
-        await updateBooking.mutateAsync({
-          id: booking.id,
-          data: { status: newStatus },
-        });
-      },
-    });
-  };
-
-  const handleConfirmCompletion = async (completeJobs: boolean) => {
-    if (!booking || !targetStatus) return;
-
-    await updateBookingWithJobs.mutateAsync({
+    if (!booking) return
+    await updateBooking.mutateAsync({
       id: booking.id,
-      data: { status: targetStatus },
-      completeJobs,
-    });
-    setCompletionDialogOpen(false);
-    setTargetStatus(null);
-  };
-
-  const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setJobToDelete(jobId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (jobToDelete) {
-      await deleteJob.mutateAsync(jobToDelete);
-      setDeleteDialogOpen(false);
-      setJobToDelete(null);
-    }
-  };
+      data: { status: newStatus as BookingStatus },
+    })
+  }
 
   const handleDeleteBookingConfirm = async () => {
     await deleteBooking.mutateAsync(id, {
       onSuccess: () => {
-        setDeleteBookingDialogOpen(false);
-        router.push("/bookings");
+        setDeleteBookingDialogOpen(false)
+        router.push("/bookings")
       },
-    });
-  };
+    })
+  }
 
   if (isLoading) {
     return (
@@ -171,7 +94,7 @@ export default function BookingDetailPage({
           </div>
         </ContentSection>
       </PageContainer>
-    );
+    )
   }
 
   if (!booking) {
@@ -187,14 +110,8 @@ export default function BookingDetailPage({
           </div>
         </ContentSection>
       </PageContainer>
-    );
+    )
   }
-
-  const currentPrice = Number(booking.service.price);
-  const capturedPrice = Number(booking.captured_price);
-  const totalAmount = Number(booking.total_amount);
-  const quantity = booking.quantity ? Number(booking.quantity) : null;
-  const priceChanged = currentPrice !== capturedPrice;
 
   return (
     <PageContainer>
@@ -229,6 +146,7 @@ export default function BookingDetailPage({
             <Button
               variant="outline"
               onClick={() => setEditBookingDialogOpen(true)}
+              disabled={!!booking.bill}
             >
               <Edit className="h-4 w-4 mr-2" />
               Chỉnh sửa
@@ -248,7 +166,6 @@ export default function BookingDetailPage({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-3 gap-6">
-                {/* Column 1: Customer & Location */}
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Khách hàng</p>
@@ -259,11 +176,6 @@ export default function BookingDetailPage({
                     >
                       {booking.customer.name}
                     </Button>
-                    {booking.customer.phone && (
-                      <p className="text-sm text-muted-foreground">
-                        {booking.customer.phone}
-                      </p>
-                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Ngày tạo</p>
@@ -273,21 +185,21 @@ export default function BookingDetailPage({
                   </div>
                 </div>
 
-                  {/* Column 2: Service & pricing */}
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dịch vụ</p>
-                    <p className="font-medium">{booking.service.name}</p>
-                  </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Thửa ruộng</p>
                     <p className="font-medium">
                       {booking.land?.name || <span className="text-muted-foreground">—</span>}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lượng dự kiến (amount)</p>
+                    <p className="font-medium">
+                      {booking.amount ? formatCurrency(Number(booking.amount)) : "—"}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Column 3: Status & Dates */}
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Trạng thái</p>
@@ -296,6 +208,7 @@ export default function BookingDetailPage({
                         value={booking.status}
                         options={BOOKING_STATUS_OPTIONS}
                         onValueChange={handleStatusChange}
+                        disabled={!!booking.bill}
                       />
                     </div>
                   </div>
@@ -308,7 +221,6 @@ export default function BookingDetailPage({
                       />
                     </div>
                   </div>
-
                 </div>
               </div>
 
@@ -321,155 +233,42 @@ export default function BookingDetailPage({
             </CardContent>
           </Card>
 
-          {/* Payment Details Card - NEW */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-blue-900">Chi tiết giá trị đơn hàng</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Số lượng:</span>
-                  <span className="font-medium">{Number(booking.quantity ?? 0)} {booking.service.unit}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Đơn giá:</span>
-                  <span className="font-medium">{formatCurrency(Number(booking.captured_price))}</span>
-                </div>
-                
-                {/* Adjustment */}
-                {Number((booking as any).adjustment || 0) !== 0 && (
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className="text-muted-foreground">Điều chỉnh:</span>
-                    <span className={Number((booking as any).adjustment) > 0 ? "text-green-600" : "text-red-600"}>
-                      {Number((booking as any).adjustment) > 0 ? "+" : "-"} {formatCurrency(Math.abs(Number((booking as any).adjustment)))}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between items-center">
-                  <span className="font-semibold text-blue-900">Tổng giá trị:</span>
-                  <span className="text-xl font-bold text-primary">
-                    {formatCurrency(totalAmount)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Captured Price Explanation Card */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-blue-900">
-                    Giá được ghi nhận: {formatCurrency(capturedPrice)}
-                  </p>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Ngày tạo: {formatDateShort(booking.created_at)}
-                  </p>
-                  {priceChanged && (
-                    <Alert className="mt-3 bg-amber-50 border-amber-200">
-                      <AlertDescription className="text-xs text-amber-800">
-                        Giá hiện tại của dịch vụ đã thay đổi thành{" "}
-                        <strong>{formatCurrency(currentPrice)}</strong>, nhưng
-                        đơn hàng này vẫn giữ nguyên giá{" "}
-                        <strong>{formatCurrency(capturedPrice)}</strong> theo
-                        thời điểm tạo đơn.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {!priceChanged && (
-                    <p className="text-xs text-blue-600 mt-2">
-                      Giá hiện tại của dịch vụ vẫn là{" "}
-                      {formatCurrency(currentPrice)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Jobs List Card */}
+          {/* Daily Bookings List */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Các công việc ({booking.jobs?.length || 0})</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => setCreateJobDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Tạo công việc
-              </Button>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Lịch sử ngày làm việc
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {!booking.jobs || booking.jobs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Chưa có công việc nào cho đơn hàng này</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => setCreateJobDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tạo công việc đầu tiên
-                  </Button>
-                </div>
+              {booking.daily_bookings?.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Chưa có ngày làm việc nào ghi nhận cho đơn hàng này
+                </p>
               ) : (
                 <div className="space-y-3">
-                  {booking.jobs.map((job) => (
-                    <div
-                      key={job.id}
-                      className="p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/jobs/${job.id}`)}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <p className="font-medium">{job.job_type.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {job.worker.name}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <StatusSelect
-                              value={job.status}
-                              options={JOB_STATUS_OPTIONS}
-                              onValueChange={(value) => {
-                                updateJob.mutateAsync({
-                                  id: job.id,
-                                  data: { status: value },
-                                });
-                              }}
-                            />
-                          </div>
-                          {booking.status !== BookingStatus.Completed && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingJob(job);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleDeleteClick(job.id, e)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                  {booking.daily_bookings?.map((db: any) => (
+                    <div key={db.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold cursor-pointer" onClick={() => router.push(`/work-days/${db.work_day.id}`)}>
+                          {formatDateShort(db.work_day.date)}
+                        </span>
+                        <span className="font-medium">
+                          {db.amount ? formatCurrency(Number(db.amount)) : "—"}
+                        </span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Số lượng: <span className="font-medium text-foreground">{Number(job.actual_qty)} {job.job_type.service.unit}</span>
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
+                        <Tractor className="h-4 w-4 mr-1" />
+                        {db.machines && db.machines.length > 0 ? (
+                          db.machines.map((m: any) => (
+                            <span key={m.id} className="bg-secondary px-2 py-1 rounded">
+                              {m.daily_machine.machine.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span>Chưa gán máy</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -498,12 +297,6 @@ export default function BookingDetailPage({
                       {formatCurrency(Number(booking.bill.total_amount))}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-green-700">Đã thanh toán:</span>
-                    <span className="font-medium text-green-900">
-                      {formatCurrency(Number(booking.bill.total_paid))}
-                    </span>
-                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -518,26 +311,6 @@ export default function BookingDetailPage({
           )}
         </div>
       </ContentSection>
-
-      {/* Delete Job Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa công việc</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa công việc này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Booking Confirmation Dialog */}
       <Dialog open={deleteBookingDialogOpen} onOpenChange={setDeleteBookingDialogOpen}>
@@ -562,52 +335,6 @@ export default function BookingDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Complete Jobs Confirmation Dialog */}
-      <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận hoàn thành</DialogTitle>
-            <DialogDescription>
-              Đơn hàng này còn {incompleteJobCount} công việc chưa hoàn thành.
-              Bạn có muốn tự động chuyển tất cả công việc sang trạng thái hoàn thành không?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col sm:justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleConfirmCompletion(false)}
-            >
-              Không, chỉ cập nhật đơn hàng
-            </Button>
-            <Button onClick={() => handleConfirmCompletion(true)}>
-              Có, hoàn thành tất cả
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-
-      {/* Create Job Dialog */}
-      <CreateJobDialog
-        open={createJobDialogOpen}
-        onOpenChange={setCreateJobDialogOpen}
-        booking={booking}
-      />
-      
-      {editingJob && (
-        <UpdateJobDialog
-          open={!!editingJob}
-          onOpenChange={(open) => !open && setEditingJob(null)}
-          job={{
-            ...editingJob,
-            booking: booking,
-            job_type: {
-              ...editingJob.job_type,
-              service: booking.service,
-            },
-          }}
-        />
-      )}
 
       <UpdateBookingDialog
         open={editBookingDialogOpen}
@@ -615,5 +342,5 @@ export default function BookingDetailPage({
         booking={booking}
       />
     </PageContainer>
-  );
+  )
 }

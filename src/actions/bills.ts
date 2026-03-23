@@ -27,7 +27,7 @@ export async function createBill(input: unknown): Promise<Result<Bill>> {
       return { success: false, error: 'Một số booking đã có hóa đơn hoặc không hợp lệ' }
     }
 
-    const subtotal = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0)
+    const subtotal = bookings.reduce((sum, b) => sum + Number(b.amount ?? 0), 0)
     const adjustment = validated.adjustment || 0
 
     const total_amount = subtotal + adjustment
@@ -144,7 +144,7 @@ export async function updateBill(id: string, input: unknown): Promise<Result<Bil
         const allBookings = await tx.booking.findMany({
            where: { id: { in: validated.booking_ids } }
         })
-        subtotal = allBookings.reduce((sum: number, b: any) => sum + Number(b.total_amount), 0)
+        subtotal = allBookings.reduce((sum: number, b: any) => sum + Number(b.amount ?? 0), 0)
       }
 
       // 2. Handle adjustment
@@ -209,15 +209,10 @@ export async function getBill(id: string) {
     include: {
       customer: true,
       bookings: {
-        include: {
-          land: true,
-          service: true,
-        },
+        include: { land: true },
       },
       payments: {
-        orderBy: {
-          payment_date: 'desc',
-        },
+        orderBy: { payment_date: 'desc' },
       },
     },
   })
@@ -328,7 +323,6 @@ export async function addBillPayment(input: unknown): Promise<Result<Bill>> {
           bookings: {
             include: {
               land: true,
-              service: true,
             },
           },
           payments: {

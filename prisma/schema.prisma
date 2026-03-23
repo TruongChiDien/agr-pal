@@ -1,10 +1,15 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
 }
+
+// ============================================================
+// AUTH
+// ============================================================
 
 model User {
   id            String   @id @default(cuid())
@@ -18,79 +23,101 @@ model User {
   @@map("users")
 }
 
-model Service {
-  id          String     @id @default(cuid())
+// ============================================================
+// MASTERS
+// ============================================================
+
+/// Loại máy (vd: "Máy cắt lúa", "Máy cày")
+/// Mỗi loại máy sở hữu các loại công việc (job_types) riêng
+model MachineType {
+  id          String      @id @default(cuid())
   name        String
-  unit        String
   description String?
-  price       Decimal    @db.Decimal(12, 2)
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
-  bookings    Booking[]
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
   job_types   Job_Type[]
+  machines    Machine[]
+  service_machine_types ServiceMachineType[]
+
+  @@map("machine_types")
+}
+
+/// Loại công việc/vị trí — thuộc về 1 MachineType cụ thể
+/// Vd: "Máy cắt lúa" có "Tài xế" (500k) + "Cột bao" (300k)
+model Job_Type {
+  id                  String             @id @default(cuid())
+  machine_type_id     String
+  name                String
+  default_base_salary Decimal            @db.Decimal(12, 2)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  machine_type        MachineType        @relation(fields: [machine_type_id], references: [id], onDelete: Cascade)
+  daily_workers       DailyMachineWorker[]
+
+  @@index([machine_type_id])
+  @@map("job_types")
+}
+
+/// Dịch vụ nông nghiệp (vd: "Cắt lúa", "Cày đất")
+model Service {
+  id           String               @id @default(cuid())
+  name         String
+  unit         String               @default("công")
+  price        Decimal              @db.Decimal(12, 2)
+  description  String?
+  created_at   DateTime             @default(now())
+  updated_at   DateTime             @updatedAt
+  machine_types ServiceMachineType[]
 
   @@map("services")
 }
 
-model Job_Type {
-  id                  String          @id @default(cuid())
-  service_id          String
-  name                String
-  default_base_salary Decimal         @db.Decimal(12, 2)
-  created_at          DateTime        @default(now())
-  service             Service         @relation(fields: [service_id], references: [id], onDelete: Cascade)
-  jobs                Job[]
-  worker_weights      Worker_Weight[]
+/// Many-to-many: service ↔ machine_type
+model ServiceMachineType {
+  service_id      String
+  machine_type_id String
+  service         Service     @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  machine_type    MachineType @relation(fields: [machine_type_id], references: [id], onDelete: Cascade)
 
-  @@index([service_id])
-  @@map("job_types")
+  @@id([service_id, machine_type_id])
+  @@map("service_machine_types")
 }
 
 model Worker {
-  id               String            @id @default(cuid())
+  id               String               @id @default(cuid())
   name             String
   phone            String?
   address          String?
-  created_at       DateTime          @default(now())
-  updated_at       DateTime          @updatedAt
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
   advance_payments Advance_Payment[]
-  jobs             Job[]
   payroll_sheets   Payroll_Sheet[]
-  worker_weights   Worker_Weight[]
+  daily_workers    DailyMachineWorker[]
 
   @@map("workers")
 }
 
-model Worker_Weight {
-  id          String   @id @default(cuid())
-  worker_id   String
-  job_type_id String
-  weight      Decimal  @db.Decimal(5, 2)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  job_type    Job_Type @relation(fields: [job_type_id], references: [id], onDelete: Cascade)
-  worker      Worker   @relation(fields: [worker_id], references: [id], onDelete: Cascade)
-
-  @@unique([worker_id, job_type_id])
-  @@index([worker_id])
-  @@index([job_type_id])
-  @@map("worker_weights")
-}
-
+/// Máy nông nghiệp — thuộc 1 MachineType cụ thể
 model Machine {
-  id            String        @id @default(cuid())
-  name          String
-  model         String?
-  type          String?
-  purchase_date DateTime?
-  status        MachineStatus @default(AVAILABLE)
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
-  jobs             Job[]
+  id               String         @id @default(cuid())
+  name             String
+  model            String?
+  machine_type_id  String
+  purchase_date    DateTime?
+  status           MachineStatus  @default(AVAILABLE)
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+  machine_type     MachineType    @relation(fields: [machine_type_id], references: [id])
   maintenance_logs MaintenanceLog[]
+  daily_machines   DailyMachine[]
 
+  @@index([machine_type_id])
   @@map("machines")
 }
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
 
 model Customer {
   id         String    @id @default(cuid())
@@ -120,26 +147,40 @@ model Land {
   @@map("lands")
 }
 
+// ============================================================
+// OPERATIONS — DATE-CENTRIC
+// ============================================================
+
+/// Ngày làm việc — đơn vị trung tâm của hệ thống
+model WorkDay {
+  id             String         @id @default(cuid())
+  date           DateTime       @unique @db.Date
+  notes          String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  daily_bookings DailyBooking[]
+  daily_machines DailyMachine[]
+
+  @@index([date])
+  @@map("work_days")
+}
+
+/// Booking của khách hàng
 model Booking {
-  id             String        @id @default(cuid())
+  id             String         @id @default(cuid())
   customer_id    String
   land_id        String?
-  service_id     String
-  quantity       Decimal?      @db.Decimal(10, 2)
-  captured_price Decimal       @db.Decimal(12, 2)
-  adjustment     Decimal       @default(0) @db.Decimal(12, 2)
-  total_amount   Decimal       @db.Decimal(12, 2)
-  status         BookingStatus @default(NEW)
-  payment_status PaymentStatus @default(PENDING_BILL)
+  amount         Decimal?       @db.Decimal(12, 2)
+  status         BookingStatus  @default(NEW)
+  payment_status PaymentStatus  @default(PENDING_BILL)
   bill_id        String?
   notes          String?
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  bill           Bill?         @relation(fields: [bill_id], references: [id])
-  customer       Customer      @relation(fields: [customer_id], references: [id])
-  land           Land?         @relation(fields: [land_id], references: [id])
-  service        Service       @relation(fields: [service_id], references: [id])
-  jobs           Job[]
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  bill           Bill?          @relation(fields: [bill_id], references: [id])
+  customer       Customer       @relation(fields: [customer_id], references: [id])
+  land           Land?          @relation(fields: [land_id], references: [id])
+  daily_bookings DailyBooking[]
 
   @@index([customer_id])
   @@index([status])
@@ -148,51 +189,104 @@ model Booking {
   @@map("bookings")
 }
 
-model Job {
-  id             String           @id @default(cuid())
-  booking_id     String
-  job_type_id    String
-  machine_id     String?
-  status         JobStatus        @default(NEW)
-  notes          String?
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
-  worker_id      String
-  actual_qty     Decimal          @default(0) @db.Decimal(10, 2)
-  applied_base   Decimal          @db.Decimal(12, 2)
-  applied_weight Decimal          @db.Decimal(5, 2)
-  payment_adjustment Decimal      @default(0) @db.Decimal(12, 2)
-  final_pay      Decimal          @db.Decimal(12, 2)
-  payroll_id     String?
-  payment_status JobPaymentStatus @default(PENDING_PAYROLL)
-  booking        Booking          @relation(fields: [booking_id], references: [id], onDelete: Cascade)
-  job_type       Job_Type         @relation(fields: [job_type_id], references: [id])
-  machine        Machine?         @relation(fields: [machine_id], references: [id])
-  payroll        Payroll_Sheet?   @relation(fields: [payroll_id], references: [id])
-  worker         Worker           @relation(fields: [worker_id], references: [id])
+/// Booking tham gia trong 1 ngày cụ thể
+model DailyBooking {
+  id          String                @id @default(cuid())
+  work_day_id String
+  booking_id  String
+  amount      Decimal?              @db.Decimal(12, 2)
+  notes       String?
+  created_at  DateTime              @default(now())
+  updated_at  DateTime              @updatedAt
+  work_day    WorkDay               @relation(fields: [work_day_id], references: [id], onDelete: Cascade)
+  booking     Booking               @relation(fields: [booking_id], references: [id])
+  machines    DailyBookingMachine[]
 
+  @@unique([work_day_id, booking_id])
+  @@index([work_day_id])
   @@index([booking_id])
-  @@index([worker_id])
-  @@index([status])
-  @@index([payment_status])
-  @@index([payroll_id])
-  @@map("jobs")
+  @@map("daily_bookings")
 }
 
+/// Machine hoạt động trong 1 ngày
+model DailyMachine {
+  id          String                @id @default(cuid())
+  work_day_id String
+  machine_id  String
+  amount      Decimal?              @db.Decimal(12, 2)
+  notes       String?
+  created_at  DateTime              @default(now())
+  updated_at  DateTime              @updatedAt
+  work_day    WorkDay               @relation(fields: [work_day_id], references: [id], onDelete: Cascade)
+  machine     Machine               @relation(fields: [machine_id], references: [id])
+  workers     DailyMachineWorker[]
+  bookings    DailyBookingMachine[]
+
+  @@unique([work_day_id, machine_id])
+  @@index([work_day_id])
+  @@index([machine_id])
+  @@map("daily_machines")
+}
+
+/// Worker làm việc trên 1 machine trong 1 ngày
+/// job_type_id snapshot: loại công việc tại thời điểm assign
+model DailyMachineWorker {
+  id                 String           @id @default(cuid())
+  daily_machine_id   String
+  worker_id          String
+  job_type_id        String
+  applied_base       Decimal          @db.Decimal(12, 2)
+  applied_weight     Decimal          @db.Decimal(5, 2)
+  payment_adjustment Decimal          @default(0) @db.Decimal(12, 2)
+  payroll_id         String?
+  payment_status     JobPaymentStatus @default(PENDING_PAYROLL)
+  notes              String?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  daily_machine      DailyMachine     @relation(fields: [daily_machine_id], references: [id], onDelete: Cascade)
+  worker             Worker           @relation(fields: [worker_id], references: [id])
+  job_type           Job_Type         @relation(fields: [job_type_id], references: [id])
+  payroll            Payroll_Sheet?   @relation(fields: [payroll_id], references: [id])
+
+  @@unique([daily_machine_id, worker_id])
+  @@index([daily_machine_id])
+  @@index([worker_id])
+  @@index([job_type_id])
+  @@index([payroll_id])
+  @@map("daily_machine_workers")
+}
+
+/// Liên kết trace-back: booking nào đã dùng machine nào trong ngày
+model DailyBookingMachine {
+  id               String       @id @default(cuid())
+  daily_booking_id String
+  daily_machine_id String
+  created_at       DateTime     @default(now())
+  daily_booking    DailyBooking @relation(fields: [daily_booking_id], references: [id], onDelete: Cascade)
+  daily_machine    DailyMachine @relation(fields: [daily_machine_id], references: [id], onDelete: Cascade)
+
+  @@unique([daily_booking_id, daily_machine_id])
+  @@map("daily_booking_machines")
+}
+
+// ============================================================
+// FINANCIALS
+// ============================================================
+
 model Bill {
-  id              String        @id @default(cuid())
-  customer_id     String
-  total_amount    Decimal       @db.Decimal(12, 2)
-  total_paid      Decimal       @default(0) @db.Decimal(12, 2)
-  status          BillStatus    @default(OPEN)
-  created_at      DateTime      @default(now())
-  updated_at      DateTime      @updatedAt
-  adjustment      Decimal       @default(0) @db.Decimal(12, 2)
-  notes           String?
-  subtotal        Decimal       @default(0) @db.Decimal(12, 2)
-  payments        BillPayment[]
-  customer        Customer      @relation(fields: [customer_id], references: [id])
-  bookings        Booking[]
+  id           String        @id @default(cuid())
+  customer_id  String
+  total_amount Decimal       @db.Decimal(12, 2)
+  total_paid   Decimal       @default(0) @db.Decimal(12, 2)
+  status       BillStatus    @default(OPEN)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  adjustment   Decimal       @default(0) @db.Decimal(12, 2)
+  notes        String?
+  subtotal     Decimal       @default(0) @db.Decimal(12, 2)
+  payments     BillPayment[]
+  customer     Customer      @relation(fields: [customer_id], references: [id])
+  bookings     Booking[]
 
   @@index([customer_id])
   @@index([status])
@@ -232,21 +326,21 @@ model Advance_Payment {
 }
 
 model Payroll_Sheet {
-  id               String            @id @default(cuid())
+  id               String               @id @default(cuid())
   worker_id        String
-  total_wages      Decimal           @db.Decimal(12, 2)
-  total_adv        Decimal           @default(0) @db.Decimal(12, 2)
-  adjustment       Decimal           @default(0) @db.Decimal(12, 2)
-  net_payable      Decimal           @db.Decimal(12, 2)
-  total_paid       Decimal           @default(0) @db.Decimal(12, 2)
-  status           PayrollStatus     @default(OPEN)
+  total_wages      Decimal              @db.Decimal(12, 2)
+  total_adv        Decimal              @default(0) @db.Decimal(12, 2)
+  adjustment       Decimal              @default(0) @db.Decimal(12, 2)
+  net_payable      Decimal              @db.Decimal(12, 2)
+  total_paid       Decimal              @default(0) @db.Decimal(12, 2)
+  status           PayrollStatus        @default(OPEN)
   notes            String?
-  created_at       DateTime          @default(now())
-  updated_at       DateTime          @updatedAt
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
   advance_payments Advance_Payment[]
-  jobs             Job[]
+  daily_workers    DailyMachineWorker[]
   payments         Payroll_Payment[]
-  worker           Worker            @relation(fields: [worker_id], references: [id])
+  worker           Worker               @relation(fields: [worker_id], references: [id])
 
   @@index([worker_id])
   @@index([status])
@@ -267,6 +361,10 @@ model Payroll_Payment {
   @@index([payment_date])
   @@map("payroll_payments")
 }
+
+// ============================================================
+// MAINTENANCE
+// ============================================================
 
 model MaintenanceCategory {
   id         String           @id @default(cuid())
@@ -297,6 +395,10 @@ model MaintenanceLog {
   @@map("maintenance_logs")
 }
 
+// ============================================================
+// ENUMS
+// ============================================================
+
 enum MachineStatus {
   AVAILABLE
   IN_USE
@@ -315,14 +417,6 @@ enum PaymentStatus {
   PENDING_BILL
   ADDED_BILL
   FULLY_PAID
-}
-
-enum JobStatus {
-  NEW
-  IN_PROGRESS
-  BLOCKED
-  COMPLETED
-  CANCELED
 }
 
 enum JobPaymentStatus {

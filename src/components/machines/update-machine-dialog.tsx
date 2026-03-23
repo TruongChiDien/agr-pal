@@ -1,12 +1,13 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useUpdateMachine } from "@/hooks/use-machines";
-import { updateMachineSchema } from "@/schemas/machine";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useUpdateMachine } from "@/hooks/use-machines"
+import { useMachineTypes } from "@/hooks/use-machine-types"
+import { updateMachineSchema } from "@/schemas/machine"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormField,
@@ -22,42 +23,43 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/forms/date-picker";
-import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
-import { MachineStatus } from "@/types/enums";
-import type { Machine } from "@prisma/client";
+} from "@/components/ui/select"
+import { DatePicker } from "@/components/forms/date-picker"
+import { z } from "zod"
+import { useToast } from "@/hooks/use-toast"
+import { MachineStatus } from "@/types/enums"
+import type { Machine } from "@prisma/client"
 
-type UpdateMachineInput = z.infer<typeof updateMachineSchema>;
+type UpdateMachineInput = z.infer<typeof updateMachineSchema>
 
 interface UpdateMachineDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  machine: Machine;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  machine: Machine
 }
 
 export function UpdateMachineDialog({ open, onOpenChange, machine }: UpdateMachineDialogProps) {
-  const updateMachine = useUpdateMachine();
-  const { toast } = useToast();
+  const updateMachine = useUpdateMachine()
+  const { data: machineTypes, isLoading: isTypesLoading } = useMachineTypes()
+  const { toast } = useToast()
 
   const form = useForm<UpdateMachineInput>({
     resolver: zodResolver(updateMachineSchema),
     defaultValues: {
       name: "",
       model: "",
-      type: "",
+      machine_type_id: "",
       purchase_date: undefined,
       status: MachineStatus.Available,
     },
-  });
+  })
 
   // Pre-fill form when machine data loads
   useEffect(() => {
@@ -65,12 +67,12 @@ export function UpdateMachineDialog({ open, onOpenChange, machine }: UpdateMachi
       form.reset({
         name: machine.name,
         model: machine.model || "",
-        type: machine.type || "",
+        machine_type_id: machine.machine_type_id || "",
         purchase_date: machine.purchase_date ? new Date(machine.purchase_date) : undefined,
         status: machine.status as MachineStatus,
-      });
+      })
     }
-  }, [machine, form]);
+  }, [machine, form])
 
   const onSubmit = async (data: UpdateMachineInput) => {
     await updateMachine.mutateAsync(
@@ -81,19 +83,19 @@ export function UpdateMachineDialog({ open, onOpenChange, machine }: UpdateMachi
                toast({
                    title: "Thành công",
                    description: "Đã cập nhật máy",
-               });
-               onOpenChange(false);
+               })
+               onOpenChange(false)
            } else {
                toast({
                    title: "Lỗi",
                    description: result.error || "Có lỗi xảy ra",
                    variant: "destructive"
-               });
+               })
            }
         },
       }
-    );
-  };
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,17 +143,24 @@ export function UpdateMachineDialog({ open, onOpenChange, machine }: UpdateMachi
 
             <FormField
               control={form.control}
-              name="type"
+              name="machine_type_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="VD: Máy cày, Máy gặt"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
+                  <FormLabel>Loại máy *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isTypesLoading ? "Đang tải..." : "Chọn loại máy"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {machineTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -215,5 +224,5 @@ export function UpdateMachineDialog({ open, onOpenChange, machine }: UpdateMachi
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -3,9 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
-import { createWorkerSchema, updateWorkerSchema, createWorkerWeightSchema, updateWorkerWeightSchema, createAdvancePaymentSchema, updateAdvancePaymentSchema } from '@/schemas/worker'
+import { JobPaymentStatus } from '@/types/enums'
+import { createWorkerSchema, updateWorkerSchema, createAdvancePaymentSchema, updateAdvancePaymentSchema } from '@/schemas/worker'
 import type { Result } from '@/types/result'
-import type { Worker, Worker_Weight, Advance_Payment } from '@prisma/client'
+import type { Worker, Advance_Payment } from '@prisma/client'
 
 // Worker CRUD
 export async function createWorker(input: unknown): Promise<Result<Worker>> {
@@ -69,20 +70,8 @@ export async function listWorkers() {
   await requireAuth()
   return await prisma.worker.findMany({
     include: {
-      worker_weights: {
-        include: {
-          job_type: {
-            include: {
-              service: true,
-            },
-          },
-        },
-      },
-      jobs: {
-        select: {
-          id: true,
-          status: true,
-        },
+      _count: {
+        select: { daily_workers: true },
       },
     },
     orderBy: { name: 'asc' },
@@ -94,30 +83,18 @@ export async function getWorker(id: string) {
   return await prisma.worker.findUnique({
     where: { id },
     include: {
-      worker_weights: {
+      daily_workers: {
         include: {
-          job_type: {
+          job_type: true,
+          daily_machine: {
             include: {
-              service: true,
-            },
-          },
-        },
-      },
-      jobs: {
-        include: {
-          job_type: {
-            include: {
-              service: true,
-            },
-          },
-          booking: {
-            include: {
-              customer: true,
-              service: true,
+              machine: { include: { machine_type: true } },
+              work_day: true,
             },
           },
         },
         orderBy: { created_at: 'desc' },
+        take: 30,
       },
       advance_payments: {
         orderBy: { created_at: 'desc' },
@@ -127,64 +104,6 @@ export async function getWorker(id: string) {
       },
     },
   })
-}
-
-// Worker_Weight CRUD
-export async function createWorkerWeight(input: unknown): Promise<Result<Worker_Weight>> {
-  try {
-    await requireAuth()
-    const validated = createWorkerWeightSchema.parse(input)
-
-    const workerWeight = await prisma.worker_Weight.create({
-      data: validated,
-    })
-
-    revalidatePath('/dashboard/workers')
-    return { success: true, data: workerWeight }
-  } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi tạo hệ số lương' }
-  }
-}
-
-export async function updateWorkerWeight(id: string, input: unknown): Promise<Result<Worker_Weight>> {
-  try {
-    await requireAuth()
-    const validated = updateWorkerWeightSchema.parse(input)
-
-    const workerWeight = await prisma.worker_Weight.update({
-      where: { id },
-      data: validated,
-    })
-
-    revalidatePath('/dashboard/workers')
-    return { success: true, data: workerWeight }
-  } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi cập nhật hệ số lương' }
-  }
-}
-
-export async function deleteWorkerWeight(id: string): Promise<Result<void>> {
-  try {
-    await requireAuth()
-
-    await prisma.worker_Weight.delete({
-      where: { id },
-    })
-
-    revalidatePath('/dashboard/workers')
-    return { success: true, data: undefined }
-  } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi xóa hệ số lương' }
-  }
 }
 
 // Advance_Payment CRUD
@@ -271,3 +190,50 @@ export async function deleteAdvancePayment(id: string): Promise<Result<void>> {
     return { success: false, error: 'Đã xảy ra lỗi khi xóa tạm ứng' }
   }
 }
+
+// ── Daily Workers for Select ────────────────────────────────
+
+export async function listPendingDailyWorkers(workerId: string) {
+  await requireAuth()
+  return await prisma.dailyMachineWorker.findMany({
+    where: {
+      worker_id: workerId,
+      payment_status: JobPaymentStatus.PendingPayroll,
+    },
+    include: {
+      daily_machine: {
+        include: {
+          machine: true,
+          work_day: true,
+        },
+      },
+      job_type: true,
+    },
+    orderBy: {
+      daily_machine: {
+        work_day: {
+          date: 'desc',
+        },
+      },
+    },
+  })
+}
+
+export async function listPayrollDailyWorkers(payrollId: string) {
+  await requireAuth()
+  return await prisma.dailyMachineWorker.findMany({
+    where: {
+      payroll_id: payrollId,
+    },
+    include: {
+      daily_machine: {
+        include: {
+          machine: true,
+          work_day: true,
+        },
+      },
+      job_type: true,
+    },
+  })
+}
+

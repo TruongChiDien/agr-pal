@@ -88,11 +88,11 @@ export default function CustomerDetailPage({
   };
 
   // Calculate estimated debt from pending bookings (not yet in bills)
-  const calculateEstimatedDebt = (bookings?: Array<{ payment_status: string; total_amount: number | string }>): number => {
+  const calculateEstimatedDebt = (bookings?: Array<{ payment_status: string; amount?: number | string | null }>): number => {
     if (!bookings) return 0;
     return bookings
       .filter((b) => b.payment_status === "PENDING_BILL")
-      .reduce((sum, b) => sum + Number(b.total_amount), 0);
+      .reduce((sum, b) => sum + Number(b.amount || 0), 0);
   };
 
 

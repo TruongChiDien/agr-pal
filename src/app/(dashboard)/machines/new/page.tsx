@@ -1,25 +1,34 @@
-"use client";
+"use client"
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCreateMachine } from "@/hooks/use-machines";
-import { createMachineSchema } from "@/schemas/machine";
-import { PageContainer, ContentSection } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { DatePicker } from "@/components/forms/date-picker";
-import { ArrowLeft } from "lucide-react";
-import { z } from "zod";
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useCreateMachine } from "@/hooks/use-machines"
+import { useMachineTypes } from "@/hooks/use-machine-types"
+import { createMachineSchema } from "@/schemas/machine"
+import { PageContainer, ContentSection } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DatePicker } from "@/components/forms/date-picker"
+import { ArrowLeft } from "lucide-react"
+import { z } from "zod"
 
-type CreateMachineInput = z.infer<typeof createMachineSchema>;
+type CreateMachineInput = z.infer<typeof createMachineSchema>
 
 export default function CreateMachinePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect");
-  const createMachine = useCreateMachine();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect")
+  const createMachine = useCreateMachine()
+  const { data: machineTypes, isLoading: isTypesLoading } = useMachineTypes()
 
   const form = useForm<CreateMachineInput>({
     resolver: zodResolver(createMachineSchema),
@@ -28,20 +37,20 @@ export default function CreateMachinePage() {
     defaultValues: {
       name: "",
       model: "",
-      type: "",
+      machine_type_id: "",
       purchase_date: undefined,
     },
-  });
+  })
 
   const onSubmit = async (data: CreateMachineInput) => {
     await createMachine.mutateAsync(data, {
       onSuccess: (result) => {
         if (result.success && result.data?.id) {
-          router.push(redirectTo || `/machines/${result.data.id}`);
+          router.push(redirectTo || `/machines/${result.data.id}`)
         }
       },
-    });
-  };
+    })
+  }
 
   return (
     <PageContainer>
@@ -91,17 +100,24 @@ export default function CreateMachinePage() {
 
             <FormField
               control={form.control}
-              name="type"
+              name="machine_type_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="VD: Máy cày, Máy gặt"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
+                  <FormLabel>Loại máy *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isTypesLoading ? "Đang tải..." : "Chọn loại máy"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {machineTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -142,5 +158,5 @@ export default function CreateMachinePage() {
         </Form>
       </ContentSection>
     </PageContainer>
-  );
+  )
 }

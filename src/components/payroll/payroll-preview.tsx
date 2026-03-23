@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
-import type { Job, Advance_Payment } from "@prisma/client";
+import type { Advance_Payment, DailyMachineWorker } from "@prisma/client";
 
 interface PayrollPreviewProps {
   workerId: string;
@@ -11,7 +11,7 @@ interface PayrollPreviewProps {
   selectedAdvanceIds: string[];
   adjustment?: number;
   // Source data typically passed from Selectors
-  sourceJobs?: Job[];
+  sourceJobs?: DailyMachineWorker[];
   sourceAdvances?: Advance_Payment[];
 }
 

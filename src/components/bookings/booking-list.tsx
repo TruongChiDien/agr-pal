@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useBookings, useDeleteBooking, useUpdateBooking, useUpdateBookingWithJobs } from "@/hooks/use-bookings";
+import { useBookings, useDeleteBooking, useUpdateBooking } from "@/hooks/use-bookings";
 import { useCustomer } from "@/hooks/use-customers";
 import { Button } from "@/components/ui/button";
 import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
@@ -31,15 +31,13 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BookingStatus, PaymentStatus } from "@/types/enums";
-import type { Booking, Customer, Land, Service } from "@prisma/client";
+import type { Booking, Customer, Land } from "@prisma/client";
 import { handleBookingStatusUpdate } from "@/lib/booking-status-utils";
 import { UpdateBookingDialog } from "@/components/bookings/update-booking-dialog";
 import { CreateBookingDialog } from "@/components/bookings/create-booking-dialog";
-
 type BookingWithRelations = Booking & {
   customer: Customer;
   land: Land | null;
-  service: Service;
 };
 
 // Status options for Select
@@ -91,7 +89,6 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
 
   // Hooks and State
   const updateBooking = useUpdateBooking();
-  const updateBookingWithJobs = useUpdateBookingWithJobs();
   const deleteBooking = useDeleteBooking();
 
   const [statusFilter, setStatusFilter] = useState<string[]>(
@@ -174,10 +171,9 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
 
   const handleConfirmCompleteJobs = async () => {
     if (pendingStatusUpdate) {
-      await updateBookingWithJobs.mutateAsync({
+      await updateBooking.mutateAsync({
         id: pendingStatusUpdate.bookingId,
-        data: { status: pendingStatusUpdate.newStatus },
-        completeJobs: true,
+        data: { status: pendingStatusUpdate.newStatus as BookingStatus },
       });
       setJobConfirmDialogOpen(false);
       setPendingStatusUpdate(null);
@@ -186,10 +182,9 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
 
   const handleDeclineCompleteJobs = async () => {
     if (pendingStatusUpdate) {
-      await updateBookingWithJobs.mutateAsync({
+      await updateBooking.mutateAsync({
         id: pendingStatusUpdate.bookingId,
-        data: { status: pendingStatusUpdate.newStatus },
-        completeJobs: false,
+        data: { status: pendingStatusUpdate.newStatus as BookingStatus },
       });
       setJobConfirmDialogOpen(false);
       setPendingStatusUpdate(null);
@@ -278,19 +273,6 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
       render: (item: BookingWithRelations) => <span className="font-medium">{item.customer?.name}</span>,
     }]),
     {
-      key: "service",
-      label: "Dịch vụ",
-      width: "200px",
-      render: (item) => (
-        <div className="flex flex-col">
-            <span className="font-medium">{item.service?.name}</span>
-            <span className="text-xs text-muted-foreground">
-            {Number(item.quantity)} {item.service?.unit}
-            </span>
-        </div>
-      ),
-    },
-    {
       key: "land",
       label: "Thửa ruộng",
       width: "200px",
@@ -306,14 +288,13 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
       render: (item) => <span className="text-muted-foreground">{item.notes || "—"}</span>,
     },
     {
-      key: "total_amount",
-      label: "Giá trị",
-      align: "right",
+      key: "amount",
+      label: "Lượng dự kiến",
       width: "140px",
-      sortable: true,
+      align: "right",
       render: (item) => (
         <span className="font-semibold">
-          {formatCurrency(Number(item.total_amount))}
+          {item.amount ? formatCurrency(Number(item.amount)) : "—"}
         </span>
       ),
     },
@@ -562,27 +543,24 @@ export function BookingList({ customerId, onEdit, onDelete }: BookingListProps) 
       <Dialog open={jobConfirmDialogOpen} onOpenChange={setJobConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Hoàn thành các công việc?</DialogTitle>
+            <DialogTitle>Xác nhận</DialogTitle>
             <DialogDescription>
-              Đơn hàng này có {incompleteJobCount} công việc chưa hoàn thành (trạng thái Mới hoặc Đang xử lý).
-              <br />
-              <br />
-              Bạn có muốn đánh dấu tất cả các công việc này là Hoàn thành không?
+              Bạn có chắc chắn muốn thay đổi trạng thái đơn hàng này?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={handleDeclineCompleteJobs}
-              disabled={updateBookingWithJobs.isPending}
+              disabled={updateBooking.isPending}
             >
-              Không, chỉ cập nhật đơn hàng
+              Hủy
             </Button>
             <Button
               onClick={handleConfirmCompleteJobs}
-              disabled={updateBookingWithJobs.isPending}
+              disabled={updateBooking.isPending}
             >
-              {updateBookingWithJobs.isPending ? "Đang cập nhật..." : "Có, hoàn thành tất cả"}
+              {updateBooking.isPending ? "Đang cập nhật..." : "Xác nhận"}
             </Button>
           </DialogFooter>
         </DialogContent>

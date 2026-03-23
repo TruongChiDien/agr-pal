@@ -1,13 +1,13 @@
 import {
   LayoutDashboard,
   CalendarDays,
-  Briefcase,
+  BookOpen,
   Users,
-  MapPin,
   Receipt,
   Wallet,
   Tractor,
-  Wrench,
+  Settings2,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,17 +45,24 @@ export const navigationConfig: NavGroup[] = [
     label: "Hoạt động",
     items: [
       {
-        id: "bookings",
-        label: "Đơn hàng",
-        href: "/bookings",
+        id: "work-days",
+        label: "Ngày làm việc",
+        href: "/work-days",
         icon: CalendarDays,
         enabled: true,
       },
       {
-        id: "jobs",
-        label: "Công việc",
-        href: "/jobs",
-        icon: Briefcase,
+        id: "bookings",
+        label: "Đơn hàng",
+        href: "/bookings",
+        icon: BookOpen,
+        enabled: true,
+      },
+      {
+        id: "services",
+        label: "Dịch vụ",
+        href: "/services",
+        icon: Package,
         enabled: true,
       },
     ],
@@ -102,7 +109,7 @@ export const navigationConfig: NavGroup[] = [
   },
   {
     id: "assets",
-    label: "Tài sản & Dịch vụ",
+    label: "Tài sản & Cài đặt",
     items: [
       {
         id: "machines",
@@ -112,10 +119,10 @@ export const navigationConfig: NavGroup[] = [
         enabled: true,
       },
       {
-        id: "services",
-        label: "Dịch vụ",
-        href: "/services",
-        icon: Wrench,
+        id: "machine-types",
+        label: "Loại máy & Vị trí",
+        href: "/machine-types",
+        icon: Settings2,
         enabled: true,
       },
     ],

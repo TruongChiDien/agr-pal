@@ -8,17 +8,6 @@ export const createWorkerSchema = z.object({
 
 export const updateWorkerSchema = createWorkerSchema.partial()
 
-// Worker_Weight schemas
-export const createWorkerWeightSchema = z.object({
-  worker_id: z.string().min(1, 'ID công nhân không được để trống'),
-  job_type_id: z.string().min(1, 'ID loại công việc không được để trống'),
-  weight: z.number().min(0.1, 'Hệ số lương phải lớn hơn hoặc bằng 0.1').max(5, 'Hệ số lương tối đa là 5'),
-})
-
-export const updateWorkerWeightSchema = z.object({
-  weight: z.number().min(0.1, 'Hệ số lương phải lớn hơn hoặc bằng 0.1').max(5, 'Hệ số lương tối đa là 5'),
-})
-
 // Advance_Payment schemas
 export const createAdvancePaymentSchema = z.object({
   worker_id: z.string().min(1, 'ID công nhân không được để trống'),
@@ -30,4 +19,3 @@ export const updateAdvancePaymentSchema = z.object({
   amount: z.number().positive('Số tiền phải lớn hơn 0').optional(),
   notes: z.string().max(500, 'Ghi chú tối đa 500 ký tự').optional(),
 })
-

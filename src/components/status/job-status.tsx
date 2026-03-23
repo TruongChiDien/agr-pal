@@ -1,44 +1,9 @@
 import { StatusBadge, StatusBadgeProps } from "./status-badge";
-import { JobStatus } from "@/types";
-import { Circle, Clock, CheckCircle, XCircle, Ban } from "lucide-react";
-
-const JOB_STATUS_CONFIG: Record<
-  JobStatus,
-  {
-    variant: StatusBadgeProps["variant"];
-    label: string;
-    icon: typeof Circle;
-  }
-> = {
-  [JobStatus.New]: {
-    variant: "new",
-    label: "Mới",
-    icon: Circle,
-  },
-  [JobStatus.InProgress]: {
-    variant: "in-progress",
-    label: "Đang thực hiện",
-    icon: Clock,
-  },
-  [JobStatus.Completed]: {
-    variant: "completed",
-    label: "Hoàn thành",
-    icon: CheckCircle,
-  },
-  [JobStatus.Blocked]: {
-    variant: "blocked",
-    label: "Tạm dừng",
-    icon: Ban,
-  },
-  [JobStatus.Canceled]: {
-    variant: "canceled",
-    label: "Đã hủy",
-    icon: XCircle,
-  },
-};
+import { JobPaymentStatus } from "@/types";
+import { Circle, CheckCircle, Clock } from "lucide-react";
 
 export interface JobStatusBadgeProps {
-  status: JobStatus;
+  status: JobPaymentStatus;
   className?: string;
   showIcon?: boolean;
 }
@@ -48,13 +13,25 @@ export function JobStatusBadge({
   className,
   showIcon = true,
 }: JobStatusBadgeProps) {
-  const config = JOB_STATUS_CONFIG[status];
+  let config = { variant: "secondary", label: "Chưa tính", icon: Circle };
+
+  switch (status) {
+    case JobPaymentStatus.PendingPayroll:
+      config = { variant: "secondary", label: "Chưa lên phiếu", icon: Clock };
+      break;
+    case JobPaymentStatus.AddedPayroll:
+      config = { variant: "in-progress", label: "Đã lên phiếu", icon: Circle };
+      break;
+    case JobPaymentStatus.FullyPaid:
+      config = { variant: "completed", label: "Đã thanh toán", icon: CheckCircle };
+      break;
+  }
 
   return (
     <StatusBadge
-      variant={config.variant}
+      variant={config.variant as any}
       label={config.label}
-      icon={config.icon}
+      icon={config.icon as any}
       className={className}
       showIcon={showIcon}
     />

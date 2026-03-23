@@ -14,20 +14,25 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
     await requireAuth()
     const validated = createPayrollSchema.parse(input)
 
-    // Validate jobs (previously job_workers)
-    const jobs = await prisma.job.findMany({
+    // Validate daily machine worker entries
+    const dailyWorkers = await prisma.dailyMachineWorker.findMany({
       where: {
         id: { in: validated.job_ids },
         worker_id: validated.worker_id,
         payment_status: JobPaymentStatus.PendingPayroll,
       },
+      include: { daily_machine: true },
     })
 
-    if (jobs.length !== validated.job_ids.length) {
-      return { success: false, error: 'Một số công việc đã có trong phiếu lương hoặc không hợp lệ' }
+    if (dailyWorkers.length !== validated.job_ids.length) {
+      return { success: false, error: 'Một số mục công việc đã có trong phiếu lương hoặc không hợp lệ' }
     }
 
-    const total_wages = jobs.reduce((sum: number, job: any) => sum + Number(job.final_pay), 0)
+    // Wage = sum of (applied_base * applied_weight) for each worker's task
+    const total_wages = dailyWorkers.reduce(
+      (sum: number, dw: any) => sum + Number(dw.applied_base) * Number(dw.applied_weight),
+      0
+    )
 
     // Validate advance payments if provided
     let total_adv = 0
@@ -50,7 +55,7 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
     const adjustment = validated.adjustment || 0
     const net_payable = total_wages - total_adv + adjustment
 
-    // Transaction: create payroll + update jobs + update advances
+    // Transaction: create payroll + update daily workers + update advances
     const payroll = (await prisma.$transaction(async (tx: any) => {
       const newPayroll = await tx.payroll_Sheet.create({
         data: {
@@ -64,7 +69,7 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
         },
       })
 
-      await tx.job.updateMany({
+      await tx.dailyMachineWorker.updateMany({
         where: { id: { in: validated.job_ids } },
         data: {
           payroll_id: newPayroll.id,
@@ -86,7 +91,6 @@ export async function createPayroll(input: unknown): Promise<Result<Payroll_Shee
     })) as Payroll_Sheet
 
     revalidatePath('/dashboard/payroll')
-    revalidatePath('/dashboard/jobs')
     return { success: true, data: payroll }
   } catch (error) {
     if (error instanceof Error) {
@@ -101,12 +105,12 @@ export async function listPayrolls() {
   return await prisma.payroll_Sheet.findMany({
     include: {
       worker: true,
-      jobs: {
+      daily_workers: {
         include: {
-          booking: {
+          daily_machine: {
             include: {
-              customer: true,
-              service: true,
+              machine: { include: { machine_type: true } },
+              work_day: true,
             },
           },
           job_type: true,
@@ -124,13 +128,12 @@ export async function getPayroll(id: string) {
     where: { id },
     include: {
       worker: true,
-      jobs: {
+      daily_workers: {
         include: {
-          booking: {
+          daily_machine: {
             include: {
-              customer: true,
-              land: true,
-              service: true,
+              machine: { include: { machine_type: true } },
+              work_day: true,
             },
           },
           job_type: true,
@@ -138,9 +141,7 @@ export async function getPayroll(id: string) {
       },
       advance_payments: true,
       payments: {
-        orderBy: {
-          payment_date: 'desc',
-        },
+        orderBy: { payment_date: 'desc' },
       },
     },
   })
@@ -164,9 +165,9 @@ export async function deletePayroll(id: string): Promise<Result<void>> {
       return { success: false, error: 'Không thể xóa phiếu lương đã có thanh toán' }
     }
 
-    // Transaction: delete payroll + reset jobs + reset advances
+    // Transaction: delete payroll + reset daily workers + reset advances
     await prisma.$transaction(async (tx: any) => {
-      await tx.job.updateMany({
+      await tx.dailyMachineWorker.updateMany({
         where: { payroll_id: id },
         data: {
           payroll_id: null,
@@ -188,7 +189,6 @@ export async function deletePayroll(id: string): Promise<Result<void>> {
     })
 
     revalidatePath('/dashboard/payroll')
-    revalidatePath('/dashboard/jobs')
     return { success: true, data: undefined }
   } catch (error) {
     if (error instanceof Error) {
@@ -256,9 +256,9 @@ export async function addPayrollPayment(input: unknown): Promise<Result<Payroll_
         },
       })
 
-      // If payroll completed, update job payment status
+      // If payroll completed, update daily worker payment status
       if (newStatus === PayrollStatus.Completed) {
-        await tx.job.updateMany({
+        await tx.dailyMachineWorker.updateMany({
           where: { payroll_id: validated.payroll_id },
           data: {
             payment_status: JobPaymentStatus.FullyPaid,
@@ -271,7 +271,6 @@ export async function addPayrollPayment(input: unknown): Promise<Result<Payroll_
 
     revalidatePath('/dashboard/payroll')
     revalidatePath(`/dashboard/payroll/${validated.payroll_id}`)
-    revalidatePath('/dashboard/jobs')
     return { success: true, data: updatedPayroll }
   } catch (error) {
     if (error instanceof Error) {
@@ -308,8 +307,8 @@ export async function updatePayroll(input: unknown): Promise<Result<Payroll_Shee
 
     // Not paid -> Full Update
     await prisma.$transaction(async (tx: any) => {
-        // Disconnect all
-        await tx.job.updateMany({
+        // Disconnect all daily workers and advances
+        await tx.dailyMachineWorker.updateMany({
             where: { payroll_id: id },
             data: { payroll_id: null, payment_status: JobPaymentStatus.PendingPayroll }
         })
@@ -318,18 +317,22 @@ export async function updatePayroll(input: unknown): Promise<Result<Payroll_Shee
             data: { payroll_id: null, status: AdvanceStatus.Unprocessed }
         })
         
-        // Re-connect
-        const jobs = await tx.job.findMany({
+        // Re-connect daily workers
+        const dailyWorkers = await tx.dailyMachineWorker.findMany({
             where: {
                 id: { in: validatedData.job_ids },
                 worker_id: validatedData.worker_id,
                 payment_status: JobPaymentStatus.PendingPayroll
-            }
+            },
+            include: { daily_machine: true },
         })
         
-        if (jobs.length !== validatedData.job_ids.length) throw new Error("Một số công việc không hợp lệ hoặc đã được thanh toán")
+        if (dailyWorkers.length !== validatedData.job_ids.length) throw new Error("Một số mục công việc không hợp lệ hoặc đã được thanh toán")
             
-        const total_wages = jobs.reduce((sum: number, job: any) => sum + Number(job.final_pay), 0)
+        const total_wages = dailyWorkers.reduce(
+          (sum: number, dw: any) => sum + Number(dw.applied_base) * Number(dw.applied_weight),
+          0
+        )
         
         let total_adv = 0
         if (validatedData.advance_payment_ids?.length) {
@@ -351,7 +354,7 @@ export async function updatePayroll(input: unknown): Promise<Result<Payroll_Shee
         await tx.payroll_Sheet.update({
             where: { id },
             data: {
-                worker_id: validatedData.worker_id, // Ensure consistent?
+                worker_id: validatedData.worker_id,
                 total_wages,
                 total_adv,
                 adjustment,
@@ -360,8 +363,8 @@ export async function updatePayroll(input: unknown): Promise<Result<Payroll_Shee
             }
         })
         
-        // Connect Jobs
-        await tx.job.updateMany({
+        // Connect daily workers
+        await tx.dailyMachineWorker.updateMany({
             where: { id: { in: validatedData.job_ids } },
             data: { payroll_id: id, payment_status: JobPaymentStatus.AddedPayroll }
         })
@@ -377,7 +380,6 @@ export async function updatePayroll(input: unknown): Promise<Result<Payroll_Shee
     
     revalidatePath('/dashboard/payroll')
     revalidatePath(`/dashboard/payroll/${id}`)
-    revalidatePath('/dashboard/jobs') // Needed if jobs changed
     
     const updated = await prisma.payroll_Sheet.findUnique({ where: { id } })
     return { success: true, data: updated as Payroll_Sheet }

@@ -6,9 +6,6 @@ import {
   updateWorker,
   deleteWorker,
   getWorker,
-  createWorkerWeight,
-  updateWorkerWeight,
-  deleteWorkerWeight,
   createAdvancePayment,
   deleteAdvancePayment
 } from '@/actions/workers'
@@ -89,79 +86,6 @@ export function useDeleteWorker() {
         toast({
           title: 'Thành công',
           description: 'Công nhân đã được xóa',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-// Worker Weight hooks
-export function useCreateWorkerWeight() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: createWorkerWeight,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['workers'] })
-        toast({
-          title: 'Thành công',
-          description: 'Hệ số lương đã được tạo',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-export function useUpdateWorkerWeight() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: unknown }) => updateWorkerWeight(id, data),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['workers'] })
-        toast({
-          title: 'Thành công',
-          description: 'Hệ số lương đã được cập nhật',
-        })
-      } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
-    },
-  })
-}
-
-export function useDeleteWorkerWeight() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
-
-  return useMutation({
-    mutationFn: deleteWorkerWeight,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['workers'] })
-        toast({
-          title: 'Thành công',
-          description: 'Hệ số lương đã được xóa',
         })
       } else {
         toast({

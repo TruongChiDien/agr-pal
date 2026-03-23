@@ -10,74 +10,61 @@ import type { Service } from '@prisma/client'
 export async function createService(input: unknown): Promise<Result<Service>> {
   try {
     await requireAuth()
-    const validated = createServiceSchema.parse(input)
-
+    const { machine_type_ids, ...data } = createServiceSchema.parse(input)
     const service = await prisma.service.create({
-      data: validated,
+      data: {
+        ...data,
+        machine_types: machine_type_ids?.length
+          ? { create: machine_type_ids.map((id) => ({ machine_type_id: id })) }
+          : undefined,
+      },
     })
-
     revalidatePath('/dashboard/services')
     return { success: true, data: service }
   } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi tạo dịch vụ' }
+    return { success: false, error: error instanceof Error ? error.message : 'Lỗi tạo dịch vụ' }
   }
 }
 
-export async function updateService(
-  id: string,
-  input: unknown
-): Promise<Result<Service>> {
+export async function updateService(id: string, input: unknown): Promise<Result<Service>> {
   try {
     await requireAuth()
-    const validated = updateServiceSchema.parse(input)
-
+    const { machine_type_ids, ...data } = updateServiceSchema.parse(input)
     const service = await prisma.service.update({
       where: { id },
-      data: validated,
+      data: {
+        ...data,
+        machine_types:
+          machine_type_ids !== undefined
+            ? {
+                deleteMany: {},
+                create: machine_type_ids.map((mid) => ({ machine_type_id: mid })),
+              }
+            : undefined,
+      },
     })
-
     revalidatePath('/dashboard/services')
     return { success: true, data: service }
   } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi cập nhật dịch vụ' }
+    return { success: false, error: error instanceof Error ? error.message : 'Lỗi cập nhật dịch vụ' }
   }
 }
 
 export async function deleteService(id: string): Promise<Result<void>> {
   try {
     await requireAuth()
-
-    await prisma.service.delete({
-      where: { id },
-    })
-
+    await prisma.service.delete({ where: { id } })
     revalidatePath('/dashboard/services')
     return { success: true, data: undefined }
   } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, error: error.message }
-    }
-    return { success: false, error: 'Đã xảy ra lỗi khi xóa dịch vụ' }
+    return { success: false, error: error instanceof Error ? error.message : 'Lỗi xóa dịch vụ' }
   }
 }
 
 export async function listServices() {
   await requireAuth()
-  return await prisma.service.findMany({
+  return prisma.service.findMany({
+    include: { machine_types: { include: { machine_type: true } } },
     orderBy: { name: 'asc' },
-  })
-}
-
-export async function getService(id: string) {
-  await requireAuth()
-  return await prisma.service.findUnique({
-    where: { id },
-    include: { job_types: true },
   })
 }

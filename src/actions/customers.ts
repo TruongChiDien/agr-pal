@@ -81,7 +81,6 @@ export async function getCustomer(id: string) {
       lands: true,
       bookings: {
         include: {
-          service: true,
           land: true,
         },
         orderBy: {
@@ -92,7 +91,6 @@ export async function getCustomer(id: string) {
         include: {
           bookings: {
             include: {
-              service: true,
               land: true,
             }
           }
@@ -116,9 +114,7 @@ export async function getCustomer(id: string) {
     })),
     bookings: customer.bookings?.map(booking => ({
       ...booking,
-      quantity: Number(booking.quantity),
-      captured_price: Number(booking.captured_price),
-      total_amount: Number(booking.total_amount),
+      amount: booking.amount ? Number(booking.amount) : undefined,
     })),
     bills: customer.bills?.map(bill => ({
       ...bill,
@@ -128,9 +124,7 @@ export async function getCustomer(id: string) {
       subtotal: Number(bill.subtotal),
       bookings: bill.bookings?.map(booking => ({
         ...booking,
-        quantity: Number(booking.quantity),
-        captured_price: Number(booking.captured_price),
-        total_amount: Number(booking.total_amount),
+        amount: booking.amount ? Number(booking.amount) : undefined,
       })),
     })),
   }

@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateMachine } from "@/hooks/use-machines";
-import { createMachineSchema } from "@/schemas/machine";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useCreateMachine } from "@/hooks/use-machines"
+import { useMachineTypes } from "@/hooks/use-machine-types"
+import { createMachineSchema } from "@/schemas/machine"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormField,
@@ -23,21 +23,29 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
-import { DatePicker } from "@/components/forms/date-picker";
-import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DatePicker } from "@/components/forms/date-picker"
+import { z } from "zod"
+import { useToast } from "@/hooks/use-toast"
 
-type CreateMachineInput = z.infer<typeof createMachineSchema>;
+type CreateMachineInput = z.infer<typeof createMachineSchema>
 
 interface CreateMachineDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogProps) {
-  const createMachine = useCreateMachine();
-  const { toast } = useToast();
+  const createMachine = useCreateMachine()
+  const { data: machineTypes, isLoading: isTypesLoading } = useMachineTypes()
+  const { toast } = useToast()
 
   const form = useForm<CreateMachineInput>({
     resolver: zodResolver(createMachineSchema),
@@ -45,10 +53,10 @@ export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogP
     defaultValues: {
       name: "",
       model: "",
-      type: "",
+      machine_type_id: "",
       purchase_date: new Date(),
     },
-  });
+  })
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -56,11 +64,11 @@ export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogP
       form.reset({
         name: "",
         model: "",
-        type: "",
+        machine_type_id: "",
         purchase_date: new Date(),
-      });
+      })
     }
-  }, [open, form]);
+  }, [open, form])
 
   const onSubmit = async (data: CreateMachineInput) => {
     await createMachine.mutateAsync(data, {
@@ -69,19 +77,19 @@ export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogP
           toast({
             title: "Thành công",
             description: "Máy đã được tạo",
-          });
-          onOpenChange(false);
-          form.reset();
+          })
+          onOpenChange(false)
+          form.reset()
         } else {
             toast({
                 title: "Lỗi",
                 description: result.error || "Có lỗi xảy ra",
                 variant: 'destructive',
-            });
+            })
         }
       },
-    });
-  };
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,17 +137,24 @@ export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogP
 
             <FormField
               control={form.control}
-              name="type"
+              name="machine_type_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="VD: Máy cày, Máy gặt"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
+                  <FormLabel>Loại máy *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isTypesLoading ? "Đang tải..." : "Chọn loại máy"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {machineTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -180,5 +195,5 @@ export function CreateMachineDialog({ open, onOpenChange }: CreateMachineDialogP
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

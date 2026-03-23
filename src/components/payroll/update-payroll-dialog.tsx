@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createPayrollSchema } from "@/schemas/payroll";
-import type { Payroll_Sheet, Job, Advance_Payment, Worker } from "@prisma/client";
+import type { Payroll_Sheet, Advance_Payment, Worker, DailyMachineWorker } from "@prisma/client";
 import { useToast } from "@/hooks/use-toast";
 
 // Use create schema for validation, but we handle updates
@@ -38,8 +38,8 @@ interface UpdatePayrollDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payroll: Payroll_Sheet & {
-    worker: Worker;
-    jobs?: Job[];
+    worker?: Worker;
+    daily_workers?: DailyMachineWorker[];
     advance_payments?: Advance_Payment[];
   };
 }
@@ -54,7 +54,7 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [selectedAdvanceIds, setSelectedAdvanceIds] = useState<string[]>([]);
   
-  const [sourceJobs, setSourceJobs] = useState<Job[]>([]);
+  const [sourceJobs, setSourceJobs] = useState<any[]>([]);
   const [sourceAdvances, setSourceAdvances] = useState<Advance_Payment[]>([]);
 
   // Check if locked
@@ -75,9 +75,8 @@ export function UpdatePayrollDialog({ open, onOpenChange, payroll }: UpdatePayro
   // Reset form when dialog opens or payroll changes
   useEffect(() => {
     if (open && activePayroll) {
-      // Use forced type casting to ensure specific fields are accessed if TS complains
       const anyPayroll = activePayroll as any;
-      const jobIds = anyPayroll.jobs?.map((j: any) => j.id) || [];
+      const jobIds = anyPayroll.daily_workers?.map((j: any) => j.id) || [];
       const advanceIds = anyPayroll.advance_payments?.map((a: any) => a.id) || [];
       
       form.reset({

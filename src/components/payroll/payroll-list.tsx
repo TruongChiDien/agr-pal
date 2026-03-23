@@ -32,13 +32,13 @@ import {
 import { CreatePayrollDialog } from "@/components/payroll/create-payroll-dialog";
 import { UpdatePayrollDialog } from "@/components/payroll/update-payroll-dialog";
 import { AddPayrollPaymentDialog } from "@/components/payroll/add-payroll-payment-dialog";
-import type { Payroll_Sheet, Worker, Job, Advance_Payment } from "@prisma/client";
+import type { Payroll_Sheet, Worker, Advance_Payment, DailyMachineWorker } from "@prisma/client";
 
 type PayrollWithRelations = Payroll_Sheet & {
   worker?: Worker;
   adjustment?: any; // Decimal
   notes?: string | null;
-  jobs?: Job[];
+  daily_workers?: DailyMachineWorker[];
   advance_payments?: Advance_Payment[];
 };
 

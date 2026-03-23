@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useUpdateBill } from "@/hooks/use-bills";
-import { updateBillSchema } from "@/schemas/bill";
-import { useBookings } from "@/hooks/use-bookings";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react"
+import { useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useUpdateBill } from "@/hooks/use-bills"
+import { updateBillSchema } from "@/schemas/bill"
+import { useBookings } from "@/hooks/use-bookings"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormField,
@@ -23,37 +23,36 @@ import {
   FormControl,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { z } from "zod";
-import type { Bill, Booking, Land, Service } from "@prisma/client";
-import { BillStatus, PaymentStatus } from "@/types/enums";
-import { formatDateShort, formatCurrency } from "@/lib/format";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent } from "@/components/ui/card"
+import { z } from "zod"
+import type { Bill, Booking, Land } from "@prisma/client"
+import { BillStatus, PaymentStatus } from "@/types/enums"
+import { formatDateShort, formatCurrency } from "@/lib/format"
 
 type UpdateBillDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  bill: Bill & { bookings: Booking[] };
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  bill: Bill & { bookings: Booking[] }
+}
 
-type UpdateBillInput = z.infer<typeof updateBillSchema>;
+type UpdateBillInput = z.infer<typeof updateBillSchema>
 
 type BookingWithRelations = Booking & {
-  land: Land | null;
-  service: Service;
-};
+  land: Land | null
+}
 
 export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogProps) {
-  const updateBill = useUpdateBill();
-  const { data: bookings } = useBookings();
+  const updateBill = useUpdateBill()
+  const { data: bookings } = useBookings()
   
   // Check if bill is editable (status OPEN and not paid)
   // Need to verify 'total_paid' from bill. However, simple Prisma type might keep it as Decimal.
   // We assume the passed bill object has Decimal or number fields.
-  const isEditable = bill.status === BillStatus.Open && Number(bill.total_paid) === 0;
+  const isEditable = bill.status === BillStatus.Open && Number(bill.total_paid) === 0
 
   const form = useForm<UpdateBillInput>({
     resolver: zodResolver(updateBillSchema),
@@ -62,7 +61,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
       adjustment: Number((bill as any).adjustment ?? 0) || undefined,
       notes: (bill as any).notes || "",
     },
-  });
+  })
 
   // Sync form when bill changes
   useEffect(() => {
@@ -71,19 +70,19 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
         booking_ids: bill.bookings.map(b => b.id),
         adjustment: Number((bill as any).adjustment ?? 0) || undefined,
         notes: (bill as any).notes || "",
-      });
+      })
     }
-  }, [open, bill, form]);
+  }, [open, bill, form])
 
   const onSubmit = async (data: UpdateBillInput) => {
-    const result = await updateBill.mutateAsync({ id: bill.id, data });
+    const result = await updateBill.mutateAsync({ id: bill.id, data })
     if (result.success) {
-      onOpenChange(false);
+      onOpenChange(false)
     }
-  };
+  }
 
-  const selectedBookingIds = useWatch({ control: form.control, name: "booking_ids" }) || [];
-  const adjustment = useWatch({ control: form.control, name: "adjustment" }) || 0;
+  const selectedBookingIds = useWatch({ control: form.control, name: "booking_ids" }) || []
+  const adjustment = useWatch({ control: form.control, name: "adjustment" }) || 0
 
   // Prepare bookings list for selection
   // Includes: 
@@ -100,20 +99,20 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
             b.payment_status === PaymentStatus.PendingBill
           )
       ) 
-      : [];
+      : []
 
   const totalAmount = allRelevantBookings
     .filter((b) => selectedBookingIds.includes(b.id))
-    .reduce((sum, b) => sum + Number(b.total_amount), 0);
+    .reduce((sum, b) => sum + Number(b.amount ?? 0), 0)
   
   const handleToggle = (bookingId: string) => {
-      const current = selectedBookingIds;
+      const current = selectedBookingIds
       if (current.includes(bookingId)) {
-        form.setValue("booking_ids", current.filter((id) => id !== bookingId));
+        form.setValue("booking_ids", current.filter((id) => id !== bookingId))
       } else {
-        form.setValue("booking_ids", [...current, bookingId]);
+        form.setValue("booking_ids", [...current, bookingId])
       }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,7 +145,7 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
                         onCheckedChange={() => handleToggle(booking.id)}
                         disabled={!isEditable}
                       />
-                      <div className="flex-1 grid grid-cols-3 gap-4">
+                      <div className="flex-1 grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm font-medium">
                             {booking.land?.name || "Chưa chọn ruộng"}
@@ -155,15 +154,9 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
                             {formatDateShort(booking.created_at)}
                           </p>
                         </div>
-                        <div>
-                          <p className="text-sm">{booking.service.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {Number(booking.quantity)} {booking.service.unit}
-                          </p>
-                        </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-primary">
-                            {formatCurrency(Number(booking.total_amount))}
+                            {booking.amount ? formatCurrency(Number(booking.amount)) : "—"}
                           </p>
                         </div>
                       </div>
@@ -215,8 +208,8 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
                               {...field}
                               value={field.value || ""} 
                               onChange={(e) => {
-                                 const val = e.target.value;
-                                 field.onChange(val === "" ? 0 : Number(val));
+                                 const val = e.target.value
+                                 field.onChange(val === "" ? 0 : Number(val))
                               }}
                               disabled={!isEditable}
                             />
@@ -263,5 +256,5 @@ export function UpdateBillDialog({ open, onOpenChange, bill }: UpdateBillDialogP
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

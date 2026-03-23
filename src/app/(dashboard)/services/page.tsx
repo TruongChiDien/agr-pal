@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useServices, useDeleteService } from "@/hooks/use-services";
-import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
-import { PageContainer, ContentSection } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDateShort } from "@/lib/format";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { useState } from "react"
+import { useServices, useDeleteService } from "@/hooks/use-services"
+import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table"
+import { PageContainer, ContentSection } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Trash2 } from "lucide-react"
+import { CreateServiceDialog } from "@/components/services/create-service-dialog"
 import {
   Dialog,
   DialogContent,
@@ -15,88 +15,56 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import type { Service } from "@prisma/client";
-import { CreateServiceDialog } from "@/components/services/create-service-dialog";
-import { UpdateServiceDialog } from "@/components/services/update-service-dialog";
+} from "@/components/ui/dialog"
+import { formatCurrency } from "@/lib/format"
+
+type ServiceRow = {
+  id: string
+  name: string
+  unit: string
+  price: unknown
+  description: string | null
+  machine_types: { machine_type_id: string; machine_type: { name: string } }[]
+}
 
 export default function ServicesPage() {
-  const router = useRouter();
-  const { data: services, isLoading } = useServices();
-  const deleteService = useDeleteService();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
+  const { data: services = [], isLoading } = useServices()
+  const deleteService = useDeleteService()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [sortKey, setSortKey] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("desc");
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(15)
+  const [sortKey, setSortKey] = useState("name")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>("asc")
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      if (sortDirection === "asc") {
-        setSortDirection("desc");
-      } else if (sortDirection === "desc") {
-        setSortDirection(null);
-        setSortKey("");
-      } else {
-        setSortDirection("asc");
-      }
+      setSortDirection((d) => (d === "asc" ? "desc" : d === "desc" ? null : "asc"))
     } else {
-      setSortKey(key);
-      setSortDirection("asc");
+      setSortKey(key)
+      setSortDirection("asc")
     }
-  };
+  }
 
-  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setServiceToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (serviceToDelete) {
-      await deleteService.mutateAsync(serviceToDelete);
-      setDeleteDialogOpen(false);
-      setServiceToDelete(null);
-    }
-  };
-
-  // Sort data
-  const sortedData = services ? [...services].sort((a, b) => {
-    if (!sortKey || !sortDirection) return 0;
-
-    const aValue = (a as any)[sortKey];
-    const bValue = (b as any)[sortKey];
-
-    if (aValue instanceof Date && bValue instanceof Date) {
+  const sorted = [...services].sort((a, b) => {
+    if (!sortKey || !sortDirection) return 0
+    if (sortKey === "name") {
       return sortDirection === "asc"
-        ? aValue.getTime() - bValue.getTime()
-        : bValue.getTime() - aValue.getTime();
+        ? a.name.localeCompare(b.name, "vi-VN")
+        : b.name.localeCompare(a.name, "vi-VN")
     }
-
-    if (typeof aValue === "number" && typeof bValue === "number") {
-      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+    if (sortKey === "price") {
+      const diff = Number(a.price) - Number(b.price)
+      return sortDirection === "asc" ? diff : -diff
     }
+    return 0
+  })
 
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortDirection === "asc"
-        ? aValue.localeCompare(bValue, "vi-VN")
-        : bValue.localeCompare(aValue, "vi-VN");
-    }
+  const totalPages = Math.ceil(sorted.length / pageSize)
+  const paginated = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-    return 0;
-  }) : [];
-
-  // Paginate data
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
-
-  const columns: ColumnDef<Service>[] = [
+  const columns: ColumnDef<ServiceRow>[] = [
     {
       key: "name",
       label: "Tên dịch vụ",
@@ -104,136 +72,118 @@ export default function ServicesPage() {
       render: (item) => <span className="font-medium">{item.name}</span>,
     },
     {
-      key: "unit",
-      label: "Đơn vị",
-      sortable: true,
-      width: "120px",
-    },
-    {
       key: "price",
-      label: "Giá hiện tại",
+      label: "Đơn giá",
       sortable: true,
+      width: "160px",
       align: "right",
-      width: "150px",
       render: (item) => (
-        <span className="font-medium text-primary">{formatCurrency(Number(item.price))}</span>
+        <span className="font-medium">
+          {formatCurrency(Number(item.price))}/{item.unit}
+        </span>
       ),
     },
     {
-      key: "created_at",
-      label: "Ngày tạo",
-      sortable: true,
-      width: "120px",
-      render: (item) => formatDateShort(item.created_at),
+      key: "machine_types",
+      label: "Loại máy",
+      render: (item) => (
+        <div className="flex flex-wrap gap-1">
+          {item.machine_types.length === 0 ? (
+            <span className="text-muted-foreground text-sm">—</span>
+          ) : (
+            item.machine_types.map((smt) => (
+              <Badge key={smt.machine_type_id} variant="secondary" className="text-xs">
+                {smt.machine_type.name}
+              </Badge>
+            ))
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "description",
+      label: "Mô tả",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
+          {item.description || "—"}
+        </span>
+      ),
     },
     {
       key: "actions",
       label: "",
-      width: "100px",
+      width: "60px",
       align: "right",
       render: (item) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setServiceToEdit(item);
-              setEditDialogOpen(true);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteClick(item.id, e)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); setDeleteId(item.id) }}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
       ),
     },
-  ];
+  ]
 
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <ContentSection
-          title="Quản lý dịch vụ"
-          description="Danh sách các dịch vụ nông nghiệp"
-        >
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Đang tải...</p>
-          </div>
-        </ContentSection>
-      </PageContainer>
-    );
+  const handleDeleteConfirm = async () => {
+    if (deleteId) {
+      await deleteService.mutateAsync(deleteId)
+      setDeleteId(null)
+    }
   }
 
   return (
     <PageContainer>
       <ContentSection
-        title="Quản lý dịch vụ"
-        description="Danh sách các dịch vụ nông nghiệp"
+        title="Dịch vụ"
+        description="Quản lý danh mục dịch vụ nông nghiệp"
         actions={
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Tạo mới
+            Tạo dịch vụ mới
           </Button>
         }
       >
         <DataTable
           columns={columns}
-          data={paginatedData}
+          data={paginated}
           currentPage={currentPage}
           pageSize={pageSize}
-          totalPages={Math.ceil(sortedData.length / pageSize)}
-          totalItems={sortedData.length}
+          totalPages={totalPages}
+          totalItems={sorted.length}
           onPageChange={setCurrentPage}
-          onPageSizeChange={(newSize) => {
-            setPageSize(newSize);
-            setCurrentPage(1);
-          }}
+          onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1) }}
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSort={handleSort}
-          onRowClick={(item) => router.push(`/services/${item.id}`)}
           getRowId={(item) => item.id}
+          isLoading={isLoading}
+          emptyMessage="Chưa có dịch vụ nào"
+          emptyDescription="Thêm dịch vụ nông nghiệp đầu tiên"
         />
       </ContentSection>
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <CreateServiceDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa dịch vụ này? Hành động này không thể hoàn tác.
-            </DialogDescription>
+            <DialogDescription>Bạn có chắc muốn xóa dịch vụ này?</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Xóa
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Hủy</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteService.isPending}
+            >
+              {deleteService.isPending ? "Đang xóa..." : "Xóa"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <CreateServiceDialog 
-        open={createDialogOpen} 
-        onOpenChange={setCreateDialogOpen} 
-      />
-      
-      {serviceToEdit && (
-        <UpdateServiceDialog
-            open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            service={serviceToEdit}
-        />
-      )}
     </PageContainer>
-  );
+  )
 }

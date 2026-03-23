@@ -134,10 +134,10 @@ export default function MachineDetailPage({ params }: { params: Promise<{ id: st
                     <p className="font-medium text-lg">{machine.model}</p>
                   </div>
                 )}
-                {machine.type && (
+                {machine.machine_type && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Loại</p>
-                    <p className="font-medium text-lg">{machine.type}</p>
+                    <p className="font-medium text-lg">{(machine as any).machine_type.name}</p>
                   </div>
                 )}
                 {machine.purchase_date && (

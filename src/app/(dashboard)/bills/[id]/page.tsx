@@ -28,11 +28,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Booking, Land, Service } from "@prisma/client";
+import type { Booking, Land } from "@prisma/client";
 
 type BookingWithRelations = Booking & {
   land: Land | null;
-  service: Service;
 };
 
 // Map bill status to badge variant
@@ -135,26 +134,13 @@ export default function BillDetailPage({
       ),
     },
     {
-      key: "service",
-      label: "Dịch vụ",
-      width: "200px",
-      render: (item) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">{item.service.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {Number(item.quantity)} {item.service.unit}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "total_amount",
+      key: "amount",
       label: "Giá trị",
       align: "right",
       width: "140px",
       render: (item) => (
         <span className="text-sm font-semibold">
-          {formatCurrency(Number(item.total_amount))}
+          {item.amount ? formatCurrency(Number(item.amount)) : "—"}
         </span>
       ),
     },

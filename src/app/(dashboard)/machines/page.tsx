@@ -116,11 +116,11 @@ export default function MachinesPage() {
       render: (item) => item.model || "-",
     },
     {
-      key: "type",
+      key: "machine_type",
       label: "Loại",
       sortable: true,
       width: "150px",
-      render: (item) => item.type || "-",
+      render: (item: any) => item.machine_type?.name || "-",
     },
     {
       key: "status",

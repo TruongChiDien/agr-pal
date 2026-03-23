@@ -50,9 +50,7 @@ export async function deleteMachine(id: string): Promise<Result<void>> {
   try {
     await requireAuth()
 
-    await prisma.machine.delete({
-      where: { id },
-    })
+    await prisma.machine.delete({ where: { id } })
 
     revalidatePath('/dashboard/machines')
     return { success: true, data: undefined }
@@ -68,15 +66,8 @@ export async function listMachines() {
   await requireAuth()
   return await prisma.machine.findMany({
     include: {
-      jobs: {
-        include: {
-          booking: {
-            include: {
-              customer: true,
-              service: true,
-            },
-          },
-        },
+      machine_type: {
+        include: { job_types: { orderBy: { name: 'asc' } } },
       },
     },
     orderBy: { name: 'asc' },
@@ -88,19 +79,25 @@ export async function getMachine(id: string) {
   return await prisma.machine.findUnique({
     where: { id },
     include: {
-      jobs: {
+      machine_type: {
+        include: { job_types: { orderBy: { name: 'asc' } } },
+      },
+      maintenance_logs: {
+        include: { category: true },
+        orderBy: { maintenance_date: 'desc' },
+      },
+      daily_machines: {
         include: {
-          booking: {
+          work_day: true,
+          workers: {
             include: {
-              customer: true,
-              land: true,
-              service: true,
+              worker: true,
+              job_type: true,
             },
           },
-          job_type: true,
-          worker: true,
         },
         orderBy: { created_at: 'desc' },
+        take: 20,
       },
     },
   })

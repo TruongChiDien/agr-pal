@@ -28,13 +28,12 @@ import {
 } from "@/components/ui/tooltip";
 import { UpdatePayrollDialog } from "@/components/payroll/update-payroll-dialog";
 import { AddPayrollPaymentDialog } from "@/components/payroll/add-payroll-payment-dialog";
-import type { Job, Booking, Customer, Land, Service, Job_Type, Advance_Payment } from "@prisma/client";
+import type { Advance_Payment, DailyMachineWorker, DailyMachine, WorkDay, Machine, MachineType, Job_Type } from "@prisma/client";
 
-type JobWithRelations = Job & {
-  booking: Booking & {
-    customer: Customer;
-    land: Land | null;
-    service: Service;
+type DailyWorkerWithRelations = DailyMachineWorker & {
+  daily_machine: DailyMachine & {
+    machine: Machine & { machine_type: MachineType };
+    work_day: WorkDay;
   };
   job_type: Job_Type;
 };
@@ -126,50 +125,37 @@ export default function PayrollDetailPage({
   const totalPaid = Number(payroll.total_paid);
   const balance = netPayable - totalPaid;
 
-  const jobs = (payroll.jobs || []) as JobWithRelations[];
+  const daily_workers = (payroll.daily_workers || []) as DailyWorkerWithRelations[];
   const advances = (payroll.advance_payments || []) as Advance_Payment[];
 
-  // Table 1: Jobs columns
-  const jobColumns: ColumnDef<JobWithRelations>[] = [
+  // Table 1: Daily Workers columns
+  const jobColumns: ColumnDef<DailyWorkerWithRelations>[] = [
     {
-      key: "customer",
-      label: "Khách hàng",
+      key: "work_day",
+      label: "Ngày & Máy",
       width: "180px",
       render: (item) => (
         <div>
-          <Button
-            variant="link"
-            className="p-0 h-auto font-medium text-sm text-primary hover:no-underline hover:text-primary/80"
-            onClick={() => router.push(`/customers/${item.booking.customer.id}`)}
-          >
-            {item.booking.customer.name}
-          </Button>
+          <p className="font-medium text-sm">
+            {formatDateShort(item.daily_machine.work_day.date)}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {item.booking.land?.name || "Chưa chọn"}
+            Máy: {item.daily_machine.machine.name}
           </p>
         </div>
       ),
     },
     {
-      key: "service",
-      label: "Dịch vụ",
-      width: "200px",
+      key: "job_type",
+      label: "Công việc",
+      width: "180px",
       render: (item) => (
         <div>
-          <p className="text-sm font-medium">{item.booking.service.name}</p>
-          <p className="text-xs text-muted-foreground">{item.job_type.name}</p>
+          <p className="text-sm font-medium">{item.job_type.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {item.daily_machine.machine.name} ({item.daily_machine.machine.machine_type.name})
+          </p>
         </div>
-      ),
-    },
-    {
-      key: "quantity",
-      label: "Số lượng",
-      align: "right",
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm">
-          {Number(item.actual_qty)} {item.booking.service.unit}
-        </span>
       ),
     },
     {
@@ -182,6 +168,11 @@ export default function PayrollDetailPage({
           <p>
             {formatCurrency(Number(item.applied_base))} × {Number(item.applied_weight)}
           </p>
+          {Number(item.payment_adjustment) !== 0 && (
+            <p className={Number(item.payment_adjustment) > 0 ? "text-primary" : "text-destructive"}>
+              {Number(item.payment_adjustment) > 0 ? "+" : ""}{formatCurrency(Number(item.payment_adjustment))}
+            </p>
+          )}
         </div>
       ),
     },
@@ -190,21 +181,14 @@ export default function PayrollDetailPage({
       label: "Thành tiền",
       align: "right",
       width: "140px",
-      render: (item) => (
-        <span className="text-sm font-semibold text-primary">
-          {formatCurrency(Number(item.final_pay))}
-        </span>
-      ),
-    },
-    {
-      key: "created_at",
-      label: "Ngày tạo",
-      width: "120px",
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDateShort(item.created_at)}
-        </span>
-      ),
+      render: (item) => {
+        const pay = (Number(item.applied_base) * Number(item.applied_weight)) + Number(item.payment_adjustment);
+        return (
+          <span className="text-sm font-semibold text-primary">
+            {formatCurrency(pay)}
+          </span>
+        );
+      },
     },
   ];
 
@@ -401,28 +385,27 @@ export default function PayrollDetailPage({
           {/* Table 1: Jobs in Payroll */}
           <Card>
             <CardHeader>
-              <CardTitle>Các công việc ({jobs.length})</CardTitle>
+              <CardTitle>Các công việc ({daily_workers.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {jobs.length === 0 ? (
+              {daily_workers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Không có công việc nào
                 </p>
               ) : (
                 <DataTable
                   columns={jobColumns}
-                  data={jobs}
+                  data={daily_workers}
                   currentPage={1}
                   pageSize={100}
                   totalPages={1}
-                  totalItems={jobs.length}
+                  totalItems={daily_workers.length}
                   onPageChange={() => {}}
                   onPageSizeChange={() => {}}
                   sortKey=""
                   sortDirection={null}
                   onSort={() => {}}
                   getRowId={(item) => item.id}
-                  onRowClick={(item) => router.push(`/jobs/${item.id}`)}
                   emptyMessage="Không có công việc"
                   emptyDescription=""
                 />

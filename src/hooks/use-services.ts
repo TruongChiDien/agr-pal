@@ -1,90 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-import { listServices, createService, updateService, deleteService, getService } from '@/actions/services'
+import { listServices, createService, updateService, deleteService } from '@/actions/services'
 
 export function useServices() {
-  return useQuery({
-    queryKey: ['services'],
-    queryFn: listServices,
-  })
-}
-
-export function useService(id: string) {
-  return useQuery({
-    queryKey: ['services', id],
-    queryFn: () => getService(id),
-    enabled: !!id,
-  })
+  return useQuery({ queryKey: ['services'], queryFn: listServices, staleTime: 60_000 })
 }
 
 export function useCreateService() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   const { toast } = useToast()
-
   return useMutation({
     mutationFn: createService,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['services'] })
-        toast({
-          title: 'Thành công',
-          description: 'Dịch vụ đã được tạo',
-        })
+    onSuccess: (r) => {
+      if (r.success) {
+        qc.invalidateQueries({ queryKey: ['services'] })
+        toast({ title: 'Đã tạo dịch vụ' })
       } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
+        toast({ title: 'Lỗi', description: r.error, variant: 'destructive' })
       }
     },
   })
 }
 
 export function useUpdateService() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   const { toast } = useToast()
-
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: unknown }) => updateService(id, data),
-    onSuccess: (result, { id }) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['services'] })
-        queryClient.invalidateQueries({ queryKey: ['services', id] })
-        toast({
-          title: 'Thành công',
-          description: 'Dịch vụ đã được cập nhật',
-        })
+    onSuccess: (r) => {
+      if (r.success) {
+        qc.invalidateQueries({ queryKey: ['services'] })
+        toast({ title: 'Đã cập nhật dịch vụ' })
       } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
+        toast({ title: 'Lỗi', description: r.error, variant: 'destructive' })
       }
     },
   })
 }
 
 export function useDeleteService() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   const { toast } = useToast()
-
   return useMutation({
     mutationFn: deleteService,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['services'] })
-        toast({
-          title: 'Thành công',
-          description: 'Dịch vụ đã được xóa',
-        })
+    onSuccess: (r) => {
+      if (r.success) {
+        qc.invalidateQueries({ queryKey: ['services'] })
       } else {
-        toast({
-          title: 'Lỗi',
-          description: result.error,
-          variant: 'destructive',
-        })
+        toast({ title: 'Lỗi', description: r.error, variant: 'destructive' })
       }
     },
   })

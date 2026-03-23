@@ -49,10 +49,10 @@ next-env.d.ts
 
 # claude code
 .claude
+.opencode
 plans
 
-# documents
-docs/
-/src/generated/prisma
-
 .vscode
+
+.CLAUDE.md
+.AGENTS.md

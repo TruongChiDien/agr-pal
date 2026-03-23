@@ -2,17 +2,13 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useWorker, useDeleteWorkerWeight, useDeleteWorker } from "@/hooks/use-workers";
+import { useWorker, useDeleteWorker } from "@/hooks/use-workers";
 import { PageContainer, ContentSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DataTable, ColumnDef } from "@/components/data-display/data-table/data-table";
-import { Badge } from "@/components/ui/badge";
-import { WorkerWeightDialog } from "@/components/workers/worker-weight-dialog";
 import { formatCurrency } from "@/lib/format";
-import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
-import { JobList } from "@/components/jobs/job-list";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { AdvanceList } from "@/components/advances/advance-list";
 import { PayrollList } from "@/components/payroll/payroll-list";
 import {
@@ -24,14 +20,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { UpdateWorkerDialog } from "@/components/workers/update-worker-dialog";
-import type { Worker_Weight, Job_Type, Advance_Payment } from "@/types";
-
-type WorkerWeightWithJobType = Worker_Weight & {
-  job_type?: Job_Type & { service?: { name: string } };
-};
+import type { Advance_Payment } from "@/types";
 
 type AdvanceWithRelations = Advance_Payment;
-
 
 export default function WorkerDetailPage({
   params,
@@ -42,46 +33,24 @@ export default function WorkerDetailPage({
   const searchParams = useSearchParams();
   const { id } = use(params);
   const { data: worker, isLoading } = useWorker(id);
-  const deleteWeight = useDeleteWorkerWeight();
   const deleteWorker = useDeleteWorker();
-  // Get initial tab from URL or default to "info"
+
   const tabFromUrl = searchParams.get("tab") || "info";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
-  const [weightDialogOpen, setWeightDialogOpen] = useState(false);
-  const [editingWeight, setEditingWeight] = useState<WorkerWeightWithJobType | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [weightToDelete, setWeightToDelete] = useState<string | null>(null);
   const [deleteWorkerDialogOpen, setDeleteWorkerDialogOpen] = useState(false);
   const [updateWorkerDialogOpen, setUpdateWorkerDialogOpen] = useState(false);
 
   // Sync tab with URL parameter
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab) {
-      setActiveTab(tab);
-    }
+    if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  // Handle tab change and update URL
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
     router.push(`/workers/${id}?${params.toString()}`, { scroll: false });
-  };
-
-  const handleDeleteWeightClick = (weightId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setWeightToDelete(weightId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteWeightConfirm = async () => {
-    if (weightToDelete) {
-      await deleteWeight.mutateAsync(weightToDelete);
-      setDeleteDialogOpen(false);
-      setWeightToDelete(null);
-    }
   };
 
   const handleDeleteWorkerConfirm = async () => {
@@ -93,18 +62,6 @@ export default function WorkerDetailPage({
     });
   };
 
-  const handleEditWeight = (weight: WorkerWeightWithJobType, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingWeight(weight);
-    setWeightDialogOpen(true);
-  };
-
-  const handleCloseWeightDialog = () => {
-    setWeightDialogOpen(false);
-    setEditingWeight(null);
-  };
-
-
   // Calculate current balance from unpaid advances
   const calculateBalance = (advances?: AdvanceWithRelations[]): number => {
     if (!advances) return 0;
@@ -112,87 +69,6 @@ export default function WorkerDetailPage({
       .filter((a) => a.status === "UNPROCESSED")
       .reduce((sum, a) => sum + Number(a.amount), 0);
   };
-
-  // Worker Weight Columns
-  const weightColumns: ColumnDef<WorkerWeightWithJobType>[] = [
-    {
-      key: "job_type",
-      label: "Loại công việc",
-      render: (item) => (
-        <div>
-          <p className="font-medium">{item.job_type?.name || "N/A"}</p>
-          <p className="text-xs text-muted-foreground">
-            {item.job_type?.service?.name || ""}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "default_base_salary",
-      label: "Lương cơ bản",
-      align: "right",
-      width: "150px",
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {item.job_type?.default_base_salary
-            ? formatCurrency(Number(item.job_type.default_base_salary))
-            : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "weight",
-      label: "Hệ số",
-      align: "right",
-      width: "100px",
-      render: (item) => (
-        <Badge variant={Number(item.weight) >= 1 ? "default" : "secondary"}>
-          {Number(item.weight).toFixed(1)}x
-        </Badge>
-      ),
-    },
-    {
-      key: "final_salary",
-      label: "Lương thực tế",
-      align: "right",
-      width: "150px",
-      render: (item) => {
-        if (!item.job_type?.default_base_salary) return <span>—</span>;
-        const finalSalary =
-          Number(item.job_type.default_base_salary) * Number(item.weight);
-        return (
-          <span className="font-medium text-primary">
-            {formatCurrency(finalSalary)}
-          </span>
-        );
-      },
-    },
-    {
-      key: "actions",
-      label: "",
-      width: "100px",
-      align: "right",
-      render: (item) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleEditWeight(item, e)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteWeightClick(item.id, e)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
 
   if (isLoading) {
     return (
@@ -242,13 +118,10 @@ export default function WorkerDetailPage({
         }
       >
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="job-types">
-              Loại CV ({worker.worker_weights?.length || 0})
-            </TabsTrigger>
             <TabsTrigger value="jobs">
-              Công việc ({worker.jobs?.length || 0})
+              Công việc ({worker.daily_workers?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="advances">
               Tạm ứng ({worker.advance_payments?.length || 0})
@@ -284,23 +157,26 @@ export default function WorkerDetailPage({
                 {/* Column 2: Financial Info */}
                 <div className="space-y-4">
                   {(() => {
-                    // Calculate Financials
                     const wagesDue = worker.payroll_sheets?.reduce((sum, p) => {
-                       const total = Number(p.net_payable) || 0;
-                       const paid = Number(p.total_paid) || 0;
-                       return sum + (total - paid);
+                      const total = Number(p.net_payable) || 0;
+                      const paid = Number(p.total_paid) || 0;
+                      return sum + (total - paid);
                     }, 0) || 0;
 
-                    const pendingJobsValue = worker.jobs
-                      ?.filter(j => j.payment_status === "PENDING_PAYROLL")
-                      .reduce((sum, j) => sum + Number(j.final_pay || 0), 0) || 0;
+                    const pendingJobsValue = worker.daily_workers
+                      ?.filter(dw => dw.payment_status === "PENDING_PAYROLL")
+                      .reduce((sum, dw) => {
+                        const base = Number(dw.applied_base) || 0;
+                        const weight = Number(dw.applied_weight) || 1;
+                        const adjust = Number(dw.payment_adjustment) || 0;
+                        return sum + (base * weight + adjust);
+                      }, 0) || 0;
 
                     const pendingAdvancesValue = worker.advance_payments
                       ?.filter(a => a.status === "UNPROCESSED")
                       .reduce((sum, a) => sum + Number(a.amount), 0) || 0;
-                    
-                    const estimatedWage = pendingJobsValue - pendingAdvancesValue;
 
+                    const estimatedWage = pendingJobsValue - pendingAdvancesValue;
                     const totalWage = wagesDue + estimatedWage;
 
                     return (
@@ -331,106 +207,42 @@ export default function WorkerDetailPage({
             </Card>
           </TabsContent>
 
-          {/* Tab 2: Job Types (Worker Weights) */}
-          <TabsContent value="job-types" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex justify-end">
-                <div>
-                  <Button onClick={() => setWeightDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm loại công việc
-                  </Button>
-                </div>
-              </div>
-
-              {worker.worker_weights && worker.worker_weights.length > 0 ? (
-                <DataTable
-                  columns={weightColumns}
-                  data={worker.worker_weights}
-                  getRowId={(item) => item.id}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground mb-4">
-                      Chưa có loại công việc nào
-                    </p>
-                    <Button onClick={() => setWeightDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm loại công việc đầu tiên
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Tab 3: Jobs */}
+          {/* Tab 2: Jobs */}
           <TabsContent value="jobs" className="mt-6">
             <div className="space-y-4">
-            {worker.jobs && worker.jobs.length > 0 ? (
-                <JobList workerId={id} />
+              {worker.daily_workers && worker.daily_workers.length > 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center p-6 text-center h-48">
+                    <p className="text-muted-foreground">Tính năng xem chi tiết lịch sử làm việc theo ngày đang được cập nhật.</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center h-48">
-                    <p className="text-muted-foreground">
-                      Chưa có công việc nào
-                    </p>
+                    <p className="text-muted-foreground">Chưa có công việc nào</p>
                   </CardContent>
                 </Card>
               )}
             </div>
           </TabsContent>
 
-            {/* Tab 4: Advance Payments */}
+          {/* Tab 3: Advance Payments */}
           <TabsContent value="advances" className="mt-6">
             <AdvanceList workerId={id} workerName={worker.name} />
           </TabsContent>
 
-          {/* Tab 5: Payrolls */}
+          {/* Tab 4: Payrolls */}
           <TabsContent value="payrolls" className="mt-6">
             <PayrollList workerId={id} workerName={worker.name} />
           </TabsContent>
         </Tabs>
       </ContentSection>
 
-      {/* Worker Weight Dialog */}
-      <WorkerWeightDialog
-        open={weightDialogOpen}
-        onClose={handleCloseWeightDialog}
-        workerId={id}
-        initialData={editingWeight || undefined}
-      />
-
       <UpdateWorkerDialog
         open={updateWorkerDialogOpen}
         onOpenChange={setUpdateWorkerDialogOpen}
         worker={worker}
       />
-
-
-
-      {/* Delete Weight Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa hệ số lương này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteWeightConfirm}>
-              Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-
 
       {/* Delete Worker Confirmation Dialog */}
       <Dialog open={deleteWorkerDialogOpen} onOpenChange={setDeleteWorkerDialogOpen}>
@@ -455,7 +267,6 @@ export default function WorkerDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </PageContainer>
   );
 }

@@ -1,6 +1,5 @@
 /**
  * Status enums for the Agricultural ERP System
- * These enums provide type safety and prevent typos in status values
  */
 
 // Booking workflow statuses
@@ -19,16 +18,7 @@ export enum PaymentStatus {
   FullyPaid = "FULLY_PAID",
 }
 
-// Job execution statuses
-export enum JobStatus {
-  New = "NEW",
-  InProgress = "IN_PROGRESS",
-  Blocked = "BLOCKED",
-  Completed = "COMPLETED",
-  Canceled = "CANCELED",
-}
-
-// Job payment tracking (for payroll)
+// Daily machine worker payment tracking (for payroll)
 export enum JobPaymentStatus {
   PendingPayroll = "PENDING_PAYROLL",
   AddedPayroll = "ADDED_PAYROLL",

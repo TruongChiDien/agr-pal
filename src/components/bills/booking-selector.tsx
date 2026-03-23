@@ -1,25 +1,24 @@
-"use client";
+"use client"
 
-import { useBookings } from "@/hooks/use-bookings";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { formatCurrency, formatDateShort } from "@/lib/format";
-import { PaymentStatus } from "@/types/enums";
-import type { Booking, Land, Service } from "@prisma/client";
+import { useBookings } from "@/hooks/use-bookings"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import { formatCurrency, formatDateShort } from "@/lib/format"
+import { PaymentStatus } from "@/types/enums"
+import type { Booking, Land } from "@prisma/client"
 
 type BookingWithRelations = Booking & {
-  land: Land | null;
-  service: Service;
-};
+  land: Land | null
+}
 
 interface BookingSelectorProps {
-  customerId: string;
-  selectedBookingIds: string[];
-  onSelectionChange: (bookingIds: string[]) => void;
-  adjustment?: number;
+  customerId: string
+  selectedBookingIds: string[]
+  onSelectionChange: (bookingIds: string[]) => void
+  adjustment?: number
 }
 
 export function BookingSelector({
@@ -28,39 +27,39 @@ export function BookingSelector({
   onSelectionChange,
   adjustment = 0,
 }: BookingSelectorProps) {
-  const { data: bookings, isLoading } = useBookings();
+  const { data: bookings, isLoading } = useBookings()
 
   // Filter: same customer, PENDING_BILL status
   const availableBookings = (bookings as BookingWithRelations[] | undefined)?.filter(
     (b) => b.customer_id === customerId && b.payment_status === PaymentStatus.PendingBill
-  ) || [];
+  ) || []
 
   const totalAmount = availableBookings
     .filter((b) => selectedBookingIds.includes(b.id))
-    .reduce((sum, b) => sum + Number(b.total_amount), 0);
+    .reduce((sum, b) => sum + Number(b.amount ?? 0), 0)
 
   const handleToggle = (bookingId: string) => {
     if (selectedBookingIds.includes(bookingId)) {
-      onSelectionChange(selectedBookingIds.filter((id) => id !== bookingId));
+      onSelectionChange(selectedBookingIds.filter((id) => id !== bookingId))
     } else {
-      onSelectionChange([...selectedBookingIds, bookingId]);
+      onSelectionChange([...selectedBookingIds, bookingId])
     }
-  };
+  }
 
   const handleSelectAll = () => {
     if (selectedBookingIds.length === availableBookings.length) {
-      onSelectionChange([]);
+      onSelectionChange([])
     } else {
-      onSelectionChange(availableBookings.map((b) => b.id));
+      onSelectionChange(availableBookings.map((b) => b.id))
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32">
         <p className="text-sm text-muted-foreground">Đang tải đơn hàng...</p>
       </div>
-    );
+    )
   }
 
   if (availableBookings.length === 0) {
@@ -72,7 +71,7 @@ export function BookingSelector({
           Khách hàng này chưa có đơn hàng nào cần lập hóa đơn.
         </AlertDescription>
       </Alert>
-    );
+    )
   }
 
   return (
@@ -103,7 +102,7 @@ export function BookingSelector({
               checked={selectedBookingIds.includes(booking.id)}
               onCheckedChange={() => handleToggle(booking.id)}
             />
-            <div className="flex-1 grid grid-cols-3 gap-4">
+            <div className="flex-1 grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium">
                   {booking.land?.name || "Chưa chọn ruộng"}
@@ -112,15 +111,9 @@ export function BookingSelector({
                   {formatDateShort(booking.created_at)}
                 </p>
               </div>
-              <div>
-                <p className="text-sm">{booking.service.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {Number(booking.quantity)} {booking.service.unit}
-                </p>
-              </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-primary">
-                  {formatCurrency(Number(booking.total_amount))}
+                  {booking.amount ? formatCurrency(Number(booking.amount)) : "—"}
                 </p>
               </div>
             </div>
@@ -183,5 +176,5 @@ export function BookingSelector({
         </Card>
       )}
     </div>
-  );
+  )
 }

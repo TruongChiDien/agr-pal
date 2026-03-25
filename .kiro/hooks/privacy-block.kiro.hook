@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Privacy Block",
+  "description": "Blocks access to sensitive files (.env, credentials, secrets, private keys) before read/write/shell operations. Protects against accidental exposure of API keys, passwords, and tokens.",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "read",
+      "write",
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "PRIVACY CHECK: Before proceeding, verify the operation does NOT access sensitive files containing secrets, API keys, passwords, or tokens. Sensitive file patterns include: .env, .env.*, *.pem, *.key, credentials.json, secrets.*, id_rsa, id_ed25519, .npmrc (with auth), .pypirc, .netrc, .pgpass, .my.cnf. If the operation targets any of these files, STOP and ask the user for explicit approval before proceeding. If approved, continue. If not a sensitive file, proceed normally."
+  }
+}

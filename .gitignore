@@ -47,12 +47,4 @@ node_modules/.prisma
 *.tsbuildinfo
 next-env.d.ts
 
-# claude code
-.claude
-.opencode
-plans
-
 .vscode
-
-.CLAUDE.md
-.AGENTS.md

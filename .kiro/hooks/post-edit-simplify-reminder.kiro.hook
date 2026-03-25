@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Post-Edit Simplify Reminder",
+  "description": "After significant file edits (write operations), reminds to consider running code-simplifier to refine recent changes before code review. This is a mandatory step in the workflow.",
+  "version": "1",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "write"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Code Simplification Reminder: You have modified files in this session. After completing the current task, consider using the code-simplifier agent to refine recent changes before proceeding to code review. This is a mandatory step in the workflow."
+  }
+}

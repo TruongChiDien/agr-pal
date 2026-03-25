@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Usage Context Awareness",
+  "description": "Fetches Claude Code usage limits from Anthropic OAuth API and caches them. Runs on prompt submit to keep usage awareness current.",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "node \".claude/hooks/usage-context-awareness.cjs\"",
+    "timeout": 30
+  }
+}

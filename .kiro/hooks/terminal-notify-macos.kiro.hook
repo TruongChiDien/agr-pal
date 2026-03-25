@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Terminal Command Notification",
+  "description": "Sends a macOS notification after a terminal command finishes running, so you know when long-running commands complete.",
+  "version": "1",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "osascript -e 'display notification \"A terminal command has finished running\" with title \"Kiro\" sound name \"Glass\"'"
+  }
+}

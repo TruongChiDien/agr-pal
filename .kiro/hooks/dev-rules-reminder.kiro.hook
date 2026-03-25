@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Dev Rules Reminder",
+  "description": "Injects development rules reminder and context on every user prompt. Reminds about YAGNI/KISS/DRY principles, file size limits (200 lines), and to follow codebase standards in ./docs.",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Development rules reminder:\n- Follow YAGNI / KISS / DRY principles\n- Keep files under 200 lines, split large files into focused modules\n- Follow codebase structure and code standards in ./docs\n- Use try-catch error handling and cover security standards\n- Do NOT create new enhanced files, update existing files directly\n- After creating or modifying code, check for compile errors\n- Use kebab-case for file names with descriptive purpose"
+  }
+}

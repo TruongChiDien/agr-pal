@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(cat:*)",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/work-days/new/page.tsx)",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/work-days/[id]/page.tsx)",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/customers/page.tsx)",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/bookings/page.tsx)",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/machines/page.tsx)"
+    ]
+  }
+}

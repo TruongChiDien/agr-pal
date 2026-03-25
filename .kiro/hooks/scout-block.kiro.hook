@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Scout Block",
+  "description": "Blocks access to directories listed in .claude/.ckignore (like node_modules, dist, .venv, build artifacts). Allows build commands but prevents reading/browsing blocked directories.",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "read",
+      "write",
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "DIRECTORY ACCESS CHECK: Before proceeding, verify the operation does NOT access blocked directories. Blocked directories typically include: node_modules/, dist/, build/, .venv/, __pycache__/, .next/, .nuxt/, vendor/, coverage/, .git/objects/. If the operation targets files inside these directories, STOP and suggest an alternative approach (e.g., reading package.json instead of node_modules, checking source files instead of build output). Build/compile commands (npm build, go build, cargo build, make, etc.) are always allowed. If not targeting a blocked directory, proceed normally."
+  }
+}

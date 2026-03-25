@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Descriptive File Naming",
+  "description": "Reminds to use kebab-case and descriptive file names when creating or writing files. Skips markdown/text files. Respects language conventions (PascalCase for C#/Java, snake_case for Go/Rust).",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "write"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "File naming guidance:\n- Skip this guidance if you are creating markdown or plain text files\n- Prefer kebab-case for JS/TS/Python/shell (.js, .ts, .py, .sh) with descriptive names\n- Respect language conventions: C#/Java/Kotlin/Swift use PascalCase (.cs, .java, .kt, .swift), Go/Rust use snake_case (.go, .rs)\n- Other languages: follow their ecosystem's standard naming convention\n- Goal: self-documenting names for LLM tools (Grep, Glob, Search)"
+  }
+}
